@@ -27,8 +27,6 @@ class WordLlamaEmbedding(nn.Module):
     def forward(self, *args, **kwargs):
         pass
 
-    #        return self.embed(input_ids)
-
     @torch.inference_mode()
     def embed(self, texts: Union[str, list[str]], max_length: int = 128):
         assert isinstance(texts, str) or isinstance(texts, list)

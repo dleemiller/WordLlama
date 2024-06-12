@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "wordllama"
+version = "0.1.0"
+description = ""
+authors = ["Lee Miller <dleemiller@protonmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+toml = "^0.10.2"
+torch = "^2.3.1"
+transformers = "^4.41.2"
+pydantic = "^2.7.3"
+safetensors = "^0.4.3"
+scikit-learn = "^1.5.0"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

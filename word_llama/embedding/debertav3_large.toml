@@ -1,0 +1,5 @@
+[model]
+dim = 1024
+n_vocab = 128100
+hf_model_id = "microsoft/deberta-v3-large"
+is_encoder = true

@@ -1,6 +1,6 @@
 # Word Llama
 
-Word Llama is designed to facilitate the extraction and utilization of token embeddings from large language models. It supports operations such as embedding texts directly and extracting token embeddings to save as separate files for more efficient reuse. The goal of this library is utilize the high quality token embeddings learned in LLM training for a variety of lightweight NLP tasks, by training adapters and classifiers.
+Word Llama is designed to facilitate the extraction and utilization of token embeddings from large language models. It supports operations such as embedding texts directly and extracting token embeddings for more efficient reuse in low resource / performance applications. The goal of this library is utilize the high quality token embeddings learned in LLM training for a variety of lightweight NLP tasks, by training adapters and classifiers.
 
 ## Features
 
@@ -13,7 +13,7 @@ Word Llama is designed to facilitate the extraction and utilization of token emb
 Clone the repository and install the required packages:
 
 ```bash
-git clone https://github.com/your-repository/word_llama.git
+git clone https://github.com/dleemiller/word_llama.git
 cd word_llama
 pip install -r requirements.txt
 ```
@@ -26,7 +26,7 @@ Here’s how you can load pre-trained embeddings and use them to embed text:
 from word_llama import load
 
 # Load pre-trained embeddings
-wl = load("path/to/embeddings")
+wl = load("path/to/embeddings.safetensors")
 
 # Embed text
 embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])

@@ -13,6 +13,10 @@ class WordLlamaEmbedding(nn.Module):
         model = config.model
         self.embedding = nn.Embedding(model.n_vocab, model.dim)
 
+        # turn off gradients
+        for param in self.embedding.parameters():
+            param.requires_grad = False
+
         # load the tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model.hf_model_id)
         self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
@@ -24,29 +28,34 @@ class WordLlamaEmbedding(nn.Module):
         safetensors.torch.load_model(word_llama, filepath)
         return word_llama
 
-    def forward(self, *args, **kwargs):
-        pass
+    def forward(self, tensors: dict[torch.Tensor]):
+        return {
+            "x": self.embedding(tensors["input_ids"]),
+            "attention_mask": tensors["attention_mask"],
+        }
 
-    @torch.inference_mode()
-    def embed(self, texts: Union[str, list[str]], max_length: int = 128):
+    def tokenize(self, texts: Union[str, list[str]], max_length: int = 128):
         assert isinstance(texts, str) or isinstance(texts, list)
-        input_ids = self.tokenizer(
+        tensors = self.tokenizer(
             [texts] if isinstance(texts, str) else texts,
             return_tensors="pt",
-            return_attention_mask=False,
+            return_attention_mask=True,
             max_length=max_length,
             padding="max_length",
             truncation=True,
             add_special_tokens=False,
-        )["input_ids"].to(self.embedding.weight.device)
-
-        x = self.embedding(input_ids)
-        return self.avg_pool(x, input_ids)
+        )
+        return {k: v.to(self.embedding.weight.device) for k, v in tensors.items()}
 
     @torch.inference_mode()
-    def avg_pool(self, x: torch.Tensor, input_ids: torch.Tensor) -> torch.Tensor:
+    def embed(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
+        x = self.embedding(input_ids)
+        return self.avg_pool(x, attention_mask)
+
+    @torch.inference_mode()
+    def avg_pool(self, x: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
         # Mask
-        mask = (input_ids != 0).unsqueeze(dim=-1)
+        mask = attention_mask.unsqueeze(dim=-1)
 
         # Average pool with mask
         x = (x * mask).sum(dim=1) / mask.sum(dim=1)

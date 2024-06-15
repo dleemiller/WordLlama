@@ -8,7 +8,5 @@ class Projector(nn.Module):
         self.proj = nn.Linear(in_dim, out_dim)
 
     def forward(self, tensors) -> dict:
-        return {
-            "x": self.proj(tensors["x"]),
-            "attention_mask": tensors["attention_mask"],
-        }
+        tensors.update({"x": self.proj(tensors["token_embeddings"])})
+        return tensors

@@ -2,5 +2,5 @@ from .embedding import Config
 from .embedding.word_llama_embedding import WordLlamaEmbedding
 
 
-def load(filepath):
-    return WordLlamaEmbedding.build(filepath, Config.llama3_8B)
+def load(filepath, config=Config.llama3_8B):
+    return WordLlamaEmbedding.build(filepath, config)

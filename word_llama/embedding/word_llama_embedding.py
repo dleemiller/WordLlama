@@ -30,22 +30,21 @@ class WordLlamaEmbedding(nn.Module):
 
     def forward(self, tensors: dict[torch.Tensor]):
         return {
-            "x": self.embedding(tensors["input_ids"]),
+            "token_embeddings": self.embedding(tensors["input_ids"]),
             "attention_mask": tensors["attention_mask"],
         }
 
-    def tokenize(self, texts: Union[str, list[str]], max_length: int = 128):
-        assert isinstance(texts, str) or isinstance(texts, list)
-        tensors = self.tokenizer(
+    def tokenize(self, *args, **kwargs):
+        texts = list(args).pop(0)
+        return self.tokenizer(
             [texts] if isinstance(texts, str) else texts,
             return_tensors="pt",
             return_attention_mask=True,
-            max_length=max_length,
+            max_length=kwargs.get("max_length", 96),
             padding="max_length",
             truncation=True,
             add_special_tokens=False,
         )
-        return {k: v.to(self.embedding.weight.device) for k, v in tensors.items()}
 
     @torch.inference_mode()
     def embed(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):

@@ -27,8 +27,7 @@ class ReduceDimension:
         self.config = config
         self.configure_logging()
         self.model = config.model
-        self.train_dataset, self.eval_dataset = self.load_datasets()
-        self.train_loss = self.setup_loss()
+        self.train_loss = self.setup_losses()
         self.dev_evaluator = self.setup_evaluator()
         self.trainer = self.initialize_trainer()
 
@@ -39,26 +38,23 @@ class ReduceDimension:
             level=logging.INFO,
         )
 
-    # def initialize_model(self) -> SentenceTransformer:
-    #     wl = load(self.config.model_path, Config.llama3_70B)
-    #     proj = MLP(8192, 2048, hidden_dim=8192)
-    #     pool = AvgPool()
-    #     return SentenceTransformer(modules=[wl, proj, pool], tokenizer_kwargs=self.config.tokenizer_kwargs, device="cuda")
-
-    def load_datasets(self) -> Tuple[DatasetDict, DatasetDict]:
-        train_dataset = load_dataset(
-            *self.config.training_datasets["train"], split="train"
-        )
-        eval_dataset = load_dataset(*self.config.training_datasets["eval"], split="dev")
-        return train_dataset, eval_dataset
-
-    def setup_loss(self):
-        inner_train_loss = losses.MultipleNegativesRankingLoss(model=self.model)
-        return losses.MatryoshkaLoss(
+    def setup_losses(self):
+        mnrl_loss = losses.MatryoshkaLoss(
             model=self.model,
-            loss=inner_train_loss,
+            loss=losses.MultipleNegativesRankingLoss(model=self.model),
             matryoshka_dims=self.config.matryoshka_dims,
         )
+        pair_score_loss = losses.MatryoshkaLoss(
+            model=self.model,
+            loss=losses.AnglELoss(model=self.model),
+            matryoshka_dims=self.config.matryoshka_dims,
+        )
+
+        losses_map = {}
+        for ds_name in self.config.training_datasets["train"].keys():
+            loss_type = self.config.loss_types[ds_name]
+            losses_map[ds_name] = mnrl_loss if loss_type == "mnrl" else pair_score_loss
+        return losses_map
 
     def setup_evaluator(self) -> SequentialEvaluator:
         stsb_eval_dataset = load_dataset(
@@ -83,8 +79,8 @@ class ReduceDimension:
         return SentenceTransformerTrainer(
             model=self.model,
             args=self.config.training_args,
-            train_dataset=self.train_dataset,
-            eval_dataset=self.eval_dataset,
+            train_dataset=self.config.training_datasets["train"],
+            eval_dataset=self.config.training_datasets["eval"],
             evaluator=self.dev_evaluator,
             loss=self.train_loss,
         )

@@ -5,6 +5,8 @@ from sentence_transformers import (
     SentenceTransformerTrainingArguments,
     SentenceTransformer,
 )
+from sentence_transformers.training_args import MultiDatasetBatchSamplers
+from datasets import load_dataset
 
 from word_llama import load, Config
 from word_llama.adapters import MLP, AvgPool
@@ -24,21 +26,50 @@ class ReduceDimensionConfig:
         "add_special_tokens": True,
     }
     training_datasets: Dict[str, str] = {
-        "train": ("sentence-transformers/all-nli", "triplet"),
-        "eval": ("sentence-transformers/all-nli", "triplet"),
+        "train": {
+            "all-nli": load_dataset(
+                "sentence-transformers/all-nli", "triplet", split="train"
+            ),
+            "all-nli-score": load_dataset(
+                "sentence-transformers/all-nli", "pair-score", split="train"
+            ),
+            "msmarco": load_dataset(
+                "sentence-transformers/msmarco-bm25", "triplet", split="train"
+            ),
+            "stsb": load_dataset("sentence-transformers/stsb", split="train"),
+            "quora_duplicates": load_dataset(
+                "sentence-transformers/quora-duplicates", "pair", split="train"
+            ),
+            "natural_questions": load_dataset(
+                "sentence-transformers/natural-questions", split="train"
+            ),
+        },
+        "eval": {
+            "all-nli": load_dataset(
+                "sentence-transformers/all-nli", "triplet", split="dev"
+            ),
+            "stsb": load_dataset("sentence-transformers/stsb", split="test"),
+        },
         "sts_validation": ("sentence-transformers/stsb",),
     }
-    training_args: SentenceTransformerTrainingArguments = (
-        SentenceTransformerTrainingArguments(
-            output_dir=f"output/matryoshka_sts_custom_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
-            num_train_epochs=5,
-            per_device_train_batch_size=512,
-            warmup_steps=0,
-            evaluation_strategy="steps",
-            eval_steps=64,
-            save_steps=32,
-            fp16=True,
-        )
+    loss_types = {
+        "all-nli": "mnrl",
+        "all-nli-score": "cosent",
+        "msmarco": "mnrl",
+        "stsb": "cosent",
+        "quora_duplicates": "mnrl",
+        "natural_questions": "mnrl",
+    }
+    training_args: SentenceTransformerTrainingArguments = SentenceTransformerTrainingArguments(
+        output_dir=f"output/matryoshka_sts_custom_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
+        num_train_epochs=2,
+        per_device_train_batch_size=512,
+        warmup_steps=0,
+        evaluation_strategy="steps",
+        eval_steps=128,
+        save_steps=512,
+        fp16=True,
+        multi_dataset_batch_sampler=MultiDatasetBatchSamplers.PROPORTIONAL,
     )
 
     def __init__(

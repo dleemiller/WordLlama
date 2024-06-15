@@ -2,7 +2,6 @@ from torch import nn
 
 
 class AvgPool(nn.Module):
-
     def __init__(self):
         super().__init__()
 
@@ -11,3 +10,6 @@ class AvgPool(nn.Module):
         x = (tensors["x"] * mask).sum(dim=1) / mask.sum(dim=1)
         tensors.update({"sentence_embedding": x})
         return tensors
+
+    def save(self, *args, **kwargs):
+        pass  # nothing to save

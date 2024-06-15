@@ -1,5 +1,7 @@
 # Word Llama
 
+NOTE: This is a work in progress
+
 Word Llama is designed to facilitate the extraction and utilization of token embeddings from large language models. It supports operations such as embedding texts directly and extracting token embeddings for more efficient reuse in low resource / performance applications. The goal of this library is utilize the high quality token embeddings learned in LLM training for a variety of lightweight NLP tasks, by training adapters and classifiers.
 
 ## Features

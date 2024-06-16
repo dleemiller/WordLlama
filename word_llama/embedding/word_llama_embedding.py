@@ -59,3 +59,6 @@ class WordLlamaEmbedding(nn.Module):
         # Average pool with mask
         x = (x * mask).sum(dim=1) / mask.sum(dim=1)
         return x
+
+    def save(self, *args, **kwargs):
+        pass

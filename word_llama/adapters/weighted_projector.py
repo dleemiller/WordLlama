@@ -25,9 +25,6 @@ class WeightedProjector(nn.Module):
             for stopword_id in stopword_ids:
                 self.weights[stopword_id] = 0.1
 
-    # def forward(self, tensors) -> dict:
-    #     tensors.update({"x": self.proj(tensors[self.key])})
-    #     return tensors
     def forward(self, tensors) -> dict:
         token_ids = tensors["token_ids"]
         weights = F.gelu(

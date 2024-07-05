@@ -14,8 +14,10 @@ class STEFunction(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         (x,) = ctx.saved_tensors
+
         # Gradient is passed through unchanged where x values are between -1 and 1
         grad_x = grad_output.clone()
+
         # Restrict to the pass-through region
         grad_x[x.abs() > 1] = 0
         return grad_x

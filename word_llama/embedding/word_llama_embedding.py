@@ -1,19 +1,21 @@
 import torch
+from torch import nn
 import safetensors.torch
 
-from torch import nn
 from transformers import AutoTokenizer
 from typing import Union
+
+from ..adapters import AvgPool
 
 
 class WordLlamaEmbedding(nn.Module):
     tokenizer_kwargs = {
         "return_tensors": "pt",
-        "return_attention_mask": False,
+        "return_attention_mask": True,
         "max_length": 1024,
         "padding": "max_length",
         "truncation": True,
-        "add_special_tokens": False, # don't need without context
+        "add_special_tokens": False,  # don't need without context
     }
 
     def __init__(self, config, tokenizer_kwargs=None):
@@ -30,7 +32,9 @@ class WordLlamaEmbedding(nn.Module):
 
         # load the tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model.hf_model_id)
-        self.tokenizer.pad_token_id = self.tokenizer.vocab["<|end_of_text|>"] # for llama3 models
+        self.tokenizer.pad_token_id = self.tokenizer.vocab[
+            "<|end_of_text|>"
+        ]  # for llama3 models
 
     @classmethod
     def build(cls, filepath, config):
@@ -51,14 +55,20 @@ class WordLlamaEmbedding(nn.Module):
         return self.tokenizer(texts, **self.tokenizer_kwargs)
 
     @torch.inference_mode()
-    def embed(self, texts: Union[str, list[str]], norm:bool=False, binarize=None):
+    def embed(self, texts: Union[str, list[str]], norm: bool = False, binarize=None):
+        if isinstance(texts, str):
+            self.tokenizer_kwargs["return_attention_mask"] = False
+            self.tokenizer_kwargs["padding"] = "do_not_pad"
+        else:
+            self.tokenizer_kwargs["return_attention_mask"] = True
+            self.tokenizer_kwargs["padding"] = "max_length"
         tensors = self.tokenize(texts)
         with torch.no_grad():
             x = self.embedding(tensors["input_ids"].to(self.embedding.weight.device))
-            x = AvgPool.avg_pool(x, tensors["attention_mask"], norm=norm)
+            x = AvgPool.avg_pool(x, tensors.get("attention_mask"), norm=norm)
 
         if binarize:
-            return x.sign().bool()
+            return x > 0
         return x
 
     def save(self, *args, **kwargs):

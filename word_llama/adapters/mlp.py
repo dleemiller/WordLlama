@@ -5,10 +5,13 @@ import safetensors.torch as st
 
 
 class MLP(nn.Module):
-    def __init__(self, in_dim, out_dim, hidden_dim):
+    def __init__(self, in_dim, out_dim, hidden_dim, dropout=0.1):
         super().__init__()
         self.mlp = nn.Sequential(
-            nn.Linear(in_dim, hidden_dim), nn.Mish(), nn.Linear(hidden_dim, out_dim)
+            nn.Linear(in_dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, out_dim),
         )
 
     def forward(self, tensors) -> dict:
@@ -34,5 +37,3 @@ class MLP(nn.Module):
             filename=os.path.join(filepath, "mlp.safetensors"),
             metadata=metadata,
         )
-        # Use save_file method from safetensors to save the model with metadata
-        # st.save_file(tensors=state_dict, filename=filepath, metadata=metadata)

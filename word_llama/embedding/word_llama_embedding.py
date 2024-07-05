@@ -7,11 +7,22 @@ from typing import Union
 
 
 class WordLlamaEmbedding(nn.Module):
-    def __init__(self, config):
+    tokenizer_kwargs = {
+        "return_tensors": "pt",
+        "return_attention_mask": False,
+        "max_length": 1024,
+        "padding": "max_length",
+        "truncation": True,
+        "add_special_tokens": False, # don't need without context
+    }
+
+    def __init__(self, config, tokenizer_kwargs=None):
         super().__init__()
         self.config = config
         model = config.model
         self.embedding = nn.Embedding(model.n_vocab, model.dim)
+        if tokenizer_kwargs:
+            self.tokenizer_kwargs = tokenizer_kwargs
 
         # turn off gradients
         for param in self.embedding.parameters():
@@ -19,8 +30,7 @@ class WordLlamaEmbedding(nn.Module):
 
         # load the tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model.hf_model_id)
-        self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-        self.tokenizer.pad_token_id = 0
+        self.tokenizer.pad_token_id = self.tokenizer.vocab["<|end_of_text|>"] # for llama3 models
 
     @classmethod
     def build(cls, filepath, config):
@@ -30,34 +40,25 @@ class WordLlamaEmbedding(nn.Module):
 
     def forward(self, tensors: dict[torch.Tensor]):
         return {
+            "token_ids": tensors["input_ids"],
             "token_embeddings": self.embedding(tensors["input_ids"]),
             "attention_mask": tensors["attention_mask"],
         }
 
     def tokenize(self, *args, **kwargs):
         texts = list(args).pop(0)
-        return self.tokenizer(
-            [texts] if isinstance(texts, str) else texts,
-            return_tensors="pt",
-            return_attention_mask=True,
-            max_length=kwargs.get("max_length", 96),
-            padding="max_length",
-            truncation=True,
-            add_special_tokens=False,
-        )
+        texts = [texts] if isinstance(texts, str) else texts
+        return self.tokenizer(texts, **self.tokenizer_kwargs)
 
     @torch.inference_mode()
-    def embed(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
-        x = self.embedding(input_ids)
-        return self.avg_pool(x, attention_mask)
+    def embed(self, texts: Union[str, list[str]], norm:bool=False, binarize=None):
+        tensors = self.tokenize(texts)
+        with torch.no_grad():
+            x = self.embedding(tensors["input_ids"].to(self.embedding.weight.device))
+            x = AvgPool.avg_pool(x, tensors["attention_mask"], norm=norm)
 
-    @torch.inference_mode()
-    def avg_pool(self, x: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        # Mask
-        mask = attention_mask.unsqueeze(dim=-1)
-
-        # Average pool with mask
-        x = (x * mask).sum(dim=1) / mask.sum(dim=1)
+        if binarize:
+            return x.sign().bool()
         return x
 
     def save(self, *args, **kwargs):

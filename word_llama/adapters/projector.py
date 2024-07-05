@@ -1,14 +1,16 @@
+import os
 from torch import nn
 import safetensors.torch as st
 
 
 class Projector(nn.Module):
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim, key="token_embeddings"):
         super().__init__()
         self.proj = nn.Linear(in_dim, out_dim)
+        self.key = key
 
     def forward(self, tensors) -> dict:
-        tensors.update({"x": self.proj(tensors["token_embeddings"])})
+        tensors.update({"x": self.proj(tensors[self.key])})
         return tensors
 
     def save(self, filepath: str, **kwargs):

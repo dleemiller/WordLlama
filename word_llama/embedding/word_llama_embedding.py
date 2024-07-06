@@ -105,5 +105,21 @@ class WordLlamaEmbedding(nn.Module):
 
         return 1.0 - dist / max_dist
 
+    @staticmethod
+    def cosine_similarity(a, b):
+        assert a.shape == b.shape
+        assert a.dtype in (np.float16, np.float32)
+        assert b.dtype in (np.float16, np.float32)
+
+        # Compute cosine similarity
+        if a.ndim > 1:
+            a_norm = np.linalg.norm(a, axis=1)
+            b_norm = np.linalg.norm(b, axis=1)
+            return np.sum(a * b, axis=1) / (a_norm * b_norm)
+        else:
+            a_norm = np.linalg.norm(a)
+            b_norm = np.linalg.norm(b)
+            return  np.sum(a * b) / (a_norm * b_norm)
+
     def save(self, *args, **kwargs):
         pass

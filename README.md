@@ -6,8 +6,8 @@ The power of 13 trillion tokens of training, extracted, flogged and minimized in
 
 ## What is it?
 
-WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations.
-Unlike traditional embeddings such as GloVe or Word2Vec, WordLlama begins by extracting the token embedding codebook from a state-of-the-art LLM (e.g., LLama3 70B).
+WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations (such as GloVe or Word2Vec).
+WordLlama begins by extracting the token embedding codebook from a state-of-the-art LLM (e.g., LLama3 70B).
 
 The key features of WordLlama include:
 

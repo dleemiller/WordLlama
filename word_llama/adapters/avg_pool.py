@@ -16,6 +16,7 @@ class AvgPool(nn.Module):
     ) -> torch.Tensor:
         if attention_mask is not None:
             # Mask
+            attention_mask = attention_mask.to(x.device)
             mask = attention_mask.unsqueeze(dim=-1)
 
             # Average pool with mask

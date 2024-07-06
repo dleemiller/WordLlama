@@ -62,6 +62,7 @@ class WordLlamaEmbedding(nn.Module):
         norm: bool = False,
         binarize: bool = False,
         pack: bool = True,
+        return_pt: bool = False
     ) -> np.array:
         """Tokenize and embed a string or list of strings"""
         single_text = False
@@ -80,7 +81,8 @@ class WordLlamaEmbedding(nn.Module):
         with torch.no_grad():
             x = self.embedding(tensors["input_ids"].to(self.embedding.weight.device))
             x = AvgPool.avg_pool(x, tensors.get("attention_mask"), norm=norm)
-            x = x.cpu().numpy()
+            if not return_pt:
+                x = x.cpu().numpy()
 
         if binarize:
             x = x > 0

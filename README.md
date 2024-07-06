@@ -1,4 +1,6 @@
-![Word Llama](wordllama.png)
+<p align="center">
+  <img src="wordllama.png" alt="Word Llama" width="60%">
+</p>
 
 # Word Llama
 

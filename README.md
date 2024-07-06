@@ -2,7 +2,41 @@
 
 # Word Llama
 
-The power of 13 trillion tokens of training, extracted, bastardized and minimized into a little package for word embedding.
+The power of 13 trillion tokens of training, extracted, flogged and minimized into a cute little package for word embedding.
+
+## What is it?
+
+WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations.
+Unlike traditional embeddings such as GloVe or Word2Vec, WordLlama begins by extracting the token embedding codebook from a state-of-the-art LLM (e.g., LLama3 70B).
+
+The key features of WordLlama include:
+
+1. Dimension Reduction: We train a projection to reduce the embedding dimension, making it more manageable for various applications.
+2. Token Weighting: An additional learnable token weighting factor is incorporated, with stopwords initially assigned lower weights.
+3. Training Approach: The model is trained using sentence-transformers with MultipleNegativesRankingLoss, similar to generalized embedding models.
+4. Embedding Generation: Final embeddings are created by average pooling the projected token embeddings.
+
+To optimize for performance, WordLlama employs the Matryoshka training technique, allowing for flexible truncation of the embedding dimension.
+For even greater efficiency, we implement straight-through estimators during training to produce binary embeddings.
+This approach enables us to create ultra-compact representations, with the smallest model producing 64-bit embeddings that can leverage rapid hamming distance calculations.
+
+The final weights are saved after weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding). The original
+tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are averaged. There is very little computation required, and the
+resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
+
+## Next steps
+
+- Test distillation training from a larger embedding model
+- Test other LLM token embeddings: small vocab like phi-3, xl vocab like gemma 2
+- Test concatenation with Llama guard 2
+- Retrain on llama3 405B (waiting on release...)
+- Figure out hosting for final v1 weights
+- Add some convenience methods for similarity
+- Write a requirements minimized package with C python bindings for basic operations
+
+## MTEB Results (preliminary)
+
+(Running Evaluators)
 
 ## Features
 
@@ -78,13 +112,19 @@ from word_llama.extract import extract_hf
 extract_hf(Config.llama3_8B, "path/to/save/llama3_8B_embeddings.safetensors")
 ```
 
-## Advanced Usage
+## Citations
 
-(Provide advanced usage examples here)
+If you use WordLlama in your research or project, please consider citing it as follows:
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit pull requests, report bugs, or suggest new features.
+```bibtex
+@software{miller2024wordllama,
+  author = {Miller, D. Lee},
+  title = {WordLlama: Recycled Token Embeddings from Large Language Models},
+  year = {2024},
+  url = {https://github.com/dleemiller/word_llama},
+  version = {0.0.0}
+}
+```
 
 ## License
 

@@ -10,12 +10,11 @@ The power of 13 trillion tokens of training, extracted, flogged and minimized in
 - [Quick Start](#quick-start)
 - [What is it?](#what-is-it)
 - [MTEB Results (standard models)](#mteb-results-standard-models)
-- [Notes](#notes)
-- [Next steps](#next-steps)
+- [Embed Text](#embed-text)
+- [Training Notes](#training-notes)
+- [Roadmap](#roadmap)
 - [Features](#features)
 - [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Demonstration](#demonstration)
 - [Extracting Token Embeddings](#extracting-token-embeddings)
 - [Citations](#citations)
 - [License](#license)
@@ -23,8 +22,8 @@ The power of 13 trillion tokens of training, extracted, flogged and minimized in
 ## Quick Start
 
 Install:
-```
-git clone git@github.com:dleemiller/WordLlama.git
+```bash
+git clone git@github.com:dleemiller/wordllama.git
 pip install .
 ```
 
@@ -60,7 +59,8 @@ The key features of WordLlama include:
 
 1. Dimension Reduction: We train a projection to reduce the embedding dimension, making it more manageable for various applications.
 2. Low Resource Requirements: A simple token lookup with average pooling, enables this to operate fast on CPU.
-3. Binarization: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming disnance calculations.
+3. Binarization: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations.
+4. Numpy-only inference: Keep it lightweight and simple.
 
 To optimize for performance, WordLlama employs the Matryoshka training technique, allowing for flexible truncation of the embedding dimension.
 For even greater efficiency, we implement straight-through estimators during training to produce binary embeddings.
@@ -82,7 +82,22 @@ resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 | CQA DupStack           | 17.54       | 21.62        | 23.13        | 23.78        | 23.96         | 15.47      | 16.79    | 41.32            |
 | SummEval               | 30.31       | 30.65        | 31.08        | 30.30        | 30.54         | 28.87      | 30.49    | 30.81            |
 
-## Notes
+## Embed Text
+
+Here’s how you can load pre-trained embeddings and use them to embed text:
+
+```python
+from wordllama import load
+
+# Load pre-trained embeddings
+wl = load()
+
+# Embed text
+embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
+print(embeddings)
+```
+
+## Training Notes
 
 Smaller dimension standard models 64-256 benchmark very well compared to other word embedding models.
 Binary embedding models showed more pronounced improvement at higher dimensions, and either 512 or 1024 is recommended for binary embedding,
@@ -94,7 +109,7 @@ hidden dimension, and does not train as well as Llama3 8B (4096) or 70B (8192).
 
 I am uncertain how much impact the vocabulary size has, and many tokens from the Llama3 tokenizer are different only by a space or punctuation.
 
-## Next steps
+## Roadmap
 
 - Test distillation training from a larger embedding model
 - Test other LLM token embeddings: small vocab like phi-3, xl vocab like gemma 2
@@ -109,61 +124,20 @@ I am uncertain how much impact the vocabulary size has, and many tokens from the
 - **Load and Embed**: Quickly load pre-trained embeddings and use them to embed texts.
 - **Extract Embeddings**: Extract token embeddings from transformer-based models and save them for later use.
 - **Matryoshka Training**: Truncate to size with Matryoshka embedding training
-- **Binariz-abe**: Even smaller and faster by training with straight through estimators for binarization.
+- **Binariz-able**: Even smaller and faster by training with straight through estimators for binarization.
 
-Note: binary embeddings have a greater performance loss at smaller dimensions that dense embeddings.
+Note: binary embeddings have a greater performance loss at smaller dimensions than dense embeddings.
 
-Included is the 64-dim binary trained model, because it's small enough for github. I'll update weights once the 405B parameter model is released.
+Included is the 64-dim binary trained model, because it's small enough for GitHub. I'll update weights once the 405B parameter model is released.
 
 ## Installation
 
 Clone the repository and install the required packages:
 
 ```bash
-git clone https://github.com/dleemiller/word_llama.git
-cd word_llama
+git clone https://github.com/dleemiller/wordllama.git
+cd wordllama
 pip install -r requirements.txt
-```
-
-## Quick Start
-
-Here’s how you can load pre-trained embeddings and use them to embed text:
-
-```python
-from word_llama import load
-
-# Load pre-trained embeddings
-wl = load("weights/wordllama_64_binary.safetensors") # binary trained, truncated to 64-dims
-
-# Embed text
-embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
-print(embeddings)
-```
-
-## Demonstration
-
-```python
-from word_llama import load, Config
-
-# Load Word Llama with configuration
-wl = load("weights/wordllama_64_binary.safetensors", Config.wordllama_64)
-
-# Embed texts
-a = wl.embed("I went to the car")
-b = wl.embed("I went to the sedan")
-c = wl.embed("I went to the park")
-
-# Calculate cosine similarity
-print(wl.cosine_similarity(a, b))  # Output: 0.68713075
-print(wl.cosine_similarity(a, c))  # Output: 0.28954816
-
-# Embed texts with binarization
-a = wl.embed("I went to the car", binarize=True)
-print(a)  # Output: array([232, 109, 141, 180, 130, 170, 177, 144], dtype=uint8)
-b = wl.embed("I went to the sedan", binarize=True)
-
-# Calculate Hamming similarity
-print(wl.hamming_similarity(a, b))  # Output: 0.78125
 ```
 
 ## Extracting Token Embeddings
@@ -171,8 +145,8 @@ print(wl.hamming_similarity(a, b))  # Output: 0.78125
 To extract token embeddings from a model, ensure you have agreed to the user agreement and logged in using the Hugging Face CLI (for llama3 models). You can then use the following snippet:
 
 ```python
-from word_llama import Config
-from word_llama.extract import extract_hf
+from wordllama import Config
+from wordllama.extract import extract_hf
 
 # Extract embeddings for the specified configuration
 extract_hf(Config.llama3_8B, "path/to/save/llama3_8B_embeddings.safetensors")
@@ -187,7 +161,7 @@ If you use WordLlama in your research or project, please consider citing it as f
   author = {Miller, D. Lee},
   title = {WordLlama: Recycled Token Embeddings from Large Language Models},
   year = {2024},
-  url = {https://github.com/dleemiller/word_llama},
+  url = {https://github.com/dleemiller/wordllama},
   version = {0.0.0}
 }
 ```

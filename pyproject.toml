@@ -1,23 +1,37 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
 name = "wordllama"
 version = "0.1.0"
-description = ""
-authors = ["Lee Miller <dleemiller@protonmail.com>"]
+description = "WordLlama Embedding and Training"
+authors = ["Lee Miller <dleemiller@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+requires-python = ">=3.6"
 
-[tool.poetry.dependencies]
-python = "^3.11"
-toml = "^0.10.2"
-torch = "^2.3.1"
-transformers = "^4.41.2"
-pydantic = "^2.7.3"
-safetensors = "^0.4.3"
-scikit-learn = "^1.5.0"
-numpy = "^1.26.4"
-pandas = "^2.2.2"
+[project.urls]
+"Homepage" = ""
+"Repository" = "https://github.com/dleemiller/WordLlama"
 
+[project.dependencies]
+numpy = "*"
+safetensors = "*"
+tokenizers = "*"
+toml = "*"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[project.optional-dependencies]
+train = [
+    "torch",
+    "transformers",
+    "sentence-transformers",
+    "datasets"
+]
+
+[tool.setuptools.package-data]
+"wordllama" = ["**/*.toml"]
+
+[tool.setuptools.entry-points.console_scripts]
+wordllama = "wordllama.wordllama:main"
+

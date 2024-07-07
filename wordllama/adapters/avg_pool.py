@@ -15,12 +15,21 @@ class AvgPool(nn.Module):
         x: torch.Tensor, attention_mask: Optional[torch.Tensor], norm: bool = False
     ) -> torch.Tensor:
         if attention_mask is not None:
-            # Mask
-            attention_mask = attention_mask.to(x.device)
-            mask = attention_mask.unsqueeze(dim=-1)
+            try:
+                attention_mask = attention_mask.to(x.device)
+                # Mask
+                mask = attention_mask.unsqueeze(dim=-1)
 
-            # Average pool with mask
-            x = (x * mask).sum(dim=1) / mask.sum(dim=1)
+                # Average pool with mask
+                x = (x * mask).sum(dim=1) / mask.sum(dim=1)
+
+            except RuntimeError as e:
+                print("Error in avg_pool")
+                print("x shape:", x.shape)
+                print("attention_mask shape:", attention_mask.shape)
+                print("Error message:", e)
+                return x.sum(dim=1) / x.size(1)
+
         else:
             x = torch.mean(x, dim=1)
 

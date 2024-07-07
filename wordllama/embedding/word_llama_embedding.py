@@ -115,46 +115,5 @@ class WordLlamaEmbedding(nn.Module):
             x = x[0]
         return x
 
-    @staticmethod
-    def hamming_similarity(a, b):
-        assert a.shape == b.shape
-        assert a.ndim == 1
-        assert a.dtype == np.uint8
-        assert b.dtype == np.uint8
-
-        max_dist = a.size * 8
-
-        # calculate distance
-        dist = sum(bin(x).count("1") for x in a ^ b)
-
-        return 1.0 - dist / max_dist
-
-    @staticmethod
-    def cosine_similarity(a, b):
-        assert a.shape == b.shape, "Input vectors must have the same shape."
-        assert a.dtype in (
-            np.float16,
-            np.float32,
-            np.float64,
-        ), "Input vectors must be of type float16, float32, or float64."
-        assert b.dtype in (
-            np.float16,
-            np.float32,
-            np.float64,
-        ), "Input vectors must be of type float16, float32, or float64."
-
-        epsilon = 1e-8  # Small value to prevent division by zero
-
-        if a.ndim == 1:
-            a_norm = np.linalg.norm(a)
-            b_norm = np.linalg.norm(b)
-            return np.dot(a, b) / (a_norm * b_norm + epsilon)
-        elif a.ndim == 2:
-            a_norm = np.linalg.norm(a, axis=1)
-            b_norm = np.linalg.norm(b, axis=1)
-            return np.sum(a * b, axis=1) / (a_norm * b_norm + epsilon)
-        else:
-            raise ValueError("Input arrays must be either 1D or 2D.")
-
     def save(self, *args, **kwargs):
         pass

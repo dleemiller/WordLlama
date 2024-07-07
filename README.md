@@ -27,7 +27,7 @@ resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 
 ## MTEB Results (dense models)
 
-| Metric                 | WordLlama64 | WordLlama128 | WordLlama256 | WordLlama512 | WordLlama1024 | GloVe 300d | Komninos | all-MiniLM-L6-v2 |
+| Metric                 | WL64 | WL128 | WL256 | WL512 | WL1024 | GloVe 300d | Komninos | all-MiniLM-L6-v2 |
 |------------------------|-------------|--------------|--------------|--------------|---------------|------------|----------|------------------|
 | Clustering             | 32.23       | 34.20        | 35.11        | 35.27        | 35.34         | 27.73      | 26.57    | 42.35            |
 | Reranking              | 50.33       | 51.52        | 52.03        | 52.20        | 52.37         | 43.29      | 44.75    | 58.04            |

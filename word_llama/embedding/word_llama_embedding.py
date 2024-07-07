@@ -7,6 +7,7 @@ from transformers import AutoTokenizer
 from typing import Union
 
 from ..adapters import AvgPool
+import warnings
 
 
 class WordLlamaEmbedding(nn.Module):
@@ -62,7 +63,7 @@ class WordLlamaEmbedding(nn.Module):
         norm: bool = False,
         binarize: bool = False,
         pack: bool = True,
-        return_pt: bool = False
+        return_pt: bool = False,
     ) -> np.array:
         """Tokenize and embed a string or list of strings"""
         single_text = False
@@ -76,6 +77,27 @@ class WordLlamaEmbedding(nn.Module):
 
         # tokenize
         tensors = self.tokenize(texts)
+
+        # Clamp out-of-bounds input_ids
+        if tensors["input_ids"].max() >= self.embedding.num_embeddings:
+            warnings.warn("Some input_ids are out of bounds. Clamping to valid range.")
+            tensors["input_ids"] = tensors["input_ids"].clamp(
+                0, self.embedding.num_embeddings - 1
+            )
+
+        # Check for NaNs in input_ids and replace with 0
+        if torch.isnan(tensors["input_ids"]).any():
+            warnings.warn("NaN values found in input_ids. Replacing NaNs with 0.")
+            tensors["input_ids"][torch.isnan(tensors["input_ids"])] = 0
+
+        # Ensure at least one non-zero value in the attention mask
+        if tensors.get("attention_mask") is not None:
+            attention_mask = tensors["attention_mask"]
+            if (attention_mask.sum(dim=1) == 0).any():
+                warnings.warn(
+                    "Some attention masks are all zeros. Setting the first token to 1 for these cases."
+                )
+                attention_mask[attention_mask.sum(dim=1) == 0, 0] = 1
 
         # create embedding
         with torch.no_grad():
@@ -109,19 +131,30 @@ class WordLlamaEmbedding(nn.Module):
 
     @staticmethod
     def cosine_similarity(a, b):
-        assert a.shape == b.shape
-        assert a.dtype in (np.float16, np.float32)
-        assert b.dtype in (np.float16, np.float32)
+        assert a.shape == b.shape, "Input vectors must have the same shape."
+        assert a.dtype in (
+            np.float16,
+            np.float32,
+            np.float64,
+        ), "Input vectors must be of type float16, float32, or float64."
+        assert b.dtype in (
+            np.float16,
+            np.float32,
+            np.float64,
+        ), "Input vectors must be of type float16, float32, or float64."
 
-        # Compute cosine similarity
-        if a.ndim > 1:
-            a_norm = np.linalg.norm(a, axis=1)
-            b_norm = np.linalg.norm(b, axis=1)
-            return np.sum(a * b, axis=1) / (a_norm * b_norm)
-        else:
+        epsilon = 1e-8  # Small value to prevent division by zero
+
+        if a.ndim == 1:
             a_norm = np.linalg.norm(a)
             b_norm = np.linalg.norm(b)
-            return  np.sum(a * b) / (a_norm * b_norm)
+            return np.dot(a, b) / (a_norm * b_norm + epsilon)
+        elif a.ndim == 2:
+            a_norm = np.linalg.norm(a, axis=1)
+            b_norm = np.linalg.norm(b, axis=1)
+            return np.sum(a * b, axis=1) / (a_norm * b_norm + epsilon)
+        else:
+            raise ValueError("Input arrays must be either 1D or 2D.")
 
     def save(self, *args, **kwargs):
         pass

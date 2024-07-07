@@ -73,7 +73,7 @@ TASK_LIST_RERANKING = [
 
 TASK_LIST_RETRIEVAL = [
     "ArguAna",
-    # "ClimateFEVER",
+    ## "ClimateFEVER",
     "CQADupstackAndroidRetrieval",
     "CQADupstackEnglishRetrieval",
     "CQADupstackGamingRetrieval",
@@ -86,14 +86,14 @@ TASK_LIST_RETRIEVAL = [
     "CQADupstackUnixRetrieval",
     "CQADupstackWebmastersRetrieval",
     "CQADupstackWordpressRetrieval",
-    "DBPedia",
-    "FEVER",
+    ## "DBPedia",
+    ## "FEVER",
     "FiQA2018",
-    "HotpotQA",
-    "MSMARCO",
+    ## "HotpotQA",
+    ## "MSMARCO",
     "NFCorpus",
-    "NQ",
-    "QuoraRetrieval",
+    ## "NQ",
+    ## "QuoraRetrieval",
     "SCIDOCS",
     "SciFact",
     "Touche2020",
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         + TASK_LIST_CLUSTERING
         + TASK_LIST_PAIR_CLASSIFICATION
         + TASK_LIST_RERANKING
-        # + TASK_LIST_RETRIEVAL
+        + TASK_LIST_RETRIEVAL
         + TASK_LIST_STS
     )
 

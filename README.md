@@ -25,9 +25,9 @@ The final weights are saved after weighting, projection and truncation of the en
 tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are averaged. There is very little computation required, and the
 resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 
-## MTEB Results (dense models)
+## MTEB Results (standard models)
 
-| Metric                 | WL64 | WL128 | WL256 | WL512 | WL1024 | GloVe 300d | Komninos | all-MiniLM-L6-v2 |
+| Metric                 | WL64        | WL128        | WL256        | WL512        | WL1024        | GloVe 300d | Komninos | all-MiniLM-L6-v2 |
 |------------------------|-------------|--------------|--------------|--------------|---------------|------------|----------|------------------|
 | Clustering             | 32.23       | 34.20        | 35.11        | 35.27        | 35.34         | 27.73      | 26.57    | 42.35            |
 | Reranking              | 50.33       | 51.52        | 52.03        | 52.20        | 52.37         | 43.29      | 44.75    | 58.04            |
@@ -36,6 +36,18 @@ resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 | STS                    | 65.48       | 66.53        | 66.84        | 66.85        | 66.89         | 61.85      | 62.46    | 78.90            |
 | CQA DupStack           | 17.54       | 21.62        | 23.13        | 23.78        | 23.96         | 15.47      | 16.79    | 41.32            |
 | SummEval               | 30.31       | 30.65        | 31.08        | 30.30        | 30.54         | 28.87      | 30.49    | 30.81            |
+
+## Notes
+
+Smaller dimension standard models 64-256 benchmark very well compared to other word embedding models.
+Binary embedding models showed more pronounced improvement at higher dimensions, and either 512 or 1024 is recommended for binary embedding,
+though even 64-dimensions are useable for coarse applications.
+
+Larger hidden dimensions in the original LLM produce better WordLlama models. The current MTEB results use the embedding codebook from
+Llama3 70B, and anticipate further improvement when the 405B model is released. Deberta v3 Large has a similar vocab size, but only 1024
+hidden dimension, and does not train as well as Llama3 8B (4096) or 70B (8192).
+
+I am uncertain how much impact the vocabulary size has, and many tokens from the Llama3 tokenizer are different only by a space or punctuation.
 
 ## Next steps
 

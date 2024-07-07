@@ -14,9 +14,8 @@ WordLlama begins by extracting the token embedding codebook from a state-of-the-
 The key features of WordLlama include:
 
 1. Dimension Reduction: We train a projection to reduce the embedding dimension, making it more manageable for various applications.
-2. Token Weighting: An additional learnable token weighting factor is incorporated, with stopwords initially assigned lower weights.
-3. Training Approach: The model is trained using sentence-transformers with MultipleNegativesRankingLoss, similar to generalized embedding models.
-4. Embedding Generation: Final embeddings are created by average pooling the projected token embeddings.
+2. Low Resource Requirements: A simple token lookup with average pooling, enables this to operate fast on CPU.
+3. Binarization: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming disnance calculations.
 
 To optimize for performance, WordLlama employs the Matryoshka training technique, allowing for flexible truncation of the embedding dimension.
 For even greater efficiency, we implement straight-through estimators during training to produce binary embeddings.
@@ -25,6 +24,18 @@ This approach enables us to create ultra-compact representations, with the small
 The final weights are saved after weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding). The original
 tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are averaged. There is very little computation required, and the
 resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
+
+## MTEB Results (dense models)
+
+| Metric                 | WordLlama64 | WordLlama128 | WordLlama256 | WordLlama512 | WordLlama1024 | GloVe 300d | Komninos | all-MiniLM-L6-v2 |
+|------------------------|-------------|--------------|--------------|--------------|---------------|------------|----------|------------------|
+| Clustering             | 32.23       | 34.20        | 35.11        | 35.27        | 35.34         | 27.73      | 26.57    | 42.35            |
+| Reranking              | 50.33       | 51.52        | 52.03        | 52.20        | 52.37         | 43.29      | 44.75    | 58.04            |
+| Classification         | 53.56       | 56.93        | 58.89        | 59.76        | 60.18         | 57.29      | 57.65    | 63.05            |
+| Pair Classification    | 75.71       | 77.30        | 77.94        | 78.13        | 78.14         | 70.92      | 72.94    | 82.37            |
+| STS                    | 65.48       | 66.53        | 66.84        | 66.85        | 66.89         | 61.85      | 62.46    | 78.90            |
+| CQA DupStack           | 17.54       | 21.62        | 23.13        | 23.78        | 23.96         | 15.47      | 16.79    | 41.32            |
+| SummEval               | 30.31       | 30.65        | 31.08        | 30.30        | 30.54         | 28.87      | 30.49    | 30.81            |
 
 ## Next steps
 
@@ -35,10 +46,6 @@ resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 - Figure out hosting for final v1 weights
 - Add some convenience methods for similarity
 - Write a requirements minimized package with C python bindings for basic operations
-
-## MTEB Results (preliminary)
-
-(Running Evaluators)
 
 ## Features
 

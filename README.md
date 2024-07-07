@@ -6,6 +6,51 @@
 
 The power of 13 trillion tokens of training, extracted, flogged and minimized into a cute little package for word embedding.
 
+## Table of Contents
+- [Quick Start](#quick-start)
+- [What is it?](#what-is-it)
+- [MTEB Results (standard models)](#mteb-results-standard-models)
+- [Notes](#notes)
+- [Next steps](#next-steps)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Demonstration](#demonstration)
+- [Extracting Token Embeddings](#extracting-token-embeddings)
+- [Citations](#citations)
+- [License](#license)
+
+## Quick Start
+
+Install:
+```
+git clone git@github.com:dleemiller/WordLlama.git
+pip install .
+```
+
+Load the 64-dim model.
+```python
+from wordllama import load
+
+# Load the WordLlama model
+wl = load()
+
+# Calculate similarity between two sentences
+similarity_score = wl.similarity("i went to the car", "i went to the pawn shop")
+print(similarity_score)  # Output: 0.4026190060777956
+
+# Rank documents based on their similarity to a query
+ranked_docs = wl.rank("i went to the car", ["i went to the park", "i went to the shop", "i went to the truck", "i went to the vehicle"], use_hamming=False)
+print(ranked_docs)
+# Output:
+# [
+#   ('i went to the vehicle', 0.8765271774778441),
+#   ('i went to the truck', 0.5792372791755765),
+#   ('i went to the shop', 0.45162150518177724),
+#   ('i went to the park', 0.36642963613509194)
+# ]
+```
+
 ## What is it?
 
 WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations (such as GloVe or Word2Vec).

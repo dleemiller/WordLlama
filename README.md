@@ -95,6 +95,19 @@ wl = load()
 # Embed text
 embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
 print(embeddings)
+
+wl.load(binary=True)
+
+# Binary embeddings are packed into uint32
+# 64-dims => array of 2x uint32 
+wl.embed("I went to the car", binarize=True) # Output: array([[3029168104, 2427562626]], dtype=uint32)
+
+# Use the use_hamming flag to binarize
+similarity_score = wl.similarity("i went to the car", "i went to the pawn shop", use_hamming=True)
+print(similarity_score)  # Output: 0.59375
+
+ranked_docs = wl.rank("i went to the car", ["van", "truck"], use_hamming=False)
+
 ```
 
 ## Training Notes

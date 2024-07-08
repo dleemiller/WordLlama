@@ -1,6 +1,7 @@
 import numpy as np
 from safetensors import safe_open
 from tokenizers import Tokenizer
+from typing import Union, List
 import warnings
 import pathlib
 import logging
@@ -47,12 +48,7 @@ class WordLlama:
         x = self.embedding[input_ids]
 
         # Apply average pooling
-        if norm:
-            x = self.avg_pool(x, attention_mask)
-        else:
-            x = np.sum(x * attention_mask[..., np.newaxis], axis=1) / np.maximum(
-                attention_mask.sum(axis=1, keepdims=True), 1
-            )
+        x = self.avg_pool(x, attention_mask, norm=norm)
 
         if binarize:
             x = x > 0
@@ -68,28 +64,53 @@ class WordLlama:
     @staticmethod
     def avg_pool(x, mask, norm=False):
         if norm:
-            x = x / np.linalg.norm(x, axis=-1, keepdims=True)
+            x = x / np.linalg.norm(x + 1e-9, axis=-1, keepdims=True)
         return np.sum(x * mask[..., np.newaxis], axis=1) / np.maximum(
-            mask.sum(axis=1, keepdims=True), 1
+            mask.sum(axis=1, keepdims=True) + 1e-9, 1
         )
 
     @staticmethod
-    def hamming_similarity(a, b):
-        assert a.shape == b.shape
-        assert a.ndim == 1
-        assert a.dtype == np.uint32
-        assert b.dtype == np.uint32
+    def hamming_similarity(a: np.ndarray, b: np.ndarray) -> Union[float, np.ndarray]:
+        """
+        Calculate the Hamming similarity between a single vector and one or more vectors.
+
+        Parameters:
+        - a (np.ndarray): A single dimension vector of dtype np.uint32.
+        - b (np.ndarray): A single dimension vector or a 2D array of dtype np.uint32 with shape (batch_size, vec_dim).
+
+        Returns:
+        - Union[float, np.ndarray]: The Hamming similarity as a float if b is a single dimension vector,
+                                    or a numpy array of floats if b is a 2D array.
+        """
+        assert a.ndim == 1, "a must be a single dimension vector"
+        assert a.dtype == np.uint32, "a must be of dtype np.uint32"
+        assert b.dtype == np.uint32, "b must be of dtype np.uint32"
+
+        if b.ndim == 1:
+            b = np.expand_dims(b, axis=0)
+        assert b.ndim == 2, "b must be a single dimension vector or a 2D array"
 
         max_dist = a.size * 32
 
         # Calculate Hamming distance
-        dist = np.sum([bin(x).count("1") for x in a ^ b])
+        xor_result = np.bitwise_xor(a, b)
+        dist = np.sum(np.unpackbits(xor_result.view(np.uint8), axis=1), axis=1)
 
         return 1.0 - dist / max_dist
 
     @staticmethod
-    def cosine_similarity(a, b):
-        assert a.shape == b.shape, "Input vectors must have the same shape."
+    def cosine_similarity(a: np.ndarray, b: np.ndarray) -> Union[float, np.ndarray]:
+        """
+        Calculate the cosine similarity between a single vector and one or more vectors.
+
+        Parameters:
+        - a (np.ndarray): A single dimension vector of dtype float16, float32, or float64.
+        - b (np.ndarray): A single dimension vector or a 2D array of dtype float16, float32, or float64.
+
+        Returns:
+        - Union[float, np.ndarray]: The cosine similarity as a float if b is a single dimension vector,
+                                    or a numpy array of floats if b is a 2D array.
+        """
         assert a.dtype in (
             np.float16,
             np.float32,
@@ -100,19 +121,22 @@ class WordLlama:
             np.float32,
             np.float64,
         ), "Input vectors must be of type float16, float32, or float64."
+        epsilon = 1e-9  # Small value to prevent division by zero
 
-        epsilon = 1e-8  # Small value to prevent division by zero
+        if b.ndim == 1:
+            b = np.expand_dims(b, axis=0)
+        assert b.ndim == 2, "b must be a single dimension vector or a 2D array"
 
-        if a.ndim == 1:
-            a_norm = np.linalg.norm(a)
-            b_norm = np.linalg.norm(b)
-            return np.dot(a, b) / (a_norm * b_norm + epsilon)
-        elif a.ndim == 2:
-            a_norm = np.linalg.norm(a, axis=1)
-            b_norm = np.linalg.norm(b, axis=1)
-            return np.sum(a * b, axis=1) / (a_norm * b_norm + epsilon)
-        else:
-            raise ValueError("Input arrays must be either 1D or 2D.")
+        assert a.ndim == 1
+        a = np.expand_dims(a, axis=0)
+
+        # Normalize the vectors
+        a_norm = np.linalg.norm(a, axis=1, keepdims=True)
+        b_norm = np.linalg.norm(b, axis=1, keepdims=True)
+
+        # Calculate cosine similarity
+        cosine_sim = np.dot(a, b.T) / (a_norm * b_norm.T + epsilon)
+        return cosine_sim.flatten()
 
     def similarity(self, text1, text2, use_hamming=False):
         """
@@ -126,15 +150,14 @@ class WordLlama:
         Returns:
         - float: The similarity score.
         """
-        embedding1 = self.embed(text1)
-        embedding2 = self.embed(text2)
-
         if use_hamming:
-            embedding1 = np.packbits(embedding1 > 0, axis=-1).view(np.uint32)
-            embedding2 = np.packbits(embedding2 > 0, axis=-1).view(np.uint32)
-            return self.hamming_similarity(embedding1[0], embedding2[0])
+            embedding1 = self.embed(text1, binarize=True, pack=True)
+            embedding2 = self.embed(text2, binarize=True, pack=True)
+            return self.hamming_similarity(embedding1[0], embedding2[0]).item()
         else:
-            return self.cosine_similarity(embedding1[0], embedding2[0])
+            embedding1 = self.embed(text1)
+            embedding2 = self.embed(text2)
+            return self.cosine_similarity(embedding1[0], embedding2[0]).item()
 
     def rank(self, query, docs, use_hamming=False):
         """
@@ -148,22 +171,15 @@ class WordLlama:
         Returns:
         - list of tuple: A list of (doc, score) tuples, sorted by score in descending order.
         """
-        query_embedding = self.embed(query)
-        doc_embeddings = self.embed(docs)
+        if use_hamming:
+            query_embedding = self.embed(query, binarize=True, pack=True)
+            doc_embeddings = self.embed(docs, binarize=True, pack=True)
+            scores = self.hamming_similarity(query_embedding[0], doc_embeddings)
+        else:
+            query_embedding = self.embed(query)
+            doc_embeddings = self.embed(docs)
+            scores = self.cosine_similarity(query_embedding[0], doc_embeddings)
 
-        similarities = []
-        for i, doc_embedding in enumerate(doc_embeddings):
-            if use_hamming:
-                doc_embedding = np.packbits(doc_embedding > 0, axis=-1).view(np.uint32)
-                query_embedding_packed = np.packbits(query_embedding > 0, axis=-1).view(
-                    np.uint32
-                )
-                score = self.hamming_similarity(
-                    query_embedding_packed[0], doc_embedding
-                )
-            else:
-                score = self.cosine_similarity(query_embedding[0], doc_embedding)
-            similarities.append((docs[i], score))
-
+        similarities = list(zip(docs, scores.tolist()))
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities

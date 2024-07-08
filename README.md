@@ -93,7 +93,7 @@ from wordllama import load
 wl = load(dim=64)
 
 # Embed text
-embeddings = wl64.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
+embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
 print(embeddings.shape)  # (2, 64)
 
 # Binary embeddings are packed into uint32

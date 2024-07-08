@@ -1,9 +1,36 @@
 import toml
-
-from enum import Enum, auto
 from pathlib import Path
 from pydantic import BaseModel
-from typing import Dict
+#from pydantic.settings import BaseSettings
+from typing import List, Dict
+
+
+class TokenizerConfig(BaseModel):
+    return_tensors: str
+    return_attention_mask: bool
+    max_length: int
+    padding: str
+    truncation: bool
+    add_special_tokens: bool
+
+
+class TrainingConfig(BaseModel):
+    output_dir: str
+    num_train_epochs: int
+    per_device_train_batch_size: int
+    warmup_steps: int
+    evaluation_strategy: str
+    eval_steps: int
+    save_steps: int
+    fp16: bool
+    include_num_input_tokens_seen: bool
+    learning_rate: float
+    multi_dataset_batch_sampler: str
+    binarizer_ste: str
+
+
+class MatryoshkaConfig(BaseModel):
+    dims: List[int]
 
 
 class WordLlamaModel(BaseModel):
@@ -16,6 +43,9 @@ class WordLlamaModel(BaseModel):
 
 class WordLlamaConfig(BaseModel):
     model: WordLlamaModel
+    tokenizer: TokenizerConfig
+    training: TrainingConfig
+    matryoshka: MatryoshkaConfig
 
 
 class Config:
@@ -36,8 +66,9 @@ class Config:
         for config_file in config_dir.glob("*.toml"):
             config_data = toml.load(config_file)
             config_name = config_file.stem  # Filename without extension
-            configs[config_name] = WordLlamaConfig.model_validate(config_data)
+            configs[config_name] = WordLlamaConfig(**config_data)
         return configs
 
 
 Config.setup()
+

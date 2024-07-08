@@ -2,4 +2,30 @@
 dim = 8192
 n_vocab = 128256
 hf_model_id = "meta-llama/Meta-Llama-3-70B"
-pad_token = "<|end_of_text|>"
+pad_token = "<|end_of_text|>" 
+
+[tokenizer]
+return_tensors = "pt"
+return_attention_mask = true
+max_length = 128
+padding = "max_length"
+truncation = true
+add_special_tokens = true
+
+[training]
+output_dir = "output/matryoshka_llama3_70b"
+num_train_epochs = 2
+per_device_train_batch_size = 512
+warmup_steps = 256
+evaluation_strategy = "steps"
+eval_steps = 250
+save_steps = 1000
+fp16 = true
+include_num_input_tokens_seen = false
+learning_rate = 0.01
+multi_dataset_batch_sampler = "PROPORTIONAL"
+binarizer_ste = "tanh"
+
+[matryoshka]
+dims = [1024, 512, 256, 128, 64]
+

@@ -19,6 +19,7 @@ def extract_safetensors(
     tensor_path = os.path.join(filepath, tensor)
     with safetensors.torch.safe_open(tensor_path, "pt") as f:
         embed = f.get_tensor("model.embed_tokens.weight")
+        assert embed.size(0) == config.model.n_vocab
 
     wl = WordLlamaEmbedding(config)
     wl.load_state_dict({"embedding.weight": embed})

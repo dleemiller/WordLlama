@@ -1,4 +1,13 @@
+import os
+
+# Set environment variables
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+os.environ["TORCH_USE_CUDA_DSA"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["HF_DATASETS_TRUST_REMOTE_CODE"] = "1"
+
 import torch
+import tqdm
 import safetensors.torch
 from datetime import datetime
 from pathlib import Path
@@ -10,8 +19,10 @@ from sentence_transformers import (
 )
 from sentence_transformers.training_args import MultiDatasetBatchSamplers
 
-from wordllama.trainers.reduce_dimension import ReduceDimension
 from wordllama import load_training, Config
+from wordllama.config import WordLlamaModel
+from wordllama.embedding.word_llama_embedding import WordLlamaEmbedding
+from wordllama.trainers.reduce_dimension import ReduceDimension
 from wordllama.adapters import AvgPool, WeightedProjector, Binarizer
 from dataset_loader import load_datasets
 
@@ -19,7 +30,7 @@ from dataset_loader import load_datasets
 class ReduceDimensionConfig:
     """Configuration for Dimension Reduction."""
 
-    def __init__(self, config_name: str):
+    def __init__(self, config_name: str, saving: bool = False):
         self.config = getattr(Config, config_name)
         self.config_name = config_name
 
@@ -37,26 +48,27 @@ class ReduceDimensionConfig:
         self.model = self.build_model()
 
         # Load training datasets
-        self.training_datasets = load_datasets()
+        if not saving:
+            self.training_datasets = load_datasets()
 
-        # Load training arguments from config
-        self.training_args = SentenceTransformerTrainingArguments(
-            output_dir=f"{training_args.output_dir}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
-            num_train_epochs=training_args.num_train_epochs,
-            per_device_train_batch_size=training_args.per_device_train_batch_size,
-            warmup_steps=training_args.warmup_steps,
-            evaluation_strategy=training_args.evaluation_strategy,
-            eval_steps=training_args.eval_steps,
-            save_steps=training_args.save_steps,
-            fp16=training_args.fp16,
-            include_num_input_tokens_seen=training_args.include_num_input_tokens_seen,
-            learning_rate=training_args.learning_rate,
-            multi_dataset_batch_sampler=(
-                MultiDatasetBatchSamplers.PROPORTIONAL
-                if training_args.multi_dataset_batch_sampler == "PROPORTIONAL"
-                else MultiDatasetBatchSamplers.ROUND_ROBIN
-            ),
-        )
+            # Load training arguments from config
+            self.training_args = SentenceTransformerTrainingArguments(
+                output_dir=f"{training_args.output_dir}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
+                num_train_epochs=training_args.num_train_epochs,
+                per_device_train_batch_size=training_args.per_device_train_batch_size,
+                warmup_steps=training_args.warmup_steps,
+                evaluation_strategy=training_args.evaluation_strategy,
+                eval_steps=training_args.eval_steps,
+                save_steps=training_args.save_steps,
+                fp16=training_args.fp16,
+                include_num_input_tokens_seen=training_args.include_num_input_tokens_seen,
+                learning_rate=training_args.learning_rate,
+                multi_dataset_batch_sampler=(
+                    MultiDatasetBatchSamplers.PROPORTIONAL
+                    if training_args.multi_dataset_batch_sampler == "PROPORTIONAL"
+                    else MultiDatasetBatchSamplers.ROUND_ROBIN
+                ),
+            )
 
     def build_model(self) -> SentenceTransformer:
         wl = load_training(self.model_path, self.config)
@@ -67,7 +79,12 @@ class ReduceDimensionConfig:
         # best results using weighted projector
         modules = [
             wl,
-            WeightedProjector(self.config.model.dim, max_dim, tokenizer=wl.tokenizer),
+            WeightedProjector(
+                self.config.model.dim,
+                max_dim,
+                tokenizer=wl.tokenizer,
+                n_vocab=self.config.model.n_vocab,
+            ),
             AvgPool(norm=self.norm),
         ]
 
@@ -82,37 +99,44 @@ class ReduceDimensionConfig:
         """
         Saves model reduced model weights for each dimension in matryoshka_dims.
         """
-        wl = load_training(checkpoint / self.model_path, self.config).eval()
+        wl = load_training(self.model_path, self.config).eval()
 
         # load the projector weights
         max_dim = max(self.matryoshka_dims)
         proj_path = (
             checkpoint / "1_WeightedProjector" / "weighted_projector.safetensors"
         )
-        proj = WeightedProjector(self.config.model.dim, max_dim, tokenizer=wl.tokenizer)
+        proj = WeightedProjector(
+            self.config.model.dim,
+            max_dim,
+            n_vocab=self.config.model.n_vocab,
+            tokenizer=wl.tokenizer,
+        )
         safetensors.torch.load_model(proj, proj_path)
 
-        for dims in self.matryoshka_dims:
-            target = WordLlamaEmbedding(
-                WordLlamaModel(
+        # inference the trained model
+        with torch.no_grad():
+            x = proj(
+                {
+                    "token_embeddings": wl.embedding.weight,
+                    "token_ids": torch.arange(self.config.model.n_vocab),
+                }
+            )
+
+        for dims in tqdm.tqdm(self.matryoshka_dims):
+
+            class TmpConfig:
+                model = WordLlamaModel(
                     n_vocab=self.config.model.n_vocab,
                     dim=dims,
                     hf_model_id=self.config.model.hf_model_id,
                     pad_token=self.config.model.pad_token,
                 )
-            )
 
-            # inference the trained model
-            with torch.no_grad():
-                x = proj(
-                    {
-                        "token_embeddings": wl.embedding.weight,
-                        "token_ids": torch.arange(len(wl.tokenizer.vocab)),
-                    }
-                )
+            target = WordLlamaEmbedding(TmpConfig)
 
-                # truncate the matryoshka embedding dimension to the target
-                target.embedding.weight = torch.nn.Parameter(x["x"][:, 0:dims])
+            # truncate the matryoshka embedding dimension to the target
+            target.embedding.weight = torch.nn.Parameter(x["x"][:, 0:dims])
 
             # save file
             outfile = outdir / f"{self.config_name}_{dims}.safetensors"
@@ -152,19 +176,18 @@ if __name__ == "__main__":
 
     # Parse the arguments
     args = parser.parse_args()
-    # model_config = Config.llama3_70B
-    model_config = Config.mixtral
+    config_name = "gemma2_27B"
 
     # Execute based on the command
     if args.command == "train":
-        config = ReduceDimensionConfig("mixtral")
+        config = ReduceDimensionConfig(config_name)
         config.binarize = args.binarize
         config.norm = args.norm
         trainer = ReduceDimension(config)
         trainer.train()
 
     elif args.command == "save":
-        config = ReduceDimensionConfig("mixtral")
+        config = ReduceDimensionConfig(config_name, saving=True)
         config.save(checkpoint=Path(args.checkpoint), outdir=Path(args.outdir))
 
     else:

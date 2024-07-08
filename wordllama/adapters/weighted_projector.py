@@ -8,19 +8,19 @@ import safetensors.torch as st
 
 
 class WeightedProjector(nn.Module):
-    def __init__(self, in_dim, out_dim, tokenizer, key="token_embeddings"):
+    def __init__(self, in_dim, out_dim, tokenizer, n_vocab, key="token_embeddings"):
         super().__init__()
         self.proj = nn.Linear(in_dim, out_dim)
         self.key = key
 
         # avg pool weight initialization
         # Initialize stopword weights to a lower value
-        n_vocab = len(tokenizer.vocab)
         self.weights = nn.Parameter(torch.ones(n_vocab))
-        stopword_list = set(stopwords.words("english"))
+        stopword_list = set(filter(lambda x: len(x) > 1, stopwords.words("english")))
         stopword_ids = [
             tokenizer.vocab[word] for word in stopword_list if word in tokenizer.vocab
         ]
+        print(f"Num stopword ids: {len(stopword_ids)}")
         with torch.no_grad():
             for stopword_id in stopword_ids:
                 self.weights[stopword_id] = 0.1

@@ -8,9 +8,9 @@ pad_token = "<|end_of_text|>"
 return_tensors = "pt"
 return_attention_mask = true
 max_length = 128
-padding = "max_length"
+padding = "longest"
 truncation = true
-add_special_tokens = true
+add_special_tokens = false
 
 [training]
 output_dir = "output/matryoshka_llama3_70b"

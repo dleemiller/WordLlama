@@ -1,19 +1,19 @@
 [model]
-dim = 4096
-n_vocab = 32000
-hf_model_id = "mistralai/Mixtral-8x7B-Instruct-v0.1"
-pad_token = "</s>"
+dim = 4608
+n_vocab = 256000
+hf_model_id = "google/gemma-2-27b"
+pad_token = "<eos>"
 
 [tokenizer]
 return_tensors = "pt"
 return_attention_mask = true
-max_length = 128
-padding = "max_length"
+max_length = 192
+padding = "longest"
 truncation = true
 add_special_tokens = false
 
 [training]
-output_dir = "output/matryoshka_mixtral"
+output_dir = "output/matryoshka_gemma2"
 num_train_epochs = 2
 per_device_train_batch_size = 512
 warmup_steps = 256

@@ -1,7 +1,6 @@
 import toml
 from pathlib import Path
 from pydantic import BaseModel
-#from pydantic.settings import BaseSettings
 from typing import List, Dict
 
 
@@ -71,4 +70,3 @@ class Config:
 
 
 Config.setup()
-

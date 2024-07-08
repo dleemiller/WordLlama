@@ -4,6 +4,7 @@ from tokenizers import Tokenizer
 import warnings
 import pathlib
 import logging
+from wordllama.config import Config, WordLlamaConfig
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -11,33 +12,19 @@ logger = logging.getLogger(__name__)
 
 
 class WordLlama:
-    tokenizer_kwargs = {
-        "return_tensors": "np",
-        "return_attention_mask": True,
-        "max_length": 1024,
-        "padding": "max_length",
-        "truncation": True,
-        "add_special_tokens": False,  # don't need without context
-    }
-
-    def __init__(self, config, tokenizer_kwargs=None):
+    def __init__(self, config: WordLlamaConfig):
         self.config = config
-        if tokenizer_kwargs:
-            self.tokenizer_kwargs = tokenizer_kwargs
+        self.tokenizer_kwargs = self.config.tokenizer.dict()
 
         # Load the tokenizer
-        self.tokenizer = Tokenizer.from_pretrained(config["model"]["hf_model_id"])
+        self.tokenizer = Tokenizer.from_pretrained(self.config.model.hf_model_id)
         self.tokenizer.enable_padding(length=self.tokenizer_kwargs["max_length"])
 
-        # Load the embeddings from safetensors
-        with safe_open(
-            config["model"]["embedding_path"], framework="np", device="cpu"
-        ) as f:
-            self.embedding = f.get_tensor("embedding.weight")
-
     @classmethod
-    def build(cls, weights_file, config):
-        config["model"]["embedding_path"] = str(weights_file)
+    def build(cls, weights_file, config: WordLlamaConfig):
+        with safe_open(weights_file, framework="np", device="cpu") as f:
+            cls.embedding = f.get_tensor("embedding.weight")
+
         return cls(config)
 
     def tokenize(self, texts):

@@ -1,7 +1,6 @@
 # wordllama/__init__.py
 import pathlib
 import logging
-import toml
 from .wordllama import WordLlama
 from .config import Config
 
@@ -10,31 +9,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Dynamic configuration mapping
-def load_config(dim, config_dir="wordllama/config"):
-    config_file = pathlib.Path(config_dir) / f"wordllama_{dim}.toml"
-    if not config_file.exists():
-        raise FileNotFoundError(f"Configuration file '{config_file}' not found.")
-
-    with open(config_file, "r") as f:
-        config = toml.load(f)
-    return config
-
-
 def load(
-    dim: int = 64,
-    binary: bool = False,
+    config_name: str = "llama3_70B",
     weights_dir: str = "weights",
-    config_dir: str = "wordllama/config",
+    binary: bool = False,
+    dim: int = 64,
 ):
     """
     Load the WordLlama model.
 
     Parameters:
-    - dim (int): The dimensionality of the model to load. Options: [64, 128, 256, 512, 1024].
-    - binary (bool): Whether to load the binary version of the weights.
+    - config_name (str): The name of the configuration to load.
     - weights_dir (str): Directory where weight files are stored. Default is 'weights'.
-    - config_dir (str): Directory where configuration files are stored. Default is 'wordllama/config'.
+    - binary (bool): Whether to load the binary version of the weights.
+    - dim (int): The dimensionality of the model to load. Options: [64, 128, 256, 512, 1024].
 
     Returns:
     - WordLlama: The loaded WordLlama model.
@@ -45,15 +33,15 @@ def load(
 
     Examples:
     ---------
-    >>> model = load(dim=256)
-    >>> model = load(dim=1024, binary=True)
-    >>> model = load(dim=64, weights_dir="custom_weights")
+    >>> model = load(config_name="llama3_70B", dim=256)
+    >>> model = load(config_name="mixtral", dim=1024, binary=True)
+    >>> model = load(config_name="llama3_8B", dim=64, weights_dir="custom_weights")
     """
-    logger.info(f"Loading configuration for dimension: {dim}")
-    config = load_config(dim, config_dir=config_dir)
+    logger.info(f"Loading configuration for: {config_name}")
+    config = getattr(Config, config_name)
 
     suffix = "_binary" if binary else ""
-    weights_file_name = f"wordllama_{dim}{suffix}.safetensors"
+    weights_file_name = f"{config_name}_{dim}{suffix}.safetensors"
 
     weights_file_path = pathlib.Path(weights_dir) / weights_file_name
     if not weights_file_path.exists():
@@ -64,6 +52,8 @@ def load(
     logger.info(f"Loading weights from: {weights_file_path}")
     return WordLlama.build(weights_file_path, config)
 
+
 def load_training(weights, config):
     from wordllama.embedding.word_llama_embedding import WordLlamaEmbedding
+
     return WordLlamaEmbedding.build(weights, config)

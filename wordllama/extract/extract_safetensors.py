@@ -5,8 +5,12 @@ from ..config import Config
 from ..embedding.word_llama_embedding import WordLlamaEmbedding
 
 
-
-def extract_safetensors(config, filepath: str, outname:str, tensor: str = "model-00001-of-00030.safetensors"):
+def extract_safetensors(
+    config,
+    filepath: str,
+    outname: str,
+    tensor: str = "model-00001-of-00030.safetensors",
+):
     """
     Args:
         filepath: the path to your huggingface model dir (default ~/.config/huggingface/...)

@@ -2,3 +2,4 @@
 dim = 4096
 n_vocab = 128256
 hf_model_id = "meta-llama/Meta-Llama-3-8B"
+pad_token = "<|end_of_text|>" 

@@ -1,4 +1,0 @@
-[model]
-dim = 256
-n_vocab = 128256
-hf_model_id = "meta-llama/Meta-Llama-3-70B"

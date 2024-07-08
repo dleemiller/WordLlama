@@ -1,7 +1,7 @@
 import safetensors.torch
 from transformers import AutoModelForCausalLM, AutoModel
 
-from ..embedding import WordLlamaConfig
+from ..config import WordLlamaConfig
 from ..embedding.word_llama_embedding import WordLlamaEmbedding
 
 

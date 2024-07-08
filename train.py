@@ -9,9 +9,9 @@ from sentence_transformers import (
 from sentence_transformers.training_args import MultiDatasetBatchSamplers
 from datasets import load_dataset
 
-from word_llama import load, Config
-from word_llama.adapters import AvgPool, WeightedProjector, Binarizer
-from word_llama.trainers.reduce_dimension import ReduceDimension
+from wordllama import load_training, Config
+from wordllama.adapters import AvgPool, WeightedProjector, Binarizer
+from wordllama.trainers.reduce_dimension import ReduceDimension
 
 
 class ReduceDimensionConfig:
@@ -112,20 +112,18 @@ class ReduceDimensionConfig:
             "sts_validation": ("sentence-transformers/stsb",),
         }
 
-    training_args: SentenceTransformerTrainingArguments = (
-        SentenceTransformerTrainingArguments(
-            output_dir=f"output/matryoshka_sts_custom_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
-            num_train_epochs=2,
-            per_device_train_batch_size=512,
-            warmup_steps=256,
-            evaluation_strategy="steps",
-            eval_steps=250,
-            save_steps=1000,
-            fp16=True,
-            include_num_input_tokens_seen=False,
-            learning_rate=1e-2,
-            multi_dataset_batch_sampler=MultiDatasetBatchSamplers.PROPORTIONAL,
-        )
+    training_args: SentenceTransformerTrainingArguments = SentenceTransformerTrainingArguments(
+        output_dir=f"output/matryoshka_sts_custom_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
+        num_train_epochs=2,
+        per_device_train_batch_size=512,
+        warmup_steps=256,
+        evaluation_strategy="steps",
+        eval_steps=250,
+        save_steps=1000,
+        fp16=True,
+        include_num_input_tokens_seen=False,
+        learning_rate=1e-2,
+        multi_dataset_batch_sampler=MultiDatasetBatchSamplers.PROPORTIONAL,
     )
 
     def __init__(
@@ -147,7 +145,7 @@ class ReduceDimensionConfig:
         self.norm = norm
 
     def build_model(self) -> SentenceTransformer:
-        wl = load(self.model_path, self.model_config)
+        wl = load_training(self.model_path, self.model_config)
         wl.tokenizer_kwargs = self.tokenizer_kwargs
         max_dim = max(self.matryoshka_dims)
 
@@ -258,11 +256,14 @@ if __name__ == "__main__":
 
     # Parse the arguments
     args = parser.parse_args()
-    model_config = Config.llama3_70B
+    # model_config = Config.llama3_70B
+    model_config = Config.mixtral
 
     # Execute based on the command
     if args.command == "train":
-        config = ReduceDimensionConfig(binarize=args.binarize, norm=args.norm)
+        config = ReduceDimensionConfig(
+            model_path="mixtral.safetensors", model_config=model_config, binarize=args.binarize, norm=args.norm
+        )
         trainer = ReduceDimension(config)
         trainer.train()
 

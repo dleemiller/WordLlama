@@ -10,6 +10,7 @@ class WordLlamaModel(BaseModel):
     n_vocab: int
     dim: int
     hf_model_id: str
+    pad_token: str
     is_encoder: bool = False
 
 

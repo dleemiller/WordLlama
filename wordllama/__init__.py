@@ -1,9 +1,9 @@
 # wordllama/__init__.py
-
 import pathlib
 import logging
 import toml
 from .wordllama import WordLlama
+from .config import Config
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -63,3 +63,7 @@ def load(
 
     logger.info(f"Loading weights from: {weights_file_path}")
     return WordLlama.build(weights_file_path, config)
+
+def load_training(weights, config):
+    from wordllama.embedding.word_llama_embedding import WordLlamaEmbedding
+    return WordLlamaEmbedding.build(weights, config)

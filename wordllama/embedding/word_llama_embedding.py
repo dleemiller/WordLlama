@@ -34,9 +34,7 @@ class WordLlamaEmbedding(nn.Module):
 
         # load the tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model.hf_model_id)
-        self.tokenizer.pad_token_id = self.tokenizer.vocab[
-            "<|end_of_text|>"
-        ]  # for llama3 models
+        self.tokenizer.pad_token_id = self.tokenizer.vocab[model.pad_token]
 
     @classmethod
     def build(cls, filepath, config):

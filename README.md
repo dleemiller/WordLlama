@@ -90,24 +90,28 @@ Here’s how you can load pre-trained embeddings and use them to embed text:
 from wordllama import load
 
 # Load pre-trained embeddings
-wl = load()
+wl = load(dim=64)
 
 # Embed text
-embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
-print(embeddings)
-
-wl.load(binary=True)
+embeddings = wl64.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
+print(embeddings.shape)  # (2, 64)
 
 # Binary embeddings are packed into uint32
 # 64-dims => array of 2x uint32 
-wl.embed("I went to the car", binarize=True) # Output: array([[3029168104, 2427562626]], dtype=uint32)
+wl = load(dim=64, binary=True)
+wl.embed("I went to the car", binarize=True, pack=True) # Output: array([[3029168104, 2427562626]], dtype=uint32)
+
+# load large binary trained model
+wl = load(dim=1024, binary=True)
 
 # Use the use_hamming flag to binarize
 similarity_score = wl.similarity("i went to the car", "i went to the pawn shop", use_hamming=True)
-print(similarity_score)  # Output: 0.59375
+print(similarity_score)  # Output: 0.57421875
 
 ranked_docs = wl.rank("i went to the car", ["van", "truck"], use_hamming=False)
 
+# load a different model class
+wl = load(config_name="mixtral")
 ```
 
 ## Training Notes

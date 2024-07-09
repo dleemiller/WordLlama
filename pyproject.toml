@@ -6,20 +6,17 @@ build-backend = "setuptools.build_meta"
 name = "wordllama"
 version = "0.1.0"
 description = "WordLlama Embedding and Training"
-authors = ["Lee Miller <dleemiller@gmail.com>"]
-license = "MIT"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.6"
-
-[project.urls]
-"Homepage" = ""
-"Repository" = "https://github.com/dleemiller/WordLlama"
-
-[project.dependencies]
-numpy = "*"
-safetensors = "*"
-tokenizers = "*"
-toml = "*"
+authors = [{ name = "Lee Miller", email = "dleemiller@gmail.com" }]
+dependencies = [
+  "numpy",
+  "safetensors",
+  "tokenizers",
+  "toml",
+  "pydantic>=2"
+]
 
 [project.optional-dependencies]
 train = [
@@ -29,9 +26,13 @@ train = [
     "datasets"
 ]
 
-[tool.setuptools.package-data]
-"wordllama" = ["**/*.toml"]
+[project.urls]
+Homepage = "https://yourhomepage.com"
+Repository = "https://github.com/dleemiller/WordLlama"
 
-[tool.setuptools.entry-points.console_scripts]
+[project.scripts]
 wordllama = "wordllama.wordllama:main"
+
+[tool.setuptools.package-data]
+wordllama = ["**/*.toml"]
 

@@ -69,7 +69,7 @@ For binary embedding models, we implement straight-through estimators during tra
 
 The final weights are saved after weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding) that is considerably smaller than the gigabyte-sized llm codebooks we start with. The original tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are average pooled. There is very little computation required, and the resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 
-It's good option for some nlp-lite tasks. You can train sklearn classifiers on it, perform basic semantic matching, fuzzy matching, ranking and clustering.
+It's good option for some nlp-lite tasks. You can train sklearn classifiers on it, perform basic semantic matching, fuzzy matching, ranking and clustering. You can perform your own llm surgery and train your own model on consumer GPUs in a few hours.
 
 ## MTEB Results (standard models)
 

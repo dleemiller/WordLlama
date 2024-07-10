@@ -65,7 +65,7 @@ The key features of WordLlama include:
 4. Numpy-only inference: Keep it lightweight and simple.
 
 For flexibility, WordLlama employs the Matryoshka representation learning training technique. The largest model (1024-dim) can be truncated to 64, 128, 256 or 512.
-For binary embedding models, we implement straight-through estimators during training. For dense embeddings, 256 dimensions sufficiently captures most of the performance, while for binary embeddings validation accuracy  is close to saturation at 512-dimensions (64 bytes packed).
+For binary embedding models, we implement straight-through estimators during training. For dense embeddings, 256 dimensions sufficiently captures most of the performance, while for binary embeddings validation accuracy is close to saturation at 512-dimensions (64 bytes packed).
 
 The final weights are saved after weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding) that is considerably smaller than the gigabyte-sized llm codebooks we start with. The original tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are average pooled. There is very little computation required, and the resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 
@@ -117,46 +117,23 @@ wl = load(config_name="mixtral")
 
 ## Training Notes
 
-Smaller dimension standard models 64-256 benchmark very well compared to other word embedding models.
-Binary embedding models showed more pronounced improvement at higher dimensions, and either 512 or 1024 is recommended for binary embedding,
-though even 64-dimensions are useable for coarse applications.
+Binary embedding models showed more pronounced improvement at higher dimensions, and either 512 or 1024 is recommended for binary embedding.
 
-Larger hidden dimensions in the original LLM produce better WordLlama models. The current MTEB results use the embedding codebook from
-Llama3 70B, and anticipate further improvement when the 405B model is released. Deberta v3 Large has a similar vocab size, but only 1024
-hidden dimension, and does not train as well as Llama3 8B (4096) or 70B (8192).
+The current MTEB results use the embedding codebook from Llama3 70B, and anticipate further improvement when the 405B model is released.
 
-I am uncertain how much impact the vocabulary size has, and many tokens from the Llama3 tokenizer are different only by a space or punctuation.
+Deberta v3 Large has a similar vocab size, but only 1024 hidden dimension, and does not train as well as Llama3 8B (4096)+ or 70B (8192)++.
+
+Command R+ have given me the best results so far, slightly edging out Llama3 70B. The codebook is also 5.9GB, which is the largest I have seen.
+My ~observation is that models train better with larger hidden dimensions, larger vocabs and more pretraining tokens. Hidden dimensions are projected down, but the vocab size is fixed, so 256k vocabs are double the final size as compared llama3. DBRX is also trianing quite well and has 100k vocab, and gemma2 27B seems to train well, with a large vocab and smaller hidden dimension. With the exception of Command R+, which I rented an L40S for, I could reasonably train all of these on an A4500 with 20GB of VRAM.
 
 ## Roadmap
 
 - Test distillation training from a larger embedding model
-- Test other LLM token embeddings: small vocab like phi-3, xl vocab like gemma 2
 - Test concatenation with Llama guard 2
 - Retrain on llama3 405B (waiting on release...)
-- Figure out hosting for final v1 weights
-- Add some convenience methods for similarity
+- Select and figure out hosting for v1 weights
 - Write a requirements minimized package with C python bindings for basic operations
 
-## Features
-
-- **Load and Embed**: Quickly load pre-trained embeddings and use them to embed texts.
-- **Extract Embeddings**: Extract token embeddings from transformer-based models and save them for later use.
-- **Matryoshka Training**: Truncate to size with Matryoshka embedding training
-- **Binariz-able**: Even smaller and faster by training with straight through estimators for binarization.
-
-Note: binary embeddings have a greater performance loss at smaller dimensions than dense embeddings.
-
-Included is the 64-dim binary trained model, because it's small enough for GitHub. I'll update weights once the 405B parameter model is released.
-
-## Installation
-
-Clone the repository and install the required packages:
-
-```bash
-git clone https://github.com/dleemiller/wordllama.git
-cd wordllama
-pip install -r requirements.txt
-```
 
 ## Extracting Token Embeddings
 
@@ -164,11 +141,13 @@ To extract token embeddings from a model, ensure you have agreed to the user agr
 
 ```python
 from wordllama import Config
-from wordllama.extract import extract_hf
+from wordllama.extract import extract_safetensors
 
 # Extract embeddings for the specified configuration
-extract_hf(Config.llama3_8B, "path/to/save/llama3_8B_embeddings.safetensors")
+extract_safetensors("llama3_70B", "path/to/saved/model-0001-of-00XX.safetensors")
 ```
+
+HINT: Embeddings are usually in the first safetensors file, but not always. Sometimes you have to snoop around and figure it out.
 
 ## Citations
 

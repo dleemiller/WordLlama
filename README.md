@@ -1,10 +1,12 @@
-<p align="center">
-  <img src="wordllama.png" alt="Word Llama" width="60%">
-</p>
 
 # Word Llama
 
 The power of 13 trillion tokens of training, extracted, flogged and minimized into a cute little package for word embedding.
+
+<p align="center">
+  <img src="wordllama.png" alt="Word Llama" width="60%">
+</p>
+
 
 ## Table of Contents
 - [Quick Start](#quick-start)
@@ -62,13 +64,12 @@ The key features of WordLlama include:
 3. Binarization: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations.
 4. Numpy-only inference: Keep it lightweight and simple.
 
-To optimize for performance, WordLlama employs the Matryoshka training technique, allowing for flexible truncation of the embedding dimension.
-For even greater efficiency, we implement straight-through estimators during training to produce binary embeddings.
-This approach enables us to create ultra-compact representations, with the smallest model producing 64-bit embeddings that can leverage rapid hamming distance calculations.
+For flexibility, WordLlama employs the Matryoshka representation learning training technique. The largest model (1024-dim) can be truncated to 64, 128, 256 or 512.
+For binary embedding models, we implement straight-through estimators during training. For dense embeddings, 256 dimensions sufficiently captures most of the performance, while for binary embeddings validation accuracy  is close to saturation at 512-dimensions (64 bytes packed).
 
-The final weights are saved after weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding). The original
-tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are averaged. There is very little computation required, and the
-resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
+The final weights are saved after weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding) that is considerably smaller than the gigabyte-sized llm codebooks we start with. The original tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are average pooled. There is very little computation required, and the resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
+
+It's good option for some nlp-lite tasks. You can train sklearn classifiers on it, perform basic semantic matching, fuzzy matching, ranking and clustering.
 
 ## MTEB Results (standard models)
 

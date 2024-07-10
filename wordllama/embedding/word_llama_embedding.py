@@ -20,11 +20,13 @@ class WordLlamaEmbedding(nn.Module):
         "add_special_tokens": False,  # don't need without context
     }
 
-    def __init__(self, config, tokenizer_kwargs=None):
+    def __init__(self, config, tokenizer_kwargs=None, dims=None):
         super().__init__()
         self.config = config
         model = config.model
-        self.embedding = nn.Embedding(model.n_vocab, model.dim)
+        self.embedding = nn.Embedding(
+            model.n_vocab, model.dim if dims is None else dims
+        )
         if tokenizer_kwargs:
             self.tokenizer_kwargs = tokenizer_kwargs
 
@@ -37,8 +39,8 @@ class WordLlamaEmbedding(nn.Module):
         self.tokenizer.pad_token_id = self.tokenizer.vocab[model.pad_token]
 
     @classmethod
-    def build(cls, filepath, config):
-        word_llama = cls(config)
+    def build(cls, filepath, config, dims=None):
+        word_llama = cls(config, dims=dims)
         safetensors.torch.load_model(word_llama, filepath)
         return word_llama
 

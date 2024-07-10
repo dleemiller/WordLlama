@@ -7,7 +7,7 @@ pad_token = "<eos>"
 [tokenizer]
 return_tensors = "pt"
 return_attention_mask = true
-max_length = 192
+max_length = 256
 padding = "longest"
 truncation = true
 add_special_tokens = false
@@ -15,14 +15,14 @@ add_special_tokens = false
 [training]
 output_dir = "output/matryoshka_gemma2"
 num_train_epochs = 2
-per_device_train_batch_size = 512
+per_device_train_batch_size = 384
 warmup_steps = 256
 evaluation_strategy = "steps"
 eval_steps = 250
 save_steps = 1000
 fp16 = true
 include_num_input_tokens_seen = false
-learning_rate = 5e-4
+learning_rate = 3e-4
 multi_dataset_batch_sampler = "PROPORTIONAL"
 binarizer_ste = "tanh"
 

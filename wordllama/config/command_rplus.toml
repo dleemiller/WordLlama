@@ -7,7 +7,7 @@ pad_token = "<|END_OF_TURN_TOKEN|>"
 [tokenizer]
 return_tensors = "pt"
 return_attention_mask = true
-max_length = 96
+max_length = 128
 padding = "longest"
 truncation = true
 add_special_tokens = false

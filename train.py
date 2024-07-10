@@ -1,7 +1,7 @@
 import os
 
 # Set environment variables
-os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+# os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 os.environ["TORCH_USE_CUDA_DSA"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_DATASETS_TRUST_REMOTE_CODE"] = "1"
@@ -30,7 +30,13 @@ from dataset_loader import load_datasets
 class ReduceDimensionConfig:
     """Configuration for Dimension Reduction."""
 
-    def __init__(self, config_name: str, saving: bool = False):
+    def __init__(
+        self,
+        config_name: str,
+        saving: bool = False,
+        binarize: bool = False,
+        norm: bool = False,
+    ):
         self.config = getattr(Config, config_name)
         self.config_name = config_name
 
@@ -42,9 +48,9 @@ class ReduceDimensionConfig:
         training_args = self.config.training
         self.model_path = f"{config_name}.safetensors"
         self.device = "cuda"
-        self.binarize = False
+        self.binarize = binarize
         self.binarize_ste = training_args.binarizer_ste
-        self.norm = False
+        self.norm = norm
         self.model = self.build_model()
 
         # Load training datasets
@@ -176,13 +182,13 @@ if __name__ == "__main__":
 
     # Parse the arguments
     args = parser.parse_args()
-    config_name = "gemma2_27B"
+    config_name = "dbrx"
 
     # Execute based on the command
     if args.command == "train":
-        config = ReduceDimensionConfig(config_name)
-        config.binarize = args.binarize
-        config.norm = args.norm
+        config = ReduceDimensionConfig(
+            config_name, binarize=args.binarize, norm=args.norm
+        )
         trainer = ReduceDimension(config)
         trainer.train()
 

@@ -11,7 +11,7 @@ import mteb
 import logging
 from functools import partial
 from typing import Any
-from word_llama import load, Config
+from wordllama import load_training, Config
 import numpy as np
 from more_itertools import chunked
 
@@ -20,14 +20,6 @@ from mteb.models.text_formatting_utils import corpus_to_texts
 
 logger = logging.getLogger(__name__)
 
-
-config_map = {
-    64: Config.wordllama_64,
-    128: Config.wordllama_128,
-    256: Config.wordllama_256,
-    512: Config.wordllama_512,
-    1024: Config.wordllama_1024,
-}
 
 TASK_LIST_CLASSIFICATION = [
     "AmazonCounterfactualClassification",
@@ -121,7 +113,8 @@ class WordLlamaWrapper:
     ) -> None:
         self._model_name = model_name
         self._embed_dim = embed_dim
-        self.model = load(model_name, config).to("cuda")
+        print(model_name)
+        self.model = load_training(model_name, config, dims=embed_dim).to("cuda")
 
     def encode(self, sentences: List[str], batch_size=512, **kwargs: Any) -> np.ndarray:
         all_embeddings = []
@@ -155,17 +148,18 @@ if __name__ == "__main__":
     from mteb.benchmarks import MTEB_MAIN_EN
     from datetime import datetime
 
-    DIMS = 256
+    CONFIG_NAME = "command_rplus"
+    DIMS = 64
     BINARY = ""
     wordllama = ModelMeta(
-        name="wordllama",
+        name=f"wordllama_{CONFIG_NAME}",
         revision="1",
-        release_date="2024-07-05",
+        release_date="2024-07-09",
         languages=["eng-Latn"],
         loader=partial(
             WordLlamaWrapper,
-            f"weights/wordllama_{DIMS}{BINARY}.safetensors",
-            config_map[DIMS],
+            f"weights/{CONFIG_NAME}_{DIMS}{BINARY}.safetensors",
+            config=getattr(Config, CONFIG_NAME),
             embed_dim=DIMS,
         ),
         max_tokens=512,
@@ -179,7 +173,7 @@ if __name__ == "__main__":
     evaluation = mteb.MTEB(tasks=TASK_LIST)
     results = evaluation.run(
         model,
-        output_folder=f"wordllama{DIMS}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
+        output_folder=f"wordllama_{CONFIG_NAME}_{DIMS}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
         overwrite_results=True,
         verbosity=3,
         raise_error=False,

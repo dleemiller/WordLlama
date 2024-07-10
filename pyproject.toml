@@ -20,14 +20,15 @@ dependencies = [
 
 [project.optional-dependencies]
 train = [
-    "torch",
-    "transformers",
+    "accelerate",
+    "torch>=2",
+    "transformers>=4",
     "sentence-transformers",
-    "datasets"
+    "datasets",
 ]
 
 [project.urls]
-Homepage = "https://yourhomepage.com"
+Homepage = ""
 Repository = "https://github.com/dleemiller/WordLlama"
 
 [project.scripts]

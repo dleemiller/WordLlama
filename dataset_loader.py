@@ -2,7 +2,7 @@ from datasets import load_dataset
 
 def load_datasets(seed=42):
     def shuffled_load(path, *args, **kwargs):
-        return load_dataset(*args, path, **kwargs, shuffle=True, seed=seed)
+        return load_dataset(path, *args, **kwargs).shuffle(seed)
 
     return {
         "train": {

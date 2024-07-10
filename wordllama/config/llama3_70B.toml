@@ -24,7 +24,7 @@ fp16 = true
 include_num_input_tokens_seen = false
 learning_rate = 0.01
 multi_dataset_batch_sampler = "PROPORTIONAL"
-binarizer_ste = "tanh"
+binarizer_ste = "ste"
 
 [matryoshka]
 dims = [1024, 512, 256, 128, 64]

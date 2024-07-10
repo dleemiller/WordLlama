@@ -53,7 +53,7 @@ def load(
     return WordLlama.build(weights_file_path, config)
 
 
-def load_training(weights, config):
+def load_training(weights, config, dims=None):
     from wordllama.embedding.word_llama_embedding import WordLlamaEmbedding
 
-    return WordLlamaEmbedding.build(weights, config)
+    return WordLlamaEmbedding.build(weights, config, dims=dims)

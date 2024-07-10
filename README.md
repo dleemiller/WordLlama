@@ -124,7 +124,9 @@ The current MTEB results use the embedding codebook from Llama3 70B, and anticip
 Deberta v3 Large has a similar vocab size, but only 1024 hidden dimension, and does not train as well as Llama3 8B (4096)+ or 70B (8192)++.
 
 Command R+ have given me the best results so far, slightly edging out Llama3 70B. The codebook is also 5.9GB, which is the largest I have seen.
-My ~observation is that models train better with larger hidden dimensions, larger vocabs and more pretraining tokens. Hidden dimensions are projected down, but the vocab size is fixed, so 256k vocabs are double the final size as compared llama3. DBRX is also trianing quite well and has 100k vocab, and gemma2 27B seems to train well, with a large vocab and smaller hidden dimension. With the exception of Command R+, which I rented an L40S for, I could reasonably train all of these on an A4500 with 20GB of VRAM.
+My ~observation is that models train better with larger hidden dimensions, larger vocabs and more pretraining tokens.
+
+Hidden dimensions are projected down, but the vocab size is fixed, so 256k vocabs are double the final size as compared llama3. DBRX is also trianing quite well and has 100k vocab, and gemma2 27B seems to train well, with a large vocab and smaller hidden dimension. Mixtral 8x22B did not train as well, but would be significantly more compact with only 32k vocab, while still retaining most of the performance. With the exception of Command R+, which I rented an L40S for, I could reasonably train all of these on an A4500 with 20GB of VRAM and different batch sizes and truncation lengths. Batch size 256 seems to train as well or maybe slightly better than 512.
 
 ## Roadmap
 

@@ -28,7 +28,7 @@ train = [
 ]
 
 [project.urls]
-Homepage = ""
+Homepage = "https://github.com/dleemiller"
 Repository = "https://github.com/dleemiller/WordLlama"
 
 [project.scripts]

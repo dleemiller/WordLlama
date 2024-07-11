@@ -1,8 +1,8 @@
 [model]
-dim = 8192
-n_vocab = 128256
-hf_model_id = "meta-llama/Meta-Llama-3-70B"
-pad_token = "<|end_of_text|>" 
+dim = 5120
+n_vocab = 32064
+hf_model_id = "microsoft/Phi-3-medium-4k-instruct"
+pad_token = "<|endoftext|>" 
 
 [tokenizer]
 return_tensors = "pt"
@@ -13,7 +13,7 @@ truncation = true
 add_special_tokens = false
 
 [training]
-output_dir = "output/matryoshka_llama3_70B"
+output_dir = "output/matryoshka_phi3_medium"
 num_train_epochs = 2
 per_device_train_batch_size = 256
 warmup_steps = 256

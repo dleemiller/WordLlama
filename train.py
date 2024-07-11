@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     # Parse the arguments
     args = parser.parse_args()
-    config_name = "dbrx"
+    config_name = "mixtral_8x22B"
 
     # Execute based on the command
     if args.command == "train":

@@ -148,7 +148,7 @@ if __name__ == "__main__":
     from mteb.benchmarks import MTEB_MAIN_EN
     from datetime import datetime
 
-    CONFIG_NAME = "command_rplus"
+    CONFIG_NAME = "phi3_medium"
     DIMS = 64
     BINARY = ""
     wordllama = ModelMeta(

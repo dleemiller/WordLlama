@@ -148,8 +148,8 @@ if __name__ == "__main__":
     from mteb.benchmarks import MTEB_MAIN_EN
     from datetime import datetime
 
-    CONFIG_NAME = "phi3_medium"
-    DIMS = 64
+    CONFIG_NAME = "l2_supercat"
+    DIMS = 512
     BINARY = ""
     wordllama = ModelMeta(
         name=f"wordllama_{CONFIG_NAME}",
@@ -158,7 +158,7 @@ if __name__ == "__main__":
         languages=["eng-Latn"],
         loader=partial(
             WordLlamaWrapper,
-            f"weights/{CONFIG_NAME}_{DIMS}{BINARY}.safetensors",
+            f"wordllama/weights/{CONFIG_NAME}_{DIMS}{BINARY}.safetensors",
             config=getattr(Config, CONFIG_NAME),
             embed_dim=DIMS,
         ),

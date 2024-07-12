@@ -5,7 +5,9 @@ from typing import Union, List
 import warnings
 import pathlib
 import logging
+
 from wordllama.config import Config, WordLlamaConfig
+from wordllama.tokenizers import tokenizer_from_file
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -13,25 +15,40 @@ logger = logging.getLogger(__name__)
 
 
 class WordLlama:
-    def __init__(self, config: WordLlamaConfig):
+    def __init__(self, embedding: np.array, config: WordLlamaConfig):
+        self.embedding = embedding
         self.config = config
         self.tokenizer_kwargs = self.config.tokenizer.dict()
 
         # Load the tokenizer
-        self.tokenizer = Tokenizer.from_pretrained(self.config.model.hf_model_id)
-        self.tokenizer.enable_padding(length=self.tokenizer_kwargs["max_length"])
+        if (
+            config.tokenizer.inference is not None
+            and config.tokenizer.inference.use_local_config
+        ):
+            config_path = config.tokenizer.inference.config_filename
+            self.tokenizer = tokenizer_from_file(config_path)
+        else:
+            self.tokenizer = Tokenizer.from_pretrained(self.config.model.hf_model_id)
+
+        # default settings for all inference
+        self.tokenizer.enable_padding()
+        self.tokenizer.no_truncation()
 
     @classmethod
-    def build(cls, weights_file, config: WordLlamaConfig):
+    def build(cls, weights_file, config: WordLlamaConfig, trunc_dim: int = None):
         with safe_open(weights_file, framework="np", device="cpu") as f:
-            cls.embedding = f.get_tensor("embedding.weight")
+            embedding = f.get_tensor("embedding.weight")
+            if trunc_dim:
+                embedding = embedding[:, 0:trunc_dim]
 
-        return cls(config)
+        return cls(embedding, config)
 
     def tokenize(self, texts):
         if isinstance(texts, str):
             texts = [texts]
-        return self.tokenizer.encode_batch(texts)
+        return self.tokenizer.encode_batch(
+            texts, is_pretokenized=False, add_special_tokens=False
+        )
 
     def embed(self, texts, norm=False, binarize=False, pack=True, return_np=True):
         # Tokenize the texts
@@ -96,7 +113,7 @@ class WordLlama:
         xor_result = np.bitwise_xor(a, b)
         dist = np.sum(np.unpackbits(xor_result.view(np.uint8), axis=1), axis=1)
 
-        return 1.0 - dist / max_dist
+        return 1.0 - 2.0 * (dist / max_dist)
 
     @staticmethod
     def cosine_similarity(a: np.ndarray, b: np.ndarray) -> Union[float, np.ndarray]:

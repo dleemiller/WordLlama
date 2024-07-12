@@ -1,10 +1,12 @@
+from importlib import resources
+from pathlib import Path
 import numpy as np
 import torch
 from torch import nn
 import safetensors.torch
 
 from transformers import AutoTokenizer
-from typing import Union
+from typing import Union, List, Dict
 
 from ..adapters import AvgPool
 import warnings
@@ -44,7 +46,7 @@ class WordLlamaEmbedding(nn.Module):
         safetensors.torch.load_model(word_llama, filepath)
         return word_llama
 
-    def forward(self, tensors: dict[torch.Tensor]):
+    def forward(self, tensors: Dict[str, torch.Tensor]):
         return {
             "token_ids": tensors["input_ids"],
             "token_embeddings": self.embedding(tensors["input_ids"]),
@@ -59,7 +61,7 @@ class WordLlamaEmbedding(nn.Module):
     @torch.inference_mode()
     def embed(
         self,
-        texts: Union[str, list[str]],
+        texts: Union[str, List[str]],
         norm: bool = False,
         binarize: bool = False,
         pack: bool = True,

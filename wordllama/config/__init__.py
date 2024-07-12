@@ -1,7 +1,12 @@
 import toml
 from pathlib import Path
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
+
+
+class TokenizerInferenceConfig(BaseModel):
+    use_local_config: Optional[bool] = False
+    config_filename: Optional[str] = None
 
 
 class TokenizerConfig(BaseModel):
@@ -11,6 +16,7 @@ class TokenizerConfig(BaseModel):
     padding: str
     truncation: bool
     add_special_tokens: bool
+    inference: Optional[TokenizerInferenceConfig] = None
 
 
 class TrainingConfig(BaseModel):

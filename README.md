@@ -54,9 +54,9 @@ print(ranked_docs)
 
 ## What is it?
 
-WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations (such as GloVe or Word2Vec).
+WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations (such as GloVe, Word2Vec or FastText).
 WordLlama begins by extracting the token embedding codebook from a state-of-the-art LLM (e.g., LLama3 70B), and training a small context-less model in a general purpose embedding framework.
-WordLlama improves on all MTEB benchmarks above word models like GloVe 300d, while being substantially smaller in size (16mb default model @ 256-dim).
+WordLlama improves on all MTEB benchmarks above word models like GloVe 300d, while being substantially smaller in size (16mb default model @ 256-dim vs 2GB+).
 
 The key features of WordLlama include:
 

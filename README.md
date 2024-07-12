@@ -62,7 +62,7 @@ The key features of WordLlama include:
 
 1. Dimension Reduction: We train a projection to reduce the embedding dimension, making it more manageable for various applications.
 2. Low Resource Requirements: A simple token lookup with average pooling, enables this to operate fast on CPU.
-3. Binarization: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations.
+3. Binarization: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations. (coming soon)
 4. Numpy-only inference: Keep it lightweight and simple.
 
 For flexibility, WordLlama employs the Matryoshka representation learning training technique. The largest model (1024-dim) can be truncated to 64, 128, 256 or 512.
@@ -84,7 +84,7 @@ It's good option for some nlp-lite tasks. You can train sklearn classifiers on i
 | CQA DupStack           | 18.76       | 22.54        | 24.12        | 24.59        | 23.96         | 15.47      | 16.79    | 41.32            |
 | SummEval               | 30.79       | 29.99        | 30.99        | 29.56        | 30.54         | 28.87      | 30.49    | 30.81            |
 
-The "l2_supercat" is a Llama2 model. To train this model, I concatenated codebooks from several models, including Llama2 70B and phi3 medium (after removing additional special tokens).
+The "l2_supercat" is a Llama2-vocabulary model. To train this model, I concatenated codebooks from several models, including Llama2 70B and phi3 medium (after removing additional special tokens).
 Because several models have used the Llama2 tokenizer, their codebooks can be concatenated and trained together. Performance of the resulting model is comparable to training the Llama3 70B codebook, while being 4x smaller (32k vs 128k vocabulary).
 
 I anticipate the best results will come from training using the Llama3 405B codebook, when released.

@@ -1,5 +1,5 @@
 
-# Word Llama (Coming Soon!)
+# Word Llama
 
 The power of 13 trillion tokens of training, extracted, flogged and minimized into a cute little package for word embedding.
 
@@ -29,7 +29,7 @@ git clone git@github.com:dleemiller/wordllama.git
 pip install .
 ```
 
-Load the 64-dim model.
+Load the 256-dim model.
 ```python
 from wordllama import load
 
@@ -55,7 +55,8 @@ print(ranked_docs)
 ## What is it?
 
 WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations (such as GloVe or Word2Vec).
-WordLlama begins by extracting the token embedding codebook from a state-of-the-art LLM (e.g., LLama3 70B).
+WordLlama begins by extracting the token embedding codebook from a state-of-the-art LLM (e.g., LLama3 70B), and training a small context-less model in a general purpose embedding framework.
+WordLlama improves on all MTEB benchmarks above word models like GloVe 300d, while being substantially smaller in size (16mb default model @ 256-dim).
 
 The key features of WordLlama include:
 
@@ -69,19 +70,24 @@ For binary embedding models, we implement straight-through estimators during tra
 
 The final weights are saved after weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding) that is considerably smaller than the gigabyte-sized llm codebooks we start with. The original tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are average pooled. There is very little computation required, and the resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 
-It's good option for some nlp-lite tasks. You can train sklearn classifiers on it, perform basic semantic matching, fuzzy matching, ranking and clustering. You can perform your own llm surgery and train your own model on consumer GPUs in a few hours.
+It's good option for some nlp-lite tasks. You can train sklearn classifiers on it, perform basic semantic matching, fuzzy deduplication, ranking and clustering. You can perform your own llm surgery and train your own model on consumer GPUs in a few hours.
 
-## MTEB Results (standard models)
+## MTEB Results (l2_supercat)
 
-| Metric                 | WL64        | WL128        | WL256        | WL512        | WL1024        | GloVe 300d | Komninos | all-MiniLM-L6-v2 |
+| Metric                 | WL64        | WL128        | WL256 (X)    | WL512        | WL1024        | GloVe 300d | Komninos | all-MiniLM-L6-v2 |
 |------------------------|-------------|--------------|--------------|--------------|---------------|------------|----------|------------------|
-| Clustering             | 32.23       | 34.20        | 35.11        | 35.27        | 35.34         | 27.73      | 26.57    | 42.35            |
-| Reranking              | 50.33       | 51.52        | 52.03        | 52.20        | 52.37         | 43.29      | 44.75    | 58.04            |
-| Classification         | 53.56       | 56.93        | 58.89        | 59.76        | 60.18         | 57.29      | 57.65    | 63.05            |
-| Pair Classification    | 75.71       | 77.30        | 77.94        | 78.13        | 78.14         | 70.92      | 72.94    | 82.37            |
-| STS                    | 65.48       | 66.53        | 66.84        | 66.85        | 66.89         | 61.85      | 62.46    | 78.90            |
-| CQA DupStack           | 17.54       | 21.62        | 23.13        | 23.78        | 23.96         | 15.47      | 16.79    | 41.32            |
-| SummEval               | 30.31       | 30.65        | 31.08        | 30.30        | 30.54         | 28.87      | 30.49    | 30.81            |
+| Clustering             | 30.27       | 32.20        | 33.25        | 33.40        | 35.34         | 27.73      | 26.57    | 42.35            |
+| Reranking              | 50.38       | 51.52        | 52.03        | 52.32        | 52.37         | 43.29      | 44.75    | 58.04            |
+| Classification         | 53.14       | 56.25        | 58.21        | 59.13        | 60.18         | 57.29      | 57.65    | 63.05            |
+| Pair Classification    | 75.80       | 77.59        | 78.22        | 78.50        | 78.14         | 70.92      | 72.94    | 82.37            |
+| STS                    | 66.24       | 67.53        | 67.91        | 68.22        | 66.89         | 61.85      | 62.46    | 78.90            |
+| CQA DupStack           | 18.76       | 22.54        | 24.12        | 24.59        | 23.96         | 15.47      | 16.79    | 41.32            |
+| SummEval               | 30.79       | 29.99        | 30.99        | 29.56        | 30.54         | 28.87      | 30.49    | 30.81            |
+
+The "l2_supercat" is a Llama2 model. To train this model, I concatenated codebooks from several models, including Llama2 70B and phi3 medium (after removing additional special tokens).
+Because several models have used the Llama2 tokenizer, their codebooks can be concatenated and trained together. Performance of the resulting model is comparable to training the Llama3 70B codebook, while being 4x smaller (32k vs 128k vocabulary).
+
+I anticipate the best results will come from training using the Llama3 405B codebook, when released.
 
 ## Embed Text
 
@@ -91,7 +97,8 @@ Here’s how you can load pre-trained embeddings and use them to embed text:
 from wordllama import load
 
 # Load pre-trained embeddings
-wl = load(dim=64)
+# truncate dimension to 64
+wl = load(trunc_dim=64)
 
 # Embed text
 embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
@@ -99,10 +106,10 @@ print(embeddings.shape)  # (2, 64)
 
 # Binary embeddings are packed into uint32
 # 64-dims => array of 2x uint32 
-wl = load(dim=64, binary=True)
+wl = load(trunc_dim=64, binary=True)
 wl.embed("I went to the car", binarize=True, pack=True) # Output: array([[3029168104, 2427562626]], dtype=uint32)
 
-# load large binary trained model
+# load binary trained model trained with straight through estimator
 wl = load(dim=1024, binary=True)
 
 # Use the use_hamming flag to binarize
@@ -112,30 +119,22 @@ print(similarity_score)  # Output: 0.57421875
 ranked_docs = wl.rank("i went to the car", ["van", "truck"], use_hamming=False)
 
 # load a different model class
-wl = load(config_name="mixtral")
+# 
+download("llama3_400B")
+wl = load(config="llama3_400B", dim=1024)
 ```
 
 ## Training Notes
 
 Binary embedding models showed more pronounced improvement at higher dimensions, and either 512 or 1024 is recommended for binary embedding.
 
-The current MTEB results use the embedding codebook from Llama3 70B, and anticipate further improvement when the 405B model is released.
-
-Deberta v3 Large has a similar vocab size, but only 1024 hidden dimension, and does not train as well as Llama3 8B (4096)+ or 70B (8192)++.
-
-Command R+ have given me the best results so far, slightly edging out Llama3 70B. The codebook is also 5.9GB, which is the largest I have seen.
-My ~observation is that models train better with larger hidden dimensions, larger vocabs and more pretraining tokens.
-
-Hidden dimensions are projected down, but the vocab size is fixed, so 256k vocabs are double the final size as compared llama3. DBRX is also trianing quite well and has 100k vocab, and gemma2 27B seems to train well, with a large vocab and smaller hidden dimension. Mixtral 8x22B did not train as well, but would be significantly more compact with only 32k vocab, while still retaining most of the performance. With the exception of Command R+, which I rented an L40S for, I could reasonably train all of these on an A4500 with 20GB of VRAM and different batch sizes and truncation lengths. Batch size 256 seems to train as well or maybe slightly better than 512.
+L2 Supercat was trained using a batch size of 512 on a single A100 for 12 hours.
 
 ## Roadmap
 
 - Test distillation training from a larger embedding model
-- Test concatenation with Llama guard 2
-- Retrain on llama3 405B (waiting on release...)
-- Select and figure out hosting for v1 weights
-- Write a requirements minimized package with C python bindings for basic operations
-
+- Retrain on llama3 405B (waiting on release...), concat with llama guard 2, llama3 70B
+- Select and figure out hosting for Llama3 weights (128k vocab is size prohibitive for github free tier)
 
 ## Extracting Token Embeddings
 

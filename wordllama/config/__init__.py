@@ -4,6 +4,11 @@ from pydantic import BaseModel
 from typing import List, Dict, Optional
 
 
+class TokenizerInferenceConfig(BaseModel):
+    use_local_config: Optional[bool] = False
+    config_filename: Optional[str] = None
+
+
 class TokenizerConfig(BaseModel):
     return_tensors: str
     return_attention_mask: bool
@@ -11,8 +16,7 @@ class TokenizerConfig(BaseModel):
     padding: str
     truncation: bool
     add_special_tokens: bool
-    use_local_config: Optional[bool] = False
-    config_path: Optional[str] = None
+    inference: Optional[TokenizerInferenceConfig] = None
 
 
 class TrainingConfig(BaseModel):

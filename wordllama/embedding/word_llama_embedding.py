@@ -37,11 +37,7 @@ class WordLlamaEmbedding(nn.Module):
             param.requires_grad = False
 
         # load the tokenizer
-        if config.tokenizer.use_local_config:
-            with resources.path('wordllama.tokenizers', config.tokenizer.config_filename) as tokenizer_config_path:
-                self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_config_path.as_posix())
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model.hf_model_id)
+        self.tokenizer = AutoTokenizer.from_pretrained(model.hf_model_id)
         self.tokenizer.pad_token_id = self.tokenizer.vocab[model.pad_token]
 
     @classmethod

@@ -3,8 +3,6 @@ dim = 28672
 n_vocab = 32000
 hf_model_id = "meta-llama/Llama-2-70b-hf"
 pad_token = "</s>"
-use_local_config = true
-config_filename = "l2_supercat_tokenizer_config.json"
 
 [tokenizer]
 return_tensors = "pt"
@@ -13,6 +11,10 @@ max_length = 256
 padding = "longest"
 truncation = true
 add_special_tokens = false
+
+[tokenizer.inference]
+use_local_config = true
+config_filename = "l2_supercat_tokenizer_config.json"
 
 [training]
 output_dir = "output/matryoshka_supercat"

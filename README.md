@@ -119,8 +119,7 @@ print(similarity_score)  # Output: 0.57421875
 ranked_docs = wl.rank("i went to the car", ["van", "truck"], use_hamming=False)
 
 # load a different model class
-# 
-download("llama3_400B")
+download("llama3_400B")  # Not yet implemented
 wl = load(config="llama3_400B", dim=1024)
 ```
 
@@ -141,7 +140,6 @@ L2 Supercat was trained using a batch size of 512 on a single A100 for 12 hours.
 To extract token embeddings from a model, ensure you have agreed to the user agreement and logged in using the Hugging Face CLI (for llama3 models). You can then use the following snippet:
 
 ```python
-from wordllama import Config
 from wordllama.extract import extract_safetensors
 
 # Extract embeddings for the specified configuration

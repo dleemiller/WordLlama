@@ -1,5 +1,5 @@
 
-# Word Llama
+# Word Llama (Pre-release, default weights added)
 
 The power of 13 trillion tokens of training, extracted, flogged and minimized into a cute little package for word embedding.
 

@@ -36,7 +36,7 @@ Repository = "https://github.com/dleemiller/WordLlama"
 wordllama = "wordllama.wordllama:main"
 
 [tool.setuptools.package-data]
-wordllama = ["**/*.toml", "tokenizers/*.json"]
+wordllama = ["**/*.toml", "tokenizers/*.json", "weights/*.safetensors"]
 
 [tool.setuptools.dynamic]
 classifiers = { file = "classifiers.txt" }

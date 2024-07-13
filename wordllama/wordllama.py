@@ -1,7 +1,7 @@
 import numpy as np
 from safetensors import safe_open
 from tokenizers import Tokenizer
-from typing import Union, List
+from typing import Union, List, Optional
 import warnings
 import pathlib
 import logging
@@ -35,7 +35,20 @@ class WordLlama:
         self.tokenizer.no_truncation()
 
     @classmethod
-    def build(cls, weights_file, config: WordLlamaConfig, trunc_dim: int = None):
+    def build(
+        cls, weights_file: str, config: WordLlamaConfig, trunc_dim: Optional[int] = None
+    ):
+        """
+        Build a WordLlama instance from a weights file and configuration.
+
+        Args:
+            weights_file (str): Path to the file containing the embedding weights.
+            config (WordLlamaConfig): Configuration for the WordLlama instance.
+            trunc_dim (Optional[int]): Optional dimension to truncate the embeddings to.
+
+        Returns:
+            WordLlama: An instance of the WordLlama class.
+        """
         with safe_open(weights_file, framework="np", device="cpu") as f:
             embedding = f.get_tensor("embedding.weight")
             if trunc_dim:
@@ -43,14 +56,46 @@ class WordLlama:
 
         return cls(embedding, config)
 
-    def tokenize(self, texts):
+    def tokenize(self, texts: Union[str, List[str]]) -> List:
+        """
+        Tokenize input texts using the configured tokenizer.
+
+        Args:
+            texts (Union[str, List[str]]): Single string or list of strings to tokenize.
+
+        Returns:
+            List: List of tokenized and encoded text data.
+        """
         if isinstance(texts, str):
             texts = [texts]
+        else:
+            assert isinstance(texts, list), "Input texts must be str or List[str]"
+
         return self.tokenizer.encode_batch(
             texts, is_pretokenized=False, add_special_tokens=False
         )
 
-    def embed(self, texts, norm=False, binarize=False, pack=True, return_np=True):
+    def embed(
+        self,
+        texts: Union[str, List[str]],
+        norm: bool = False,
+        binarize: bool = False,
+        pack: bool = True,
+        return_np: bool = True,
+    ) -> Union[np.ndarray, List]:
+        """
+        Generate embeddings for input texts with options for normalization and binarization.
+
+        Args:
+            texts (Union[str, List[str]]): Texts to embed.
+            norm (bool): Apply normalization to embeddings.
+            binarize (bool): Convert embeddings to binary format.
+            pack (bool): Pack binary data into bits.
+            return_np (bool): Return result as a numpy array if True, otherwise as a list.
+
+        Returns:
+            Union[np.ndarray, List]: Embeddings as numpy array or list.
+        """
         # Tokenize the texts
         encoded_texts = self.tokenize(texts)
         input_ids = np.array([enc.ids for enc in encoded_texts], dtype=np.int32)
@@ -79,12 +124,25 @@ class WordLlama:
         return x.tolist()
 
     @staticmethod
-    def avg_pool(x, mask, norm=False):
-        if norm:
-            x = x / np.linalg.norm(x + 1e-9, axis=-1, keepdims=True)
-        return np.sum(x * mask[..., np.newaxis], axis=1) / np.maximum(
+    def avg_pool(x: np.ndarray, mask: np.ndarray, norm: bool = False) -> np.ndarray:
+        """
+        Apply average pooling to the embeddings.
+
+        Args:
+            x (np.ndarray): The input embeddings.
+            mask (np.ndarray): The attention mask indicating which tokens to consider.
+            norm (bool): Whether to normalize the embeddings.
+
+        Returns:
+            np.ndarray: The pooled embeddings.
+        """
+        x = np.sum(x * mask[..., np.newaxis], axis=1) / np.maximum(
             mask.sum(axis=1, keepdims=True) + 1e-9, 1
         )
+
+        if norm:
+            x = x / np.linalg.norm(x + 1e-9, axis=-1, keepdims=True)
+        return x
 
     @staticmethod
     def hamming_similarity(a: np.ndarray, b: np.ndarray) -> Union[float, np.ndarray]:

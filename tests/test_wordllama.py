@@ -8,6 +8,7 @@ from wordllama.config import (
     TokenizerConfig,
     TrainingConfig,
     MatryoshkaConfig,
+    TokenizerInferenceConfig,
 )
 
 
@@ -43,6 +44,10 @@ class TestWordLlama(unittest.TestCase):
                 padding="max_length",
                 truncation=True,
                 add_special_tokens=True,
+                inference=TokenizerInferenceConfig(
+                    use_local_config=False,
+                    config_filename="l2_supercat_tokenizer_config.json",
+                ),
             ),
             training=TrainingConfig(
                 output_dir="output/matryoshka_sts_custom",
@@ -121,6 +126,39 @@ class TestWordLlama(unittest.TestCase):
         ranked_docs = self.model.rank("test query", docs, use_hamming=True)
         self.assertEqual(len(ranked_docs), len(docs))
         self.assertTrue(all(isinstance(score, float) for doc, score in ranked_docs))
+
+    @patch("wordllama.wordllama.Tokenizer.from_pretrained")
+    def test_build_with_truncation(self, mock_tokenizer):
+        truncated_model = WordLlama.build(
+            "wordllama/weights/l2_supercat_256.safetensors", self.config, trunc_dim=32
+        )
+        self.assertEqual(truncated_model.embedding.shape[1], 32)
+
+    def test_error_on_wrong_embedding_type(self):
+        with self.assertRaises(AssertionError):
+            self.model.embed(np.array([1, 2]))
+
+    def test_binarization_and_packing(self):
+        binary_output = self.model.embed("test string", binarize=True, pack=True)
+        self.assertIsInstance(binary_output, np.ndarray)
+        self.assertEqual(binary_output.dtype, np.uint32)
+
+    def test_normalization_effect(self):
+        normalized_output = self.model.embed("test string", norm=True)
+        norm = np.linalg.norm(normalized_output)
+        self.assertAlmostEqual(norm, 1, places=5)
+
+    def test_cosine_similarity_direct(self):
+        vec1 = np.random.rand(64)
+        vec2 = np.random.rand(64)
+        result = WordLlama.cosine_similarity(vec1, vec2)
+        self.assertIsInstance(result.item(), float)
+
+    def test_hamming_similarity_direct(self):
+        vec1 = np.random.randint(2, size=64, dtype=np.uint32)
+        vec2 = np.random.randint(2, size=64, dtype=np.uint32)
+        result = WordLlama.hamming_similarity(vec1, vec2)
+        self.assertIsInstance(result.item(), float)
 
 
 if __name__ == "__main__":

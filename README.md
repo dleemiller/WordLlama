@@ -79,13 +79,13 @@ You can perform your own llm surgery and train your own model on consumer GPUs i
 
 | Metric                 | WL64        | WL128        | WL256 (X)    | WL512        | WL1024        | GloVe 300d | Komninos | all-MiniLM-L6-v2 |
 |------------------------|-------------|--------------|--------------|--------------|---------------|------------|----------|------------------|
-| Clustering             | 30.27       | 32.20        | 33.25        | 33.40        | 35.34         | 27.73      | 26.57    | 42.35            |
-| Reranking              | 50.38       | 51.52        | 52.03        | 52.32        | 52.37         | 43.29      | 44.75    | 58.04            |
-| Classification         | 53.14       | 56.25        | 58.21        | 59.13        | 60.18         | 57.29      | 57.65    | 63.05            |
-| Pair Classification    | 75.80       | 77.59        | 78.22        | 78.50        | 78.14         | 70.92      | 72.94    | 82.37            |
-| STS                    | 66.24       | 67.53        | 67.91        | 68.22        | 66.89         | 61.85      | 62.46    | 78.90            |
-| CQA DupStack           | 18.76       | 22.54        | 24.12        | 24.59        | 23.96         | 15.47      | 16.79    | 41.32            |
-| SummEval               | 30.79       | 29.99        | 30.99        | 29.56        | 30.54         | 28.87      | 30.49    | 30.81            |
+| Clustering             | 30.27       | 32.20        | 33.25        | 33.40        | 33.62         | 27.73      | 26.57    | 42.35            |
+| Reranking              | 50.38       | 51.52        | 52.03        | 52.32        | 52.39         | 43.29      | 44.75    | 58.04            |
+| Classification         | 53.14       | 56.25        | 58.21        | 59.13        | 59.50         | 57.29      | 57.65    | 63.05            |
+| Pair Classification    | 75.80       | 77.59        | 78.22        | 78.50        | 78.60         | 70.92      | 72.94    | 82.37            |
+| STS                    | 66.24       | 67.53        | 67.91        | 68.22        | 68.27         | 61.85      | 62.46    | 78.90            |
+| CQA DupStack           | 18.76       | 22.54        | 24.12        | 24.59        | 24.83         | 15.47      | 16.79    | 41.32            |
+| SummEval               | 30.79       | 29.99        | 30.99        | 29.56        | 29.39         | 28.87      | 30.49    | 30.81            |
 
 The "l2_supercat" is a Llama2-vocabulary model. To train this model, I concatenated codebooks from several models, including Llama2 70B and phi3 medium (after removing additional special tokens).
 Because several models have used the Llama2 tokenizer, their codebooks can be concatenated and trained together. Performance of the resulting model is comparable to training the Llama3 70B codebook, while being 4x smaller (32k vs 128k vocabulary).

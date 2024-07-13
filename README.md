@@ -11,12 +11,10 @@ The power of 13 trillion tokens of training, extracted, flogged and minimized in
 ## Table of Contents
 - [Quick Start](#quick-start)
 - [What is it?](#what-is-it)
-- [MTEB Results (standard models)](#mteb-results-standard-models)
+- [MTEB Results](#mteb-results-l2_supercat)
 - [Embed Text](#embed-text)
 - [Training Notes](#training-notes)
 - [Roadmap](#roadmap)
-- [Features](#features)
-- [Installation](#installation)
 - [Extracting Token Embeddings](#extracting-token-embeddings)
 - [Citations](#citations)
 - [License](#license)
@@ -57,19 +55,19 @@ print(ranked_docs)
 WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations (such as GloVe, Word2Vec or FastText).
 WordLlama begins by extracting the token embedding codebook from a state-of-the-art LLM (e.g., LLama3 70B), and training a small context-less model in a general purpose embedding framework.
 
-WordLlama improves on all MTEB benchmarks above word models like GloVe 300d, while being substantially smaller in size (16MB default model @ 256-dim vs >2GB).
+WordLlama improves on all MTEB benchmarks above word models like GloVe 300d, while being substantially smaller in size (**16MB default model** @ 256-dim vs >2GB).
 
 The key features of WordLlama include:
 
-1. Dimension Reduction: We train a projection to reduce the embedding dimension, making it more manageable for various applications.
+1. Matryoshka Representations: Truncate embedding dimension as needed.
 2. Low Resource Requirements: A simple token lookup with average pooling, enables this to operate fast on CPU.
 3. Binarization: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations. (coming soon)
-4. Numpy-only inference: Keep it lightweight and simple.
+4. Numpy-only inference: Lightweight and simple.
 
 For flexibility, WordLlama employs the Matryoshka representation learning training technique. The largest model (1024-dim) can be truncated to 64, 128, 256 or 512.
 For binary embedding models, we implement straight-through estimators during training. For dense embeddings, 256 dimensions sufficiently captures most of the performance, while for binary embeddings validation accuracy is close to saturation at 512-dimensions (64 bytes packed).
 
-The final weights are saved after weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding) that is considerably smaller than the gigabyte-sized llm codebooks we start with. The original tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are average pooled. There is very little computation required, and the resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
+The final weights are saved *after* weighting, projection and truncation of the entire tokenizer vocabulary. Thus, WordLlama becomes a single embedding matrix (nn.Embedding) that is considerably smaller than the gigabyte-sized llm codebooks we start with. The original tokenizer is still used to preprocess the text into tokens, and the reduced size token embeddings are average pooled. There is very little computation required, and the resulting model sizes range from 16mb to 250mb for the 128k llama3 vocabulary.
 
 It's good option for some nlp-lite tasks. You can train sklearn classifiers on it, perform basic semantic matching, fuzzy deduplication, ranking and clustering.
 I think it should work well for creating LLM output evaluators, or other preparatory tasks involved in multi-hop or agentic workflows.

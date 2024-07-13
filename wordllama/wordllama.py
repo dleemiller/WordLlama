@@ -18,7 +18,7 @@ class WordLlama:
     def __init__(self, embedding: np.array, config: WordLlamaConfig):
         self.embedding = embedding
         self.config = config
-        self.tokenizer_kwargs = self.config.tokenizer.dict()
+        self.tokenizer_kwargs = self.config.tokenizer.model_dump()
 
         # Load the tokenizer
         if (

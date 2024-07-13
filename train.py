@@ -44,7 +44,7 @@ class ReduceDimensionConfig:
         self.matryoshka_dims = self.config.matryoshka.dims
 
         # Load tokenizer kwargs from config
-        self.tokenizer_kwargs = self.config.tokenizer.dict()
+        self.tokenizer_kwargs = self.config.tokenizer.model_dump()
         training_args = self.config.training
         self.model_path = f"{config_name}.safetensors"
         self.device = "cuda"

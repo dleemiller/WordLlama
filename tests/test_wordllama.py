@@ -12,7 +12,6 @@ from wordllama.config import (
 
 
 class TestWordLlama(unittest.TestCase):
-
     @patch("wordllama.wordllama.safe_open")
     @patch("wordllama.wordllama.Tokenizer.from_pretrained")
     def setUp(self, mock_tokenizer, mock_safe_open):
@@ -69,7 +68,9 @@ class TestWordLlama(unittest.TestCase):
             MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1])
         ]
         tokens = self.model.tokenize("test string")
-        self.mock_tokenizer.encode_batch.assert_called_with(["test string"])
+        self.mock_tokenizer.encode_batch.assert_called_with(
+            ["test string"], is_pretokenized=False, add_special_tokens=False
+        )
         self.assertEqual(len(tokens), 1)
 
     def test_embed(self):

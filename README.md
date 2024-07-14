@@ -23,8 +23,7 @@ The power of 15 trillion tokens of training, extracted, flogged and minimized in
 
 Install:
 ```bash
-git clone git@github.com:dleemiller/wordllama.git
-pip install .
+pip install wordllama
 ```
 
 Load the 256-dim model.

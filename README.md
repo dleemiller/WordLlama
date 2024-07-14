@@ -48,7 +48,25 @@ print(ranked_docs)
 #   ('i went to the shop', 0.45162150518177724),
 #   ('i went to the park', 0.36642963613509194)
 # ]
+
+# Longer Text
+# Trained on general embedding datasets (question / answer, nli, etc)
+# Tends to work well on sentence/passage comparisons, rather than individual words
+# For example (text from [1])
+wl.similarity(
+    """Embeddings are one of the most versatile tools in natural language processing, supporting a wide variety of settings and use cases. In essence, embeddings are numerical representations of more complex objects like text, images, audio, etc. Specifically, the objects are represented as n-dimensional vectors.""",
+    """After transforming objects using an embedding model, you can determine their inherent semantic similarity by calculating the similarity of the respective embeddings. Essentially, you determine how strongly related two objects are by measuring how close their embeddings are to each other in the n-dimensional vector space. This is crucial for many use cases: it serves as the backbone for recommendation systems, retrieval, one-shot or few-shot learning, outlier detection, similarity search, paraphrase detection, clustering, classification, and much more."""
+)
+# 0.6920047066790649
+
+wl.similarity(
+    """Embeddings are one of the most versatile tools in natural language processing, supporting a wide variety of settings and use cases. In essence, embeddings are numerical representations of more complex objects like text, images, audio, etc. Specifically, the objects are represented as n-dimensional vectors.""",
+    """Advanced Vector Extensions 512 (AVX-512) is collective name for a number of 512-bit SIMD x86 instruction set extensions. The extensions were formally introduced by Intel in July 2013 with first general-purpose microprocessors implementing the extensions introduced in July 2017."""
+)
+# 0.2784752825323744
+
 ```
+[1] [https://www.mixedbread.ai/blog/binary-mrl](https://www.mixedbread.ai/blog/binary-mrl)
 
 ## What is it?
 

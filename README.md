@@ -119,7 +119,7 @@ print(similarity_score)  # Output: 0.57421875
 
 ranked_docs = wl.rank("i went to the car", ["van", "truck"], use_hamming=False)
 
-# load a different model class
+# load a different model class (planned)
 download("llama3_400B")  # Not yet implemented
 wl = load(config="llama3_400B", dim=1024)
 ```
@@ -151,7 +151,7 @@ extract_safetensors("llama3_70B", "path/to/saved/model-0001-of-00XX.safetensors"
 
 HINT: Embeddings are usually in the first safetensors file, but not always. Sometimes there is a manifest, sometimes you have to snoop around and figure it out.
 
-For training, use the scripts in the github repo. You have to add a configuration file (copy/modify an existing one in wordllama/config/...toml.
+For training, use the scripts in the github repo. You have to add a configuration file (copy/modify an existing one into the folder).
 ```
 $ pip install wordllama[train]
 $ python train.py train --config your_new_config

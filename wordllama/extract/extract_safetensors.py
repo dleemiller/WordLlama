@@ -12,8 +12,9 @@ def extract_safetensors(
 ):
     """
     Args:
-        filepath: the path to your huggingface model dir (default ~/.config/huggingface/...)
-        tensor: the tensor file containing the token embeddings
+        config_name: name of the model configuration (see Config object)
+        tensor_path: the path to your safetensors file
+        key: the tensor key name (eg. model.embed_tokens.weight)
     """
     config = getattr(Config, config_name)
     with safetensors.torch.safe_open(tensor_path, "pt") as f:

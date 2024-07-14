@@ -158,6 +158,9 @@ if __name__ == "__main__":
         description="Train a weighted projection model using sentence transformers and Matryoshka Embeddings"
     )
     subparsers = parser.add_subparsers(dest="command", help="Sub-command help")
+    parser.add_argument(
+        "--config", type=str, required=True, help="Name of your configuration (eg. [your_config].toml)"
+    )
 
     # Add a sub-parser for the 'train' command
     parser_train = subparsers.add_parser("train", help="Train the model")
@@ -182,7 +185,7 @@ if __name__ == "__main__":
 
     # Parse the arguments
     args = parser.parse_args()
-    config_name = "mixtral_8x22B"
+    config_name = args.config
 
     # Execute based on the command
     if args.command == "train":

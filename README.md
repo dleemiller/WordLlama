@@ -36,37 +36,19 @@ wl = load()
 
 # Calculate similarity between two sentences
 similarity_score = wl.similarity("i went to the car", "i went to the pawn shop")
-print(similarity_score)  # Output: 0.4026190060777956
+print(similarity_score)  # Output: 0.06641249096796882
 
 # Rank documents based on their similarity to a query
 ranked_docs = wl.rank("i went to the car", ["i went to the park", "i went to the shop", "i went to the truck", "i went to the vehicle"], use_hamming=False)
 print(ranked_docs)
 # Output:
 # [
-#   ('i went to the vehicle', 0.8765271774778441),
-#   ('i went to the truck', 0.5792372791755765),
-#   ('i went to the shop', 0.45162150518177724),
-#   ('i went to the park', 0.36642963613509194)
+#   ('i went to the vehicle', 0.7441646856486314),
+#   ('i went to the truck', 0.2832691551894259),
+#   ('i went to the shop', 0.19732814982305436),
+#   ('i went to the park', 0.15101404519322253)
 # ]
-
-# Longer Text
-# Trained on general embedding datasets (question / answer, nli, etc)
-# Tends to work well on sentence/passage comparisons, rather than individual words
-# For example (text from [1])
-wl.similarity(
-    """Embeddings are one of the most versatile tools in natural language processing, supporting a wide variety of settings and use cases. In essence, embeddings are numerical representations of more complex objects like text, images, audio, etc. Specifically, the objects are represented as n-dimensional vectors.""",
-    """After transforming objects using an embedding model, you can determine their inherent semantic similarity by calculating the similarity of the respective embeddings. Essentially, you determine how strongly related two objects are by measuring how close their embeddings are to each other in the n-dimensional vector space. This is crucial for many use cases: it serves as the backbone for recommendation systems, retrieval, one-shot or few-shot learning, outlier detection, similarity search, paraphrase detection, clustering, classification, and much more."""
-)
-# 0.6920047066790649
-
-wl.similarity(
-    """Embeddings are one of the most versatile tools in natural language processing, supporting a wide variety of settings and use cases. In essence, embeddings are numerical representations of more complex objects like text, images, audio, etc. Specifically, the objects are represented as n-dimensional vectors.""",
-    """Advanced Vector Extensions 512 (AVX-512) is collective name for a number of 512-bit SIMD x86 instruction set extensions. The extensions were formally introduced by Intel in July 2013 with first general-purpose microprocessors implementing the extensions introduced in July 2017."""
-)
-# 0.2784752825323744
-
 ```
-[1] [https://www.mixedbread.ai/blog/binary-mrl](https://www.mixedbread.ai/blog/binary-mrl)
 
 ## What is it?
 
@@ -75,12 +57,12 @@ WordLlama begins by extracting the token embedding codebook from a state-of-the-
 
 WordLlama improves on all MTEB benchmarks above word models like GloVe 300d, while being substantially smaller in size (**16MB default model** @ 256-dim vs >2GB).
 
-The key features of WordLlama include:
+Features of WordLlama include:
 
-1. Matryoshka Representations: Truncate embedding dimension as needed.
-2. Low Resource Requirements: A simple token lookup with average pooling, enables this to operate fast on CPU.
-3. Binarization: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations. (coming soon)
-4. Numpy-only inference: Lightweight and simple.
+1. **Matryoshka Representations**: Truncate embedding dimension as needed.
+2. **Low Resource Requirements**: A simple token lookup with average pooling, enables this to operate fast on CPU.
+3. **Binarization**: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations. (coming soon)
+4. **Numpy-only inference**: Lightweight and simple.
 
 For flexibility, WordLlama employs the Matryoshka representation learning training technique. The largest model (1024-dim) can be truncated to 64, 128, 256 or 512.
 For binary embedding models, we implement straight-through estimators during training. For dense embeddings, 256 dimensions sufficiently captures most of the performance, while for binary embeddings validation accuracy is close to saturation at 512-dimensions (64 bytes packed).
@@ -153,6 +135,8 @@ L2 Supercat was trained using a batch size of 512 on a single A100 for 12 hours.
 - Test distillation training from a larger embedding model
 - Retrain on llama3 405B (waiting on release...), concat with llama guard 2, llama3 70B
 - Select and figure out hosting for Llama3 weights (128k vocab is size prohibitive for github free tier)
+- Add download() or from_pretrained() option for downloading additional weights from huggingface
+- Upload binary models
 
 ## Extracting Token Embeddings
 
@@ -165,7 +149,16 @@ from wordllama.extract import extract_safetensors
 extract_safetensors("llama3_70B", "path/to/saved/model-0001-of-00XX.safetensors")
 ```
 
-HINT: Embeddings are usually in the first safetensors file, but not always. Sometimes you have to snoop around and figure it out.
+HINT: Embeddings are usually in the first safetensors file, but not always. Sometimes there is a manifest, sometimes you have to snoop around and figure it out.
+
+For training, use the scripts in the github repo. You have to add a configuration file (copy/modify an existing one in wordllama/config/...toml.
+```
+$ pip install wordllama[train]
+$ python train.py train --config your_new_config
+(training stuff happens)
+$ python train.py save --config your_new_config --checkpoint ... --outdir /path/to/weights/
+(saves 1 model per matryoshka dim)
+```
 
 ## Citations
 

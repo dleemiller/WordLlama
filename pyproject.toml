@@ -7,7 +7,7 @@ name = "wordllama"
 version = "0.1.0"
 description = "WordLlama Embedding and Training"
 readme = { file = "README.md", content-type = "text/markdown" }
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 requires-python = ">=3.8"
 authors = [{ name = "Lee Miller", email = "dleemiller@gmail.com" }]
 dependencies = [
@@ -31,9 +31,6 @@ train = [
 [project.urls]
 Homepage = "https://github.com/dleemiller"
 Repository = "https://github.com/dleemiller/WordLlama"
-
-[project.scripts]
-wordllama = "wordllama.wordllama:main"
 
 [tool.setuptools.package-data]
 wordllama = ["**/*.toml", "tokenizers/*.json", "weights/*.safetensors"]

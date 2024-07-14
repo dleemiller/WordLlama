@@ -1,5 +1,5 @@
 
-# Word Llama (Pre-release, default weights added)
+# Word Llama
 
 The power of 15 trillion tokens of training, extracted, flogged and minimized into a cute little package for word embedding.
 
@@ -104,7 +104,11 @@ wl = load(trunc_dim=64)
 # Embed text
 embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
 print(embeddings.shape)  # (2, 64)
+```
 
+Binary embedding models can be used like this (models not yet released):
+
+```python
 # Binary embeddings are packed into uint32
 # 64-dims => array of 2x uint32 
 wl = load(trunc_dim=64, binary=True)

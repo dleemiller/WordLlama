@@ -158,12 +158,14 @@ if __name__ == "__main__":
         description="Train a weighted projection model using sentence transformers and Matryoshka Embeddings"
     )
     subparsers = parser.add_subparsers(dest="command", help="Sub-command help")
-    parser.add_argument(
-        "--config", type=str, required=True, help="Name of your configuration (eg. [your_config].toml)"
-    )
-
     # Add a sub-parser for the 'train' command
     parser_train = subparsers.add_parser("train", help="Train the model")
+    parser_train.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="Name of your configuration (eg. [your_config].toml)",
+    )
     parser_train.add_argument(
         "--binarize",
         action="store_true",
@@ -176,6 +178,12 @@ if __name__ == "__main__":
 
     # Add a sub-parser for the 'save' command
     parser_save = subparsers.add_parser("save", help="Save the model")
+    parser_save.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="Name of your configuration (eg. [your_config].toml)",
+    )
     parser_save.add_argument(
         "--checkpoint", type=str, required=True, help="Path to the checkpoint"
     )

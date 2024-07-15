@@ -178,10 +178,12 @@ class TestWordLlama(unittest.TestCase):
             binary=False,
             weights_dir=Path("/dummy/weights"),
             cache_dir=Path("/dummy/cache"),
+            disable_download=False
         )
         mock_check_tokenizer.assert_called_once_with(
             config_name="l2_supercat",
             tokenizer_filename="l2_supercat_tokenizer_config.json",
+            disable_download=False
         )
         mock_load_tokenizer.assert_called_once()
         mock_safe_open.assert_called_once_with(

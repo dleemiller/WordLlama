@@ -115,6 +115,7 @@ class WordLlama:
         binary: bool = False,
         weights_dir: Optional[Path] = None,
         cache_dir: Optional[Path] = None,
+        disable_download: bool = False,
     ) -> Path:
         """
         Check if model weights exist locally, if not, download them.
@@ -125,6 +126,7 @@ class WordLlama:
             binary (bool, optional): Whether the file is binary. Defaults to False.
             weights_dir (Path, optional): Directory where weight files are stored. If None, defaults to 'weights' directory in the current module directory.
             cache_dir (Path, optional): Directory where cached files are stored. Defaults to the appropriate cache directory.
+            disable_download (bool, optional): Disable downloads for models not in cache.
 
         Returns:
             Path: Path to the model weights file.
@@ -144,6 +146,10 @@ class WordLlama:
             )
             weights_file_path = cache_dir / filename
             if not weights_file_path.exists():
+                if disable_download:
+                    raise FileNotFoundError(
+                        f"Weights file '{filename}' not found and downloads are disabled."
+                    )
                 logger.debug(
                     f"Weights file '{filename}' not found in cache directory '{cache_dir}'. Downloading..."
                 )
@@ -160,7 +166,7 @@ class WordLlama:
 
     @classmethod
     def check_and_download_tokenizer(
-        cls, config_name: str, tokenizer_filename: str
+        cls, config_name: str, tokenizer_filename: str, disable_download: bool = False
     ) -> Path:
         """
         Check if tokenizer configuration exists locally, if not, download it.
@@ -168,6 +174,7 @@ class WordLlama:
         Args:
             config_name (str): The name of the model configuration.
             tokenizer_filename (str): The filename of the tokenizer configuration.
+            disable_download (bool, optional): Disable downloading for models not in cache.
 
         Returns:
             Path: Path to the tokenizer configuration file.
@@ -176,6 +183,11 @@ class WordLlama:
         tokenizer_file_path = cache_dir / tokenizer_filename
 
         if not tokenizer_file_path.exists():
+            if disable_download:
+                raise FileNotFoundError(
+                    f"Weights file '{filename}' not found and downloads are disabled."
+                )
+
             logger.debug(
                 f"Tokenizer config '{tokenizer_filename}' not found in cache directory '{cache_dir}'. Downloading..."
             )
@@ -201,6 +213,7 @@ class WordLlama:
         binary: bool = False,
         dim: int = 256,
         trunc_dim: Optional[int] = None,
+        disable_download: bool = False,
     ) -> WordLlamaInference:
         """
         Load the WordLlama model.
@@ -212,6 +225,7 @@ class WordLlama:
             binary (bool, optional): Whether to load the binary version of the weights. Defaults to False.
             dim (int, optional): The dimensionality of the model to load. Options: [64, 128, 256, 512, 1024]. Defaults to 256.
             trunc_dim (Optional[int], optional): The dimension to truncate the model to. Must be less than or equal to 'dim'. Defaults to None.
+            disable_download(bool, optional): Turn off downloading models from huggingface when local model is not cached.
 
         Returns:
             WordLlamaInference: The loaded WordLlama model.
@@ -251,11 +265,14 @@ class WordLlama:
             binary=binary,
             weights_dir=weights_dir,
             cache_dir=cache_dir,
+            disable_download=disable_download,
         )
 
         # Check and download tokenizer config if necessary
         tokenizer_file_path = cls.check_and_download_tokenizer(
-            config_name=config, tokenizer_filename=model_uri.tokenizer_config
+            config_name=config,
+            tokenizer_filename=model_uri.tokenizer_config,
+            disable_download=disable_download,
         )
 
         # Load the tokenizer

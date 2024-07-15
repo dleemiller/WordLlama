@@ -1,260 +1,302 @@
-import numpy as np
-from safetensors import safe_open
-from tokenizers import Tokenizer
-from typing import Union, List, Optional
-import warnings
-import pathlib
 import logging
+import requests
+import warnings
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Union, Optional, List
+from tokenizers import Tokenizer
+from safetensors import safe_open
 
-from wordllama.config import Config, WordLlamaConfig
-from wordllama.tokenizers import tokenizer_from_file
+from .inference import WordLlamaInference
+from .config import Config, WordLlamaConfig
+from .tokenizers import tokenizer_from_file
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class ModelURI:
+    repo_id: str
+    available_dims: List[int]
+    binary_dims: List[int]
+    tokenizer_config: Optional[str]
+
+
 class WordLlama:
-    def __init__(self, embedding: np.array, config: WordLlamaConfig):
-        self.embedding = embedding
-        self.config = config
-        self.tokenizer_kwargs = self.config.tokenizer.model_dump()
+    l2_supercat = ModelURI(
+        repo_id="dleemiller/word-llama-l2-supercat",
+        available_dims=[64, 128, 256, 512, 1024],
+        binary_dims=[],
+        tokenizer_config="l2_supercat_tokenizer_config.json",
+    )
+
+    @staticmethod
+    def get_filename(config_name: str, dim: int, binary: bool = False) -> str:
+        """
+        Generate the filename for the model weights or binary file.
+
+        Args:
+            config_name (str): The name of the configuration.
+            dim (int): The dimensionality of the model.
+            binary (bool): Whether the file is binary.
+
+        Returns:
+            str: The generated filename.
+        """
+        suffix = "" if not binary else "_binary"
+        return f"{config_name}_{dim}{suffix}.safetensors"
+
+    @staticmethod
+    def get_cache_dir(is_tokenizer_config: bool = False) -> Path:
+        """
+        Get the cache directory path for weights or tokenizer configuration.
+
+        Args:
+            is_tokenizer_config (bool, optional): If True, return the tokenizer cache directory.
+
+        Returns:
+            Path: The path to the cache directory.
+        """
+        base_cache_dir = Path.home() / ".cache" / "wordllama"
+        return base_cache_dir / ("tokenizers" if is_tokenizer_config else "weights")
+
+    @staticmethod
+    def download_file_from_hf(
+        repo_id: str,
+        filename: str,
+        cache_dir: Optional[Path] = None,
+        force_download: bool = False,
+        token: Optional[str] = None,
+    ) -> Path:
+        """
+        Download a file from a Hugging Face model repository and cache it locally.
+
+        Args:
+            repo_id (str): The repository ID on Hugging Face (e.g., 'user/repo').
+            filename (str): The name of the file to download.
+            cache_dir (Path, optional): The directory to cache the downloaded file. Defaults to the appropriate cache directory.
+            force_download (bool, optional): If True, force download the file even if it exists in the cache.
+            token (str, optional): The Hugging Face token for accessing private repositories.
+
+        Returns:
+            Path: The path to the cached file.
+        """
+        if cache_dir is None:
+            cache_dir = WordLlama.get_cache_dir()
+
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cached_file_path = cache_dir / filename
+
+        if not force_download and cached_file_path.exists():
+            logger.info(f"File {filename} exists in cache. Using cached version.")
+            return cached_file_path
+
+        url = f"https://huggingface.co/{repo_id}/resolve/main/{filename}"
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        logger.info(f"Downloading {filename} from {url}")
+
+        response = requests.get(url, headers=headers, stream=True)
+        response.raise_for_status()
+
+        with cached_file_path.open("wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        logger.info(f"File {filename} downloaded and cached at {cached_file_path}")
+
+        return cached_file_path
+
+    @classmethod
+    def check_and_download_model(
+        cls,
+        config_name: str,
+        dim: int,
+        binary: bool = False,
+        weights_dir: Optional[Path] = None,
+        cache_dir: Optional[Path] = None,
+    ) -> Path:
+        """
+        Check if model weights exist locally, if not, download them.
+
+        Args:
+            config_name (str): The name of the model configuration.
+            dim (int): The dimensionality of the model.
+            binary (bool, optional): Whether the file is binary. Defaults to False.
+            weights_dir (Path, optional): Directory where weight files are stored. If None, defaults to 'weights' directory in the current module directory.
+            cache_dir (Path, optional): Directory where cached files are stored. Defaults to the appropriate cache directory.
+
+        Returns:
+            Path: Path to the model weights file.
+        """
+        if weights_dir is None:
+            weights_dir = Path(__file__).parent / "weights"
+
+        if cache_dir is None:
+            cache_dir = cls.get_cache_dir()
+
+        filename = cls.get_filename(config_name=config_name, dim=dim, binary=binary)
+        weights_file_path = weights_dir / filename
+
+        if not weights_file_path.exists():
+            logger.info(
+                f"Weights file '{filename}' not found in '{weights_dir}'. Checking cache directory..."
+            )
+            weights_file_path = cache_dir / filename
+            if not weights_file_path.exists():
+                logger.info(
+                    f"Weights file '{filename}' not found in cache directory '{cache_dir}'. Downloading..."
+                )
+                weights_file_path = cls.download_file_from_hf(
+                    repo_id=getattr(cls, config_name).repo_id, filename=filename
+                )
+
+        if not weights_file_path.exists():
+            raise FileNotFoundError(
+                f"Weights file '{weights_file_path}' not found in directory '{weights_dir}' or cache '{cache_dir}'."
+            )
+
+        return weights_file_path
+
+    @classmethod
+    def check_and_download_tokenizer(
+        cls, config_name: str, tokenizer_filename: str
+    ) -> Path:
+        """
+        Check if tokenizer configuration exists locally, if not, download it.
+
+        Args:
+            config_name (str): The name of the model configuration.
+            tokenizer_filename (str): The filename of the tokenizer configuration.
+
+        Returns:
+            Path: Path to the tokenizer configuration file.
+        """
+        cache_dir = cls.get_cache_dir(is_tokenizer_config=True)
+        tokenizer_file_path = cache_dir / tokenizer_filename
+
+        if not tokenizer_file_path.exists():
+            logger.info(
+                f"Tokenizer config '{tokenizer_filename}' not found in cache directory '{cache_dir}'. Downloading..."
+            )
+            tokenizer_file_path = cls.download_file_from_hf(
+                repo_id=getattr(cls, config_name).repo_id,
+                filename=tokenizer_filename,
+                cache_dir=cache_dir,
+            )
+
+        if not tokenizer_file_path.exists():
+            raise FileNotFoundError(
+                f"Tokenizer config file '{tokenizer_file_path}' not found in cache '{cache_dir}'."
+            )
+
+        return tokenizer_file_path
+
+    @classmethod
+    def load(
+        cls,
+        config: Union[str, WordLlamaConfig] = "l2_supercat",
+        weights_dir: Optional[Path] = None,
+        cache_dir: Optional[Path] = None,
+        binary: bool = False,
+        dim: int = 256,
+        trunc_dim: Optional[int] = None,
+    ) -> WordLlamaInference:
+        """
+        Load the WordLlama model.
+
+        Args:
+            config (Union[str, WordLlamaConfig], optional): The configuration object or the name of the configuration to load. Defaults to "l2_supercat".
+            weights_dir (Optional[Path], optional): Directory where weight files are stored. If None, defaults to 'weights' directory in the current module directory. Defaults to None.
+            cache_dir (Optional[Path], optional): Directory where cached files are stored. Defaults to ~/.cache/wordllama/weights. Defaults to None.
+            binary (bool, optional): Whether to load the binary version of the weights. Defaults to False.
+            dim (int, optional): The dimensionality of the model to load. Options: [64, 128, 256, 512, 1024]. Defaults to 256.
+            trunc_dim (Optional[int], optional): The dimension to truncate the model to. Must be less than or equal to 'dim'. Defaults to None.
+
+        Returns:
+            WordLlamaInference: The loaded WordLlama model.
+
+        Raises:
+            ValueError: If the configuration is not found or dimensions are invalid.
+            FileNotFoundError: If the weights file is not found in either the weights directory or cache directory.
+        """
+        if isinstance(config, str):
+            config_obj = Config._configurations.get(config, None)
+            if config_obj is None:
+                raise ValueError(f"Configuration '{config}' not found.")
+        elif isinstance(config, WordLlamaConfig):
+            config_obj = config
+        else:
+            raise ValueError(
+                "Invalid configuration type provided. It must be either a string or an instance of WordLlamaConfig."
+            )
+
+        assert (
+            dim in config_obj.matryoshka.dims
+        ), f"Model dimension must be one of matryoshka dims in config: {config_obj.matryoshka.dims}"
+        if trunc_dim is not None:
+            assert (
+                trunc_dim <= dim
+            ), f"Cannot truncate to dimension lower than model dimension ({trunc_dim} > {dim})"
+            assert trunc_dim in config_obj.matryoshka.dims
+
+        model_uri = getattr(
+            cls, config
+        )  # this must have a class property and matching config name
+
+        # Check and download model weights
+        weights_file_path = cls.check_and_download_model(
+            config_name=config,
+            dim=dim,
+            binary=binary,
+            weights_dir=weights_dir,
+            cache_dir=cache_dir,
+        )
+
+        # Check and download tokenizer config if necessary
+        tokenizer_file_path = cls.check_and_download_tokenizer(
+            config_name=config, tokenizer_filename=model_uri.tokenizer_config
+        )
 
         # Load the tokenizer
+        tokenizer = cls.load_tokenizer(tokenizer_file_path, config_obj)
+
+        # Load the model weights
+        with safe_open(weights_file_path, framework="np", device="cpu") as f:
+            embedding = f.get_tensor("embedding.weight")
+            if trunc_dim: # truncate dimension
+                embedding = embedding[:, 0:trunc_dim]
+
+        logger.info(f"Loading weights from: {weights_file_path}")
+        return WordLlamaInference(embedding, config_obj, tokenizer)
+
+    @staticmethod
+    def load_tokenizer(tokenizer_file_path: Path, config: WordLlamaConfig) -> Tokenizer:
+        """
+        Load the tokenizer from a local file or from the Hugging Face repository.
+        First, it checks the default path, then the cache directory.
+
+        Args:
+            tokenizer_file_path (Path): The path to the tokenizer configuration file.
+            config (WordLlamaConfig): The configuration for the WordLlama model.
+
+        Returns:
+            Tokenizer: An instance of the Tokenizer class.
+        """
         if (
             config.tokenizer.inference is not None
             and config.tokenizer.inference.use_local_config
         ):
-            config_path = config.tokenizer.inference.config_filename
-            self.tokenizer = tokenizer_from_file(config_path)
-        else:
-            self.tokenizer = Tokenizer.from_pretrained(self.config.model.hf_model_id)
+            # Check in the default path
+            if tokenizer_file_path.exists():
+                logger.info(
+                    f"Loading tokenizer from default path: {tokenizer_file_path}"
+                )
+                return tokenizer_from_file(tokenizer_file_path)
 
-        # default settings for all inference
-        self.tokenizer.enable_padding()
-        self.tokenizer.no_truncation()
+            warnings.warn(
+                f"Tokenizer config file not found in both default and cache paths. Falling back to Hugging Face model: {config.model.hf_model_id}"
+            )
 
-    @classmethod
-    def build(
-        cls, weights_file: str, config: WordLlamaConfig, trunc_dim: Optional[int] = None
-    ):
-        """
-        Build a WordLlama instance from a weights file and configuration.
-
-        Args:
-            weights_file (str): Path to the file containing the embedding weights.
-            config (WordLlamaConfig): Configuration for the WordLlama instance.
-            trunc_dim (Optional[int]): Optional dimension to truncate the embeddings to.
-
-        Returns:
-            WordLlama: An instance of the WordLlama class.
-        """
-        with safe_open(weights_file, framework="np", device="cpu") as f:
-            embedding = f.get_tensor("embedding.weight")
-            if trunc_dim:
-                embedding = embedding[:, 0:trunc_dim]
-
-        return cls(embedding, config)
-
-    def tokenize(self, texts: Union[str, List[str]]) -> List:
-        """
-        Tokenize input texts using the configured tokenizer.
-
-        Args:
-            texts (Union[str, List[str]]): Single string or list of strings to tokenize.
-
-        Returns:
-            List: List of tokenized and encoded text data.
-        """
-        if isinstance(texts, str):
-            texts = [texts]
-        else:
-            assert isinstance(texts, list), "Input texts must be str or List[str]"
-
-        return self.tokenizer.encode_batch(
-            texts, is_pretokenized=False, add_special_tokens=False
-        )
-
-    def embed(
-        self,
-        texts: Union[str, List[str]],
-        norm: bool = False,
-        binarize: bool = False,
-        pack: bool = True,
-        return_np: bool = True,
-    ) -> Union[np.ndarray, List]:
-        """
-        Generate embeddings for input texts with options for normalization and binarization.
-
-        Args:
-            texts (Union[str, List[str]]): Texts to embed.
-            norm (bool): Apply normalization to embeddings.
-            binarize (bool): Convert embeddings to binary format.
-            pack (bool): Pack binary data into bits.
-            return_np (bool): Return result as a numpy array if True, otherwise as a list.
-
-        Returns:
-            Union[np.ndarray, List]: Embeddings as numpy array or list.
-        """
-        # Tokenize the texts
-        encoded_texts = self.tokenize(texts)
-        input_ids = np.array([enc.ids for enc in encoded_texts], dtype=np.int32)
-        attention_mask = np.array(
-            [enc.attention_mask for enc in encoded_texts], dtype=np.int32
-        )
-
-        # Clamp out-of-bounds input_ids
-        input_ids = np.clip(input_ids, 0, self.embedding.shape[0] - 1)
-
-        # Compute the embeddings
-        x = self.embedding[input_ids]
-
-        # Apply average pooling
-        x = self.avg_pool(x, attention_mask, norm=norm)
-
-        if binarize:
-            x = x > 0
-            if pack:
-                x = np.packbits(x, axis=-1)
-                x = x.view(np.uint32)  # Change to uint32
-
-        if return_np:
-            return x
-
-        return x.tolist()
-
-    @staticmethod
-    def avg_pool(x: np.ndarray, mask: np.ndarray, norm: bool = False) -> np.ndarray:
-        """
-        Apply average pooling to the embeddings.
-
-        Args:
-            x (np.ndarray): The input embeddings.
-            mask (np.ndarray): The attention mask indicating which tokens to consider.
-            norm (bool): Whether to normalize the embeddings.
-
-        Returns:
-            np.ndarray: The pooled embeddings.
-        """
-        x = np.sum(x * mask[..., np.newaxis], axis=1) / np.maximum(
-            mask.sum(axis=1, keepdims=True) + 1e-9, 1
-        )
-
-        if norm:
-            x = x / np.linalg.norm(x + 1e-9, axis=-1, keepdims=True)
-        return x
-
-    @staticmethod
-    def hamming_similarity(a: np.ndarray, b: np.ndarray) -> Union[float, np.ndarray]:
-        """
-        Calculate the Hamming similarity between a single vector and one or more vectors.
-
-        Parameters:
-        - a (np.ndarray): A single dimension vector of dtype np.uint32.
-        - b (np.ndarray): A single dimension vector or a 2D array of dtype np.uint32 with shape (batch_size, vec_dim).
-
-        Returns:
-        - Union[float, np.ndarray]: The Hamming similarity as a float if b is a single dimension vector,
-                                    or a numpy array of floats if b is a 2D array.
-        """
-        assert a.ndim == 1, "a must be a single dimension vector"
-        assert a.dtype == np.uint32, "a must be of dtype np.uint32"
-        assert b.dtype == np.uint32, "b must be of dtype np.uint32"
-
-        if b.ndim == 1:
-            b = np.expand_dims(b, axis=0)
-        assert b.ndim == 2, "b must be a single dimension vector or a 2D array"
-
-        max_dist = a.size * 32
-
-        # Calculate Hamming distance
-        xor_result = np.bitwise_xor(a, b)
-        dist = np.sum(np.unpackbits(xor_result.view(np.uint8), axis=1), axis=1)
-
-        return 1.0 - 2.0 * (dist / max_dist)
-
-    @staticmethod
-    def cosine_similarity(a: np.ndarray, b: np.ndarray) -> Union[float, np.ndarray]:
-        """
-        Calculate the cosine similarity between a single vector and one or more vectors.
-
-        Parameters:
-        - a (np.ndarray): A single dimension vector of dtype float16, float32, or float64.
-        - b (np.ndarray): A single dimension vector or a 2D array of dtype float16, float32, or float64.
-
-        Returns:
-        - Union[float, np.ndarray]: The cosine similarity as a float if b is a single dimension vector,
-                                    or a numpy array of floats if b is a 2D array.
-        """
-        assert a.dtype in (
-            np.float16,
-            np.float32,
-            np.float64,
-        ), "Input vectors must be of type float16, float32, or float64."
-        assert b.dtype in (
-            np.float16,
-            np.float32,
-            np.float64,
-        ), "Input vectors must be of type float16, float32, or float64."
-        epsilon = 1e-9  # Small value to prevent division by zero
-
-        if b.ndim == 1:
-            b = np.expand_dims(b, axis=0)
-        assert b.ndim == 2, "b must be a single dimension vector or a 2D array"
-
-        assert a.ndim == 1
-        a = np.expand_dims(a, axis=0)
-
-        # Normalize the vectors
-        a_norm = np.linalg.norm(a, axis=1, keepdims=True)
-        b_norm = np.linalg.norm(b, axis=1, keepdims=True)
-
-        # Calculate cosine similarity
-        cosine_sim = np.dot(a, b.T) / (a_norm * b_norm.T + epsilon)
-        return cosine_sim.flatten()
-
-    def similarity(self, text1, text2, use_hamming=False):
-        """
-        Compare two strings and return their similarity score.
-
-        Parameters:
-        - text1 (str): The first text.
-        - text2 (str): The second text.
-        - use_hamming (bool): If True, use Hamming similarity. Otherwise, use cosine similarity.
-
-        Returns:
-        - float: The similarity score.
-        """
-        if use_hamming:
-            embedding1 = self.embed(text1, binarize=True, pack=True)
-            embedding2 = self.embed(text2, binarize=True, pack=True)
-            return self.hamming_similarity(embedding1[0], embedding2[0]).item()
-        else:
-            embedding1 = self.embed(text1)
-            embedding2 = self.embed(text2)
-            return self.cosine_similarity(embedding1[0], embedding2[0]).item()
-
-    def rank(self, query, docs, use_hamming=False):
-        """
-        Rank a list of documents based on their similarity to a query.
-
-        Parameters:
-        - query (str): The query text.
-        - docs (list of str): The list of document texts.
-        - use_hamming (bool): If True, use Hamming similarity. Otherwise, use cosine similarity.
-
-        Returns:
-        - list of tuple: A list of (doc, score) tuples, sorted by score in descending order.
-        """
-        if use_hamming:
-            query_embedding = self.embed(query, binarize=True, pack=True)
-            doc_embeddings = self.embed(docs, binarize=True, pack=True)
-            scores = self.hamming_similarity(query_embedding[0], doc_embeddings)
-        else:
-            query_embedding = self.embed(query)
-            doc_embeddings = self.embed(docs)
-            scores = self.cosine_similarity(query_embedding[0], doc_embeddings)
-
-        similarities = list(zip(docs, scores.tolist()))
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        return similarities
+        # Load from Hugging Face if local config is not used or not found
+        return Tokenizer.from_pretrained(config.model.hf_model_id)

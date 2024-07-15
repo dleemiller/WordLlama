@@ -56,6 +56,8 @@ class WordLlamaEmbedding(nn.Module):
     def tokenize(self, *args, **kwargs):
         texts = list(args).pop(0)
         texts = [texts] if isinstance(texts, str) else texts
+        if "inference" in self.tokenizer_kwargs:
+            del self.tokenizer_kwargs["inference"]
         return self.tokenizer(texts, **self.tokenizer_kwargs)
 
     @torch.inference_mode()

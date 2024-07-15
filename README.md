@@ -28,10 +28,10 @@ pip install wordllama
 
 Load the 256-dim model.
 ```python
-from wordllama import load
+from wordllama import WordLlama
 
-# Load the WordLlama model
-wl = load()
+# Load the default WordLlama model
+wl = WordLlama.load()
 
 # Calculate similarity between two sentences
 similarity_score = wl.similarity("i went to the car", "i went to the pawn shop")
@@ -94,11 +94,11 @@ I anticipate the best results will come from training using the Llama3 405B code
 Here’s how you can load pre-trained embeddings and use them to embed text:
 
 ```python
-from wordllama import load
+from wordllama import WordLlama
 
 # Load pre-trained embeddings
 # truncate dimension to 64
-wl = load(trunc_dim=64)
+wl = WordLlama.load(trunc_dim=64)
 
 # Embed text
 embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all that jazz"])
@@ -110,11 +110,11 @@ Binary embedding models can be used like this (models not yet released):
 ```python
 # Binary embeddings are packed into uint32
 # 64-dims => array of 2x uint32 
-wl = load(trunc_dim=64, binary=True)
+wl = WordLlama.load(trunc_dim=64, binary=True)  # this will download the binary model from huggingface
 wl.embed("I went to the car", binarize=True, pack=True) # Output: array([[3029168104, 2427562626]], dtype=uint32)
 
 # load binary trained model trained with straight through estimator
-wl = load(dim=1024, binary=True)
+wl = WordLlama.load(dim=1024, binary=True)
 
 # Use the use_hamming flag to binarize
 similarity_score = wl.similarity("i went to the car", "i went to the pawn shop", use_hamming=True)
@@ -137,8 +137,6 @@ L2 Supercat was trained using a batch size of 512 on a single A100 for 12 hours.
 
 - Test distillation training from a larger embedding model
 - Retrain on llama3 405B (waiting on release...), concat with llama guard 2, llama3 70B
-- Select and figure out hosting for Llama3 weights (128k vocab is size prohibitive for github free tier)
-- Add download() or from_pretrained() option for downloading additional weights from huggingface
 - Upload binary models
 
 ## Extracting Token Embeddings

@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "toml"]
+requires = ["setuptools>=42", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "wordllama"
-version = "0.2.0"
+dynamic = ["version"]
 description = "WordLlama Embedding and Training"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
@@ -33,9 +33,14 @@ train = [
 Homepage = "https://github.com/dleemiller"
 Repository = "https://github.com/dleemiller/WordLlama"
 
+[tool.setuptools]
+packages = ["wordllama"]
+
 [tool.setuptools.package-data]
 wordllama = ["**/*.toml", "tokenizers/*.json", "weights/*.safetensors"]
 
 [tool.setuptools.dynamic]
 classifiers = { file = "classifiers.txt" }
 
+[tool.setuptools_scm]
+write_to = "wordllama/_version.py"

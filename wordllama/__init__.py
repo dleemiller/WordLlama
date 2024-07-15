@@ -1,27 +1,40 @@
-# wordllama/__init__.py
+"""
+WordLlama: A package for embedding and training word representations.
+
+This package provides tools for working with word embeddings, including
+the WordLlama class for managing embeddings and associated configurations.
+"""
+
 import toml
 import pathlib
 import logging
+from typing import Union, Optional
+
 from .wordllama import WordLlama
 from .config import Config, WordLlamaConfig
-
-from typing import Union, Optional
+from ._version import __version__
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-def get_version():
-    pyproject_path = pathlib.Path(__file__).parent.parent / "pyproject.toml"
-    pyproject_content = toml.load(pyproject_path)
-    return pyproject_content["project"]["version"]
-
-
-__version__ = get_version()
+__all__ = ["WordLlama", "Config", "WordLlamaConfig", "load_training", "__version__"]
 
 
 def load_training(weights, config, dims=None):
-    from wordllama.embedding.word_llama_embedding import WordLlamaEmbedding
+    """
+    Load a WordLlamaEmbedding model for training.
 
-    return WordLlamaEmbedding.build(weights, config, dims=dims)
+    This function requires additional dependencies. If they're not installed,
+    an ImportError will be raised.
+    """
+    try:
+        from .embedding.word_llama_embedding import WordLlamaEmbedding
+
+        return WordLlamaEmbedding.build(weights, config, dims=dims)
+    except ImportError:
+        logger.error(
+            "Required dependencies for training are not installed. "
+            "Please install wordllama with the 'train' extra."
+        )
+        raise

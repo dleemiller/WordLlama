@@ -84,7 +84,7 @@ You can perform your own llm surgery and train your own model on consumer GPUs i
 | CQA DupStack           | 18.76       | 22.54        | 24.12        | 24.59        | 24.83         | 15.47      | 16.79    | 41.32            |
 | SummEval               | 30.79       | 29.99        | 30.99        | 29.56        | 29.39         | 28.87      | 30.49    | 30.81            |
 
-The "l2_supercat" is a Llama2-vocabulary model. To train this model, I concatenated codebooks from several models, including Llama2 70B and phi3 medium (after removing additional special tokens).
+The [l2_supercat](https://huggingface.co/dleemiller/word-llama-l2-supercat) is a Llama2-vocabulary model. To train this model, I concatenated codebooks from several models, including Llama2 70B and phi3 medium (after removing additional special tokens).
 Because several models have used the Llama2 tokenizer, their codebooks can be concatenated and trained together. Performance of the resulting model is comparable to training the Llama3 70B codebook, while being 4x smaller (32k vs 128k vocabulary).
 
 I anticipate the best results will come from training using the Llama3 405B codebook, when released.
@@ -122,9 +122,8 @@ print(similarity_score)  # Output: 0.57421875
 
 ranked_docs = wl.rank("i went to the car", ["van", "truck"], use_hamming=False)
 
-# load a different model class (planned)
-download("llama3_400B")  # Not yet implemented
-wl = load(config="llama3_400B", dim=1024)
+# load a different model class
+wl = WordLlama.load(config="llama3_400B", dim=1024) # downloads model from HF
 ```
 
 ## Training Notes

@@ -88,13 +88,13 @@ class WordLlama:
         cached_file_path = cache_dir / filename
 
         if not force_download and cached_file_path.exists():
-            logger.info(f"File {filename} exists in cache. Using cached version.")
+            logger.debug(f"File {filename} exists in cache. Using cached version.")
             return cached_file_path
 
         url = f"https://huggingface.co/{repo_id}/resolve/main/{filename}"
         headers = {"Authorization": f"Bearer {token}"} if token else {}
 
-        logger.info(f"Downloading {filename} from {url}")
+        logger.debug(f"Downloading {filename} from {url}")
 
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
@@ -103,7 +103,7 @@ class WordLlama:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
 
-        logger.info(f"File {filename} downloaded and cached at {cached_file_path}")
+        logger.debug(f"File {filename} downloaded and cached at {cached_file_path}")
 
         return cached_file_path
 
@@ -139,12 +139,12 @@ class WordLlama:
         weights_file_path = weights_dir / filename
 
         if not weights_file_path.exists():
-            logger.info(
+            logger.debug(
                 f"Weights file '{filename}' not found in '{weights_dir}'. Checking cache directory..."
             )
             weights_file_path = cache_dir / filename
             if not weights_file_path.exists():
-                logger.info(
+                logger.debug(
                     f"Weights file '{filename}' not found in cache directory '{cache_dir}'. Downloading..."
                 )
                 weights_file_path = cls.download_file_from_hf(
@@ -176,7 +176,7 @@ class WordLlama:
         tokenizer_file_path = cache_dir / tokenizer_filename
 
         if not tokenizer_file_path.exists():
-            logger.info(
+            logger.debug(
                 f"Tokenizer config '{tokenizer_filename}' not found in cache directory '{cache_dir}'. Downloading..."
             )
             tokenizer_file_path = cls.download_file_from_hf(
@@ -264,10 +264,10 @@ class WordLlama:
         # Load the model weights
         with safe_open(weights_file_path, framework="np", device="cpu") as f:
             embedding = f.get_tensor("embedding.weight")
-            if trunc_dim: # truncate dimension
+            if trunc_dim:  # truncate dimension
                 embedding = embedding[:, 0:trunc_dim]
 
-        logger.info(f"Loading weights from: {weights_file_path}")
+        logger.debug(f"Loading weights from: {weights_file_path}")
         return WordLlamaInference(embedding, config_obj, tokenizer)
 
     @staticmethod
@@ -289,7 +289,7 @@ class WordLlama:
         ):
             # Check in the default path
             if tokenizer_file_path.exists():
-                logger.info(
+                logger.debug(
                     f"Loading tokenizer from default path: {tokenizer_file_path}"
                 )
                 return tokenizer_from_file(tokenizer_file_path)

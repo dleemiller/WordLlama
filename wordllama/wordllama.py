@@ -1,5 +1,6 @@
 import logging
 import requests
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Union, Optional, List
@@ -263,7 +264,7 @@ class WordLlama:
         # Load the model weights
         with safe_open(weights_file_path, framework="np", device="cpu") as f:
             embedding = f.get_tensor("embedding.weight")
-            if trunc_dim:
+            if trunc_dim: # truncate dimension
                 embedding = embedding[:, 0:trunc_dim]
 
         logger.info(f"Loading weights from: {weights_file_path}")

@@ -166,8 +166,7 @@ class WordLlamaInference:
         b = WordLlamaInference.normalize_embeddings(b)
 
         # Calculate cosine similarity
-        cosine_sim = np.dot(a, b.T)
-        return cosine_sim
+        return a @ b.T
 
     def vector_similarity(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         """

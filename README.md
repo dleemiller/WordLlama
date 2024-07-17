@@ -178,7 +178,7 @@ If you use WordLlama in your research or project, please consider citing it as f
   title = {WordLlama: Recycled Token Embeddings from Large Language Models},
   year = {2024},
   url = {https://github.com/dleemiller/wordllama},
-  version = {0.2.0}
+  version = {0.2.1}
 }
 ```
 

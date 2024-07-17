@@ -83,9 +83,7 @@ class TestWordLlamaInference(unittest.TestCase):
     )
     def test_deduplicate_cosine(self, mock_embed):
         docs = ["doc1", "doc1_dup", "doc2", "doc1_dup2"]
-        deduplicated_docs = self.model.deduplicate(
-            docs, threshold=0.9, use_hamming=False
-        )
+        deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
         self.assertEqual(len(deduplicated_docs), 2)
         self.assertIn("doc1", deduplicated_docs)
         self.assertIn("doc2", deduplicated_docs)
@@ -99,9 +97,8 @@ class TestWordLlamaInference(unittest.TestCase):
     )
     def test_deduplicate_hamming(self, mock_embed):
         docs = ["doc1", "doc1_dup", "doc2", "doc1_dup2"]
-        deduplicated_docs = self.model.deduplicate(
-            docs, threshold=0.9, use_hamming=True
-        )
+        self.model.binary = True
+        deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
         self.assertEqual(len(deduplicated_docs), 2)
         self.assertIn("doc1", deduplicated_docs)
         self.assertIn("doc2", deduplicated_docs)
@@ -112,16 +109,14 @@ class TestWordLlamaInference(unittest.TestCase):
         return_value=np.array(
             [
                 [0.1] * 64,
-                np.concat([np.random.rand(32), np.zeros(32)], axis=0),
-                np.concat([np.zeros(32), np.random.rand(32)]),
+                np.concatenate([np.random.rand(32), np.zeros(32)], axis=0),
+                np.concatenate([np.zeros(32), np.random.rand(32)]),
             ]
         ),
     )
     def test_deduplicate_no_duplicates(self, mock_embed):
         docs = ["doc1", "doc2", "doc3"]
-        deduplicated_docs = self.model.deduplicate(
-            docs, threshold=0.9, use_hamming=False
-        )
+        deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
         self.assertEqual(len(deduplicated_docs), 3)
         self.assertIn("doc1", deduplicated_docs)
         self.assertIn("doc2", deduplicated_docs)
@@ -134,9 +129,7 @@ class TestWordLlamaInference(unittest.TestCase):
     )
     def test_deduplicate_all_duplicates(self, mock_embed):
         docs = ["doc1", "doc1_dup", "doc1_dup2"]
-        deduplicated_docs = self.model.deduplicate(
-            docs, threshold=0.9, use_hamming=False
-        )
+        deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
         self.assertEqual(len(deduplicated_docs), 1)
         self.assertIn("doc1", deduplicated_docs)
 
@@ -162,9 +155,7 @@ class TestWordLlamaInference(unittest.TestCase):
             MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]),
             MagicMock(ids=[4, 5, 6], attention_mask=[1, 1, 1]),
         ]
-        sim_score = self.model.similarity(
-            "test string 1", "test string 2", use_hamming=False
-        )
+        sim_score = self.model.similarity("test string 1", "test string 2")
         self.assertTrue(isinstance(sim_score, float))
 
     def test_similarity_hamming(self):
@@ -172,10 +163,30 @@ class TestWordLlamaInference(unittest.TestCase):
             MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]),
             MagicMock(ids=[4, 5, 6], attention_mask=[1, 1, 1]),
         ]
-        sim_score = self.model.similarity(
-            "test string 1", "test string 2", use_hamming=True
-        )
+
+        self.model.binary = True
+        sim_score = self.model.similarity("test string 1", "test string 2")
         self.assertTrue(isinstance(sim_score, float))
+
+    def test_vector_similarity(self):
+        self.mock_tokenizer.encode_batch.return_value = [
+            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]),
+            MagicMock(ids=[4, 5, 6], attention_mask=[1, 1, 1]),
+        ]
+
+        with patch.object(self.model, "cosine_similarity") as mock_cosine:
+            mock_cosine.return_value = np.array([[0.5]])
+            self.model.binary = False
+            sim_score = self.model.similarity("test string 1", "test string 2")
+            self.assertTrue(isinstance(sim_score, float))
+            mock_cosine.assert_called_once()
+
+        with patch.object(self.model, "hamming_similarity") as mock_hamming:
+            mock_hamming.return_value = np.array([[0.5]])
+            self.model.binary = True
+            sim_score = self.model.similarity("test string 1", "test string 2")
+            self.assertTrue(isinstance(sim_score, float))
+            mock_hamming.assert_called_once()
 
     def test_rank_cosine(self):
         self.mock_tokenizer.encode_batch.return_value = [
@@ -184,7 +195,7 @@ class TestWordLlamaInference(unittest.TestCase):
             MagicMock(ids=[7, 8, 9], attention_mask=[1, 1, 1]),
         ]
         docs = ["doc1", "doc2", "doc3"]
-        ranked_docs = self.model.rank("test query", docs, use_hamming=False)
+        ranked_docs = self.model.rank("test query", docs)
         self.assertEqual(len(ranked_docs), len(docs))
         self.assertTrue(all(isinstance(score, float) for doc, score in ranked_docs))
 
@@ -195,9 +206,15 @@ class TestWordLlamaInference(unittest.TestCase):
             MagicMock(ids=[7, 8, 9], attention_mask=[1, 1, 1]),
         ]
         docs = ["doc1", "doc2", "doc3"]
-        ranked_docs = self.model.rank("test query", docs, use_hamming=True)
-        self.assertEqual(len(ranked_docs), len(docs))
-        self.assertTrue(all(isinstance(score, float) for doc, score in ranked_docs))
+
+        with patch.object(self.model, "hamming_similarity") as mock_hamming:
+            mock_hamming.return_value = np.array([[0.5, 0.7, 0.6]])
+            self.model.binary = True
+            ranked_docs = self.model.rank("test query", docs)
+
+            mock_hamming.assert_called_once()  # check setting binary calls hamming
+            self.assertEqual(len(ranked_docs), len(docs))
+            self.assertTrue(all(isinstance(score, float) for doc, score in ranked_docs))
 
     def test_instantiate_with_truncation(self):
         truncated_embedding = np.random.rand(128256, 32)
@@ -213,7 +230,8 @@ class TestWordLlamaInference(unittest.TestCase):
             self.model.embed(np.array([1, 2]))
 
     def test_binarization_and_packing(self):
-        binary_output = self.model.embed("test string", binarize=True, pack=True)
+        self.model.binary = True
+        binary_output = self.model.embed("test string")
         self.assertIsInstance(binary_output, np.ndarray)
         self.assertEqual(binary_output.dtype, np.uint32)
 
@@ -223,14 +241,14 @@ class TestWordLlamaInference(unittest.TestCase):
         self.assertAlmostEqual(norm, 1, places=5)
 
     def test_cosine_similarity_direct(self):
-        vec1 = np.random.rand(64)
-        vec2 = np.random.rand(64)
+        vec1 = np.random.rand(1, 64)
+        vec2 = np.random.rand(1, 64)
         result = WordLlamaInference.cosine_similarity(vec1, vec2)
         self.assertIsInstance(result.item(), float)
 
     def test_hamming_similarity_direct(self):
-        vec1 = np.random.randint(2, size=64, dtype=np.uint32)
-        vec2 = np.random.randint(2, size=64, dtype=np.uint32)
+        vec1 = np.expand_dims(np.random.randint(2, size=64, dtype=np.uint32), axis=0)
+        vec2 = np.expand_dims(np.random.randint(2, size=64, dtype=np.uint32), axis=0)
         result = WordLlamaInference.hamming_similarity(vec1, vec2)
         self.assertIsInstance(result.item(), float)
 

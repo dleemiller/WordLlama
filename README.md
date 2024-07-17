@@ -38,7 +38,9 @@ similarity_score = wl.similarity("i went to the car", "i went to the pawn shop")
 print(similarity_score)  # Output: 0.06641249096796882
 
 # Rank documents based on their similarity to a query
-ranked_docs = wl.rank("i went to the car", ["i went to the park", "i went to the shop", "i went to the truck", "i went to the vehicle"], use_hamming=False)
+query = "i went to the car"
+candidates = ["i went to the park", "i went to the shop", "i went to the truck", "i went to the vehicle"]
+ranked_docs = wl.rank(query, candidates)
 print(ranked_docs)
 # Output:
 # [
@@ -47,6 +49,11 @@ print(ranked_docs)
 #   ('i went to the shop', 0.19732814982305436),
 #   ('i went to the park', 0.15101404519322253)
 # ]
+
+# additional inference methods
+wl.deduplicate(candidates, threshold=0.8) # fuzzy deduplication
+wl.filter(query, candidates, threshold=0.3) # filter candidates based on query
+wl.topk(query, candidates, k=3) # return topk strings based on query
 ```
 
 ## What is it?
@@ -105,22 +112,24 @@ embeddings = wl.embed(["the quick brown fox jumps over the lazy dog", "and all t
 print(embeddings.shape)  # (2, 64)
 ```
 
-Binary embedding models can be used like this (models not yet released):
+Binary embedding models can be used like this:
 
 ```python
 # Binary embeddings are packed into uint32
 # 64-dims => array of 2x uint32 
 wl = WordLlama.load(trunc_dim=64, binary=True)  # this will download the binary model from huggingface
-wl.embed("I went to the car", binarize=True, pack=True) # Output: array([[3029168104, 2427562626]], dtype=uint32)
+wl.embed("I went to the car") # Output: array([[3029168104, 2427562626]], dtype=uint32)
 
 # load binary trained model trained with straight through estimator
 wl = WordLlama.load(dim=1024, binary=True)
 
-# Use the use_hamming flag to binarize
-similarity_score = wl.similarity("i went to the car", "i went to the pawn shop", use_hamming=True)
+# Uses the hamming similarity to binarize
+similarity_score = wl.similarity("i went to the car", "i went to the pawn shop")
 print(similarity_score)  # Output: 0.57421875
 
-ranked_docs = wl.rank("i went to the car", ["van", "truck"], use_hamming=False)
+ranked_docs = wl.rank("i went to the car", ["van", "truck"])
+
+wl.binary = False # turn off hamming and use cosine
 
 # load a different model class
 wl = WordLlama.load(config="llama3_400B", dim=1024) # downloads model from HF
@@ -136,7 +145,6 @@ L2 Supercat was trained using a batch size of 512 on a single A100 for 12 hours.
 
 - Test distillation training from a larger embedding model
 - Retrain on llama3 405B (waiting on release...), concat with llama guard 2, llama3 70B
-- Upload binary models
 
 ## Extracting Token Embeddings
 

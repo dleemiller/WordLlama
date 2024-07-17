@@ -94,7 +94,7 @@ class WordLlama:
         url = f"https://huggingface.co/{repo_id}/resolve/main/{filename}"
         headers = {"Authorization": f"Bearer {token}"} if token else {}
 
-        logger.debug(f"Downloading {filename} from {url}")
+        logger.info(f"Downloading {filename} from {url}")
 
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
@@ -155,17 +155,17 @@ class WordLlama:
                 if binary:
                     assert (
                         dim in model_uri.binary_dims
-                    ), f"Dimension must be one of {model_uril.binary_dims}"
+                    ), f"Dimension must be one of {model_uri.binary_dims}"
                 else:
                     assert (
                         dim in model_uri.available_dims
-                    ), f"Dimension must be one of {model_uril.available_dims}"
+                    ), f"Dimension must be one of {model_uri.available_dims}"
 
                 logger.debug(
                     f"Weights file '{filename}' not found in cache directory '{cache_dir}'. Downloading..."
                 )
                 weights_file_path = cls.download_file_from_hf(
-                    repo_id=model_uril.repo_id, filename=filename
+                    repo_id=model_uri.repo_id, filename=filename
                 )
 
         if not weights_file_path.exists():
@@ -293,7 +293,7 @@ class WordLlama:
                 embedding = embedding[:, 0:trunc_dim]
 
         logger.debug(f"Loading weights from: {weights_file_path}")
-        return WordLlamaInference(embedding, config_obj, tokenizer)
+        return WordLlamaInference(embedding, config_obj, tokenizer, binary=binary)
 
     @staticmethod
     def load_tokenizer(tokenizer_file_path: Path, config: WordLlamaConfig) -> Tokenizer:

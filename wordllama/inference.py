@@ -12,8 +12,13 @@ logger = logging.getLogger(__name__)
 
 class WordLlamaInference:
     def __init__(
-        self, embedding: np.array, config: WordLlamaConfig, tokenizer: Tokenizer
+        self,
+        embedding: np.array,
+        config: WordLlamaConfig,
+        tokenizer: Tokenizer,
+        binary: bool = False,
     ):
+        self.binary = binary
         self.embedding = embedding
         self.config = config
         self.tokenizer = tokenizer
@@ -46,9 +51,8 @@ class WordLlamaInference:
         self,
         texts: Union[str, List[str]],
         norm: bool = False,
-        binarize: bool = False,
-        pack: bool = True,
         return_np: bool = True,
+        pool_embeddings: bool = True,
     ) -> Union[np.ndarray, List]:
         """
         Generate embeddings for input texts with options for normalization and binarization.
@@ -56,9 +60,8 @@ class WordLlamaInference:
         Args:
             texts (Union[str, List[str]]): Texts to embed.
             norm (bool): Apply normalization to embeddings.
-            binarize (bool): Convert embeddings to binary format.
-            pack (bool): Pack binary data into bits.
             return_np (bool): Return result as a numpy array if True, otherwise as a list.
+            pool_embeddings (bool): Apply average pooling to embeddings.
 
         Returns:
             Union[np.ndarray, List]: Embeddings as numpy array or list.
@@ -75,6 +78,8 @@ class WordLlamaInference:
 
         # Compute the embeddings
         x = self.embedding[input_ids]
+        if not pool_embeddings:
+            return x
 
         # Apply average pooling
         x = self.avg_pool(x, attention_mask)
@@ -82,11 +87,10 @@ class WordLlamaInference:
         if norm:
             x = self.normalize_embeddings(x)
 
-        if binarize:
+        if self.binary:
             x = x > 0
-            if pack:
-                x = np.packbits(x, axis=-1)
-                x = x.view(np.uint32)  # Change to uint32
+            x = np.packbits(x, axis=-1)
+            x = x.view(np.uint32)  # Change to uint32
 
         if return_np:
             return x
@@ -106,7 +110,7 @@ class WordLlamaInference:
             np.ndarray: The pooled embeddings.
         """
         x = np.sum(x * mask[..., np.newaxis], axis=1) / np.maximum(
-            mask.sum(axis=1, keepdims=True) + 1e-9, 1
+            mask.sum(axis=1, keepdims=True), 1
         )
 
         return x
@@ -131,23 +135,12 @@ class WordLlamaInference:
         Calculate the Hamming similarity between vectors.
 
         Parameters:
-        - a (np.ndarray): A 1D or 2D array of dtype np.uint32.
-        - b (np.ndarray): A 1D or 2D array of dtype np.uint32.
+        - a (np.ndarray): A 2D array of dtype np.uint32.
+        - b (np.ndarray): A 2D array of dtype np.uint32.
 
         Returns:
         - np.ndarray: A 2D array of Hamming similarity scores.
         """
-        assert a.dtype == np.uint32, "a must be of dtype np.uint32"
-        assert b.dtype == np.uint32, "b must be of dtype np.uint32"
-
-        if a.ndim == 1:
-            a = np.expand_dims(a, axis=0)
-        if b.ndim == 1:
-            b = np.expand_dims(b, axis=0)
-
-        assert a.ndim == 2, "a must be a 2D array"
-        assert b.ndim == 2, "b must be a 2D array"
-
         max_dist = a.shape[1] * 32
 
         # Calculate Hamming distance
@@ -162,23 +155,30 @@ class WordLlamaInference:
         Calculate the cosine similarity between vectors.
 
         Parameters:
-        - a (np.ndarray): A 1D or 2D array of dtype float16, float32, or float64.
-        - b (np.ndarray): A 1D or 2D array of dtype float16, float32, or float64.
+        - a (np.ndarray): A 2D array of dtype float16, float32, or float64.
+        - b (np.ndarray): A 2D array of dtype float16, float32, or float64.
 
         Returns:
         - np.ndarray: A 2D array of cosine similarity scores.
         """
-        assert a.dtype in (
-            np.float16,
-            np.float32,
-            np.float64,
-        ), "a must be of type float16, float32, or float64."
-        assert b.dtype in (
-            np.float16,
-            np.float32,
-            np.float64,
-        ), "b must be of type float16, float32, or float64."
+        # Normalize the vectors
+        a = WordLlamaInference.normalize_embeddings(a)
+        b = WordLlamaInference.normalize_embeddings(b)
 
+        # Calculate cosine similarity
+        return a @ b.T
+
+    def vector_similarity(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        """
+        Calculate the similarity between vectors based on the binary attribute.
+
+        Parameters:
+        - a (np.ndarray): A 1D or 2D array of vectors.
+        - b (np.ndarray): A 1D or 2D array of vectors.
+
+        Returns:
+        - np.ndarray: A 2D array of similarity scores.
+        """
         if a.ndim == 1:
             a = np.expand_dims(a, axis=0)
         if b.ndim == 1:
@@ -187,58 +187,41 @@ class WordLlamaInference:
         assert a.ndim == 2, "a must be a 2D array"
         assert b.ndim == 2, "b must be a 2D array"
 
-        # Normalize the vectors
-        a = WordLlamaInference.normalize_embeddings(a)
-        b = WordLlamaInference.normalize_embeddings(b)
+        if self.binary:
+            return self.hamming_similarity(a, b)
+        else:
+            return self.cosine_similarity(a, b)
 
-        # Calculate cosine similarity
-        cosine_sim = np.dot(a, b.T)
-        return cosine_sim
-
-    def similarity(self, text1: str, text2: str, use_hamming: bool = False) -> float:
+    def similarity(self, text1: str, text2: str) -> float:
         """
         Compare two strings and return their similarity score.
 
         Parameters:
         - text1 (str): The first text.
         - text2 (str): The second text.
-        - use_hamming (bool): If True, use Hamming similarity. Otherwise, use cosine similarity.
 
         Returns:
         - float: The similarity score.
         """
-        if use_hamming:
-            embedding1 = self.embed(text1, binarize=True, pack=True)
-            embedding2 = self.embed(text2, binarize=True, pack=True)
-            return self.hamming_similarity(embedding1[0], embedding2[0]).item()
-        else:
-            embedding1 = self.embed(text1)
-            embedding2 = self.embed(text2)
-            return self.cosine_similarity(embedding1[0], embedding2[0]).item()
+        embedding1 = self.embed(text1)
+        embedding2 = self.embed(text2)
+        return self.vector_similarity(embedding1[0], embedding2[0]).item()
 
-    def rank(
-        self, query: str, docs: List[str], use_hamming: bool = False
-    ) -> List[tuple]:
+    def rank(self, query: str, docs: List[str]) -> List[tuple]:
         """
         Rank a list of documents based on their similarity to a query.
 
         Parameters:
         - query (str): The query text.
         - docs (list of str): The list of document texts.
-        - use_hamming (bool): If True, use Hamming similarity. Otherwise, use cosine similarity.
 
         Returns:
         - list of tuple: A list of (doc, score) tuples, sorted by score in descending order.
         """
         assert isinstance(query, str), "Query must be a string"
-        if use_hamming:
-            query_embedding = self.embed(query, binarize=True, pack=True)
-            doc_embeddings = self.embed(docs, binarize=True, pack=True)
-            scores = self.hamming_similarity(query_embedding[0], doc_embeddings)
-        else:
-            query_embedding = self.embed(query)
-            doc_embeddings = self.embed(docs)
-            scores = self.cosine_similarity(query_embedding[0], doc_embeddings)
+        query_embedding = self.embed(query)
+        doc_embeddings = self.embed(docs)
+        scores = self.vector_similarity(query_embedding[0], doc_embeddings)
 
         scores = scores.squeeze()
         similarities = list(zip(docs, scores.tolist()))
@@ -246,11 +229,7 @@ class WordLlamaInference:
         return similarities
 
     def deduplicate(
-        self,
-        docs: List[str],
-        threshold: float = 0.9,
-        batch_size: int = 100,
-        use_hamming: bool = False,
+        self, docs: List[str], threshold: float = 0.9, batch_size: int = 100
     ) -> List[str]:
         """
         Deduplicate a list of documents based on similarity threshold.
@@ -259,15 +238,12 @@ class WordLlamaInference:
             docs (List[str]): List of document texts to deduplicate.
             threshold (float): Similarity threshold for deduplication.
             batch_size (int): Batch size for processing embeddings.
-            use_hamming (bool): Whether to use Hamming similarity. If False, uses cosine similarity.
 
         Returns:
             List[str]: Deduplicated list of document texts.
         """
         # Embed all documents
-        doc_embeddings = self.embed(
-            docs, binarize=use_hamming, pack=use_hamming, norm=not use_hamming
-        )
+        doc_embeddings = self.embed(docs, norm=not self.binary)
 
         num_embeddings = doc_embeddings.shape[0]
         duplicate_indices = set()
@@ -285,10 +261,7 @@ class WordLlamaInference:
                 end_j = min(j + batch_size, num_embeddings)
                 batch_j = doc_embeddings[start_j:end_j]
 
-                if use_hamming:
-                    sim_matrix = self.hamming_similarity(batch_i, batch_j)
-                else:
-                    sim_matrix = self.cosine_similarity(batch_i, batch_j)
+                sim_matrix = self.vector_similarity(batch_i, batch_j)
 
                 # Find indices where similarity exceeds the threshold
                 sim_indices = np.argwhere(sim_matrix > threshold)
@@ -305,3 +278,48 @@ class WordLlamaInference:
             doc for idx, doc in enumerate(docs) if idx not in duplicate_indices
         ]
         return unique_docs
+
+    def topk(self, query: str, candidates: List[str], k: int = 3) -> List[str]:
+        """
+        Retrieve the top-k documents based on their similarity to the query.
+
+        Parameters:
+        - query (str): The query text.
+        - candidates (list of str): The list of candidate document texts.
+        - k (int): The number of top documents to return.
+
+        Returns:
+        - list of str: The top-k document texts.
+        """
+        assert (
+            len(candidates) > k
+        ), f"Number of candidates ({len(candidates)}) must be greater than k ({k})"
+        ranked_docs = self.rank(query, candidates)
+        return [doc for doc, score in ranked_docs[:k]]
+
+    def filter(
+        self, query: str, candidates: List[str], threshold: float = 0.3
+    ) -> List[str]:
+        """
+        Filter documents based on their similarity to the query.
+
+        Parameters:
+        - query (str): The query text.
+        - candidates (list of str): The list of candidate document texts.
+        - threshold (float): The similarity threshold for filtering.
+
+        Returns:
+        - list of str: The filtered document texts.
+        """
+        query_embedding = self.embed(query)
+        candidate_embeddings = self.embed(candidates)
+        similarity_scores = self.vector_similarity(
+            query_embedding[0], candidate_embeddings
+        ).squeeze()
+
+        filtered_docs = [
+            doc
+            for doc, score in zip(candidates, similarity_scores)
+            if score > threshold
+        ]
+        return filtered_docs

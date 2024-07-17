@@ -111,7 +111,7 @@ class TestWordLlama(unittest.TestCase):
     @patch("wordllama.wordllama.Path.exists", side_effect=[False, True, True])
     def test_check_and_download_tokenizer(self, mock_exists, mock_download):
         tokenizer_file_path = WordLlama.check_and_download_tokenizer(
-            config_name=self.config_name, tokenizer_filename="tokenizer_config.json"
+            config_name=self.config_name
         )
         self.assertEqual(
             tokenizer_file_path, Path("/dummy/cache/tokenizers/tokenizer_config.json")
@@ -178,12 +178,10 @@ class TestWordLlama(unittest.TestCase):
             binary=False,
             weights_dir=Path("/dummy/weights"),
             cache_dir=Path("/dummy/cache"),
-            disable_download=False
+            disable_download=False,
         )
         mock_check_tokenizer.assert_called_once_with(
-            config_name="l2_supercat",
-            tokenizer_filename="l2_supercat_tokenizer_config.json",
-            disable_download=False
+            config_name="l2_supercat", disable_download=False
         )
         mock_load_tokenizer.assert_called_once()
         mock_safe_open.assert_called_once_with(

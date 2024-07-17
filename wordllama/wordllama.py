@@ -26,7 +26,7 @@ class WordLlama:
     l2_supercat = ModelURI(
         repo_id="dleemiller/word-llama-l2-supercat",
         available_dims=[64, 128, 256, 512, 1024],
-        binary_dims=[],
+        binary_dims=[64, 128, 256, 512, 1024],
         tokenizer_config="l2_supercat_tokenizer_config.json",
     )
 
@@ -94,7 +94,7 @@ class WordLlama:
         url = f"https://huggingface.co/{repo_id}/resolve/main/{filename}"
         headers = {"Authorization": f"Bearer {token}"} if token else {}
 
-        logger.debug(f"Downloading {filename} from {url}")
+        logger.info(f"Downloading {filename} from {url}")
 
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
@@ -150,11 +150,22 @@ class WordLlama:
                     raise FileNotFoundError(
                         f"Weights file '{filename}' not found and downloads are disabled."
                     )
+
+                model_uri = getattr(cls, config_name)
+                if binary:
+                    assert (
+                        dim in model_uri.binary_dims
+                    ), f"Dimension must be one of {model_uri.binary_dims}"
+                else:
+                    assert (
+                        dim in model_uri.available_dims
+                    ), f"Dimension must be one of {model_uri.available_dims}"
+
                 logger.debug(
                     f"Weights file '{filename}' not found in cache directory '{cache_dir}'. Downloading..."
                 )
                 weights_file_path = cls.download_file_from_hf(
-                    repo_id=getattr(cls, config_name).repo_id, filename=filename
+                    repo_id=model_uri.repo_id, filename=filename
                 )
 
         if not weights_file_path.exists():
@@ -166,7 +177,7 @@ class WordLlama:
 
     @classmethod
     def check_and_download_tokenizer(
-        cls, config_name: str, tokenizer_filename: str, disable_download: bool = False
+        cls, config_name: str, disable_download: bool = False
     ) -> Path:
         """
         Check if tokenizer configuration exists locally, if not, download it.
@@ -179,8 +190,9 @@ class WordLlama:
         Returns:
             Path: Path to the tokenizer configuration file.
         """
+        model_uri = getattr(cls, config_name)
         cache_dir = cls.get_cache_dir(is_tokenizer_config=True)
-        tokenizer_file_path = cache_dir / tokenizer_filename
+        tokenizer_file_path = cache_dir / model_uri.tokenizer_config
 
         if not tokenizer_file_path.exists():
             if disable_download:
@@ -189,11 +201,12 @@ class WordLlama:
                 )
 
             logger.debug(
-                f"Tokenizer config '{tokenizer_filename}' not found in cache directory '{cache_dir}'. Downloading..."
+                f"Tokenizer config '{model_uri.tokenizer_config}' not found in cache directory '{cache_dir}'. Downloading..."
             )
+
             tokenizer_file_path = cls.download_file_from_hf(
-                repo_id=getattr(cls, config_name).repo_id,
-                filename=tokenizer_filename,
+                repo_id=model_uri.repo_id,
+                filename=model_uri.tokenizer_config,
                 cache_dir=cache_dir,
             )
 
@@ -254,10 +267,6 @@ class WordLlama:
             ), f"Cannot truncate to dimension lower than model dimension ({trunc_dim} > {dim})"
             assert trunc_dim in config_obj.matryoshka.dims
 
-        model_uri = getattr(
-            cls, config
-        )  # this must have a class property and matching config name
-
         # Check and download model weights
         weights_file_path = cls.check_and_download_model(
             config_name=config,
@@ -271,7 +280,6 @@ class WordLlama:
         # Check and download tokenizer config if necessary
         tokenizer_file_path = cls.check_and_download_tokenizer(
             config_name=config,
-            tokenizer_filename=model_uri.tokenizer_config,
             disable_download=disable_download,
         )
 
@@ -285,7 +293,7 @@ class WordLlama:
                 embedding = embedding[:, 0:trunc_dim]
 
         logger.debug(f"Loading weights from: {weights_file_path}")
-        return WordLlamaInference(embedding, config_obj, tokenizer)
+        return WordLlamaInference(embedding, config_obj, tokenizer, binary=binary)
 
     @staticmethod
     def load_tokenizer(tokenizer_file_path: Path, config: WordLlamaConfig) -> Tokenizer:

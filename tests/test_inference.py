@@ -71,10 +71,74 @@ class TestWordLlamaInference(unittest.TestCase):
         )
 
         self.model = WordLlamaInference(
-            embedding=np.random.rand(128256, 64),
+            embedding=np.random.rand(32000, 64),
             config=self.config,
             tokenizer=self.mock_tokenizer,
         )
+
+    @patch.object(
+        WordLlamaInference,
+        "embed",
+        return_value=np.array([[0.1] * 64, [0.1] * 64, np.random.rand(64), [0.1] * 64]),
+    )
+    def test_deduplicate_cosine(self, mock_embed):
+        docs = ["doc1", "doc1_dup", "doc2", "doc1_dup2"]
+        deduplicated_docs = self.model.deduplicate(
+            docs, threshold=0.9, use_hamming=False
+        )
+        self.assertEqual(len(deduplicated_docs), 2)
+        self.assertIn("doc1", deduplicated_docs)
+        self.assertIn("doc2", deduplicated_docs)
+
+    @patch.object(
+        WordLlamaInference,
+        "embed",
+        return_value=np.array(
+            [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1, 2, 3]], dtype=np.uint32
+        ),
+    )
+    def test_deduplicate_hamming(self, mock_embed):
+        docs = ["doc1", "doc1_dup", "doc2", "doc1_dup2"]
+        deduplicated_docs = self.model.deduplicate(
+            docs, threshold=0.9, use_hamming=True
+        )
+        self.assertEqual(len(deduplicated_docs), 2)
+        self.assertIn("doc1", deduplicated_docs)
+        self.assertIn("doc2", deduplicated_docs)
+
+    @patch.object(
+        WordLlamaInference,
+        "embed",
+        return_value=np.array(
+            [
+                [0.1] * 64,
+                np.concat([np.random.rand(32), np.zeros(32)], axis=0),
+                np.concat([np.zeros(32), np.random.rand(32)]),
+            ]
+        ),
+    )
+    def test_deduplicate_no_duplicates(self, mock_embed):
+        docs = ["doc1", "doc2", "doc3"]
+        deduplicated_docs = self.model.deduplicate(
+            docs, threshold=0.9, use_hamming=False
+        )
+        self.assertEqual(len(deduplicated_docs), 3)
+        self.assertIn("doc1", deduplicated_docs)
+        self.assertIn("doc2", deduplicated_docs)
+        self.assertIn("doc3", deduplicated_docs)
+
+    @patch.object(
+        WordLlamaInference,
+        "embed",
+        return_value=np.array([[0.1] * 64, [0.1] * 64, [0.1] * 64]),
+    )
+    def test_deduplicate_all_duplicates(self, mock_embed):
+        docs = ["doc1", "doc1_dup", "doc1_dup2"]
+        deduplicated_docs = self.model.deduplicate(
+            docs, threshold=0.9, use_hamming=False
+        )
+        self.assertEqual(len(deduplicated_docs), 1)
+        self.assertIn("doc1", deduplicated_docs)
 
     def test_tokenize(self):
         self.mock_tokenizer.encode_batch.return_value = [

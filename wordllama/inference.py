@@ -327,9 +327,9 @@ class WordLlamaInference:
 
     def cluster(
         self,
-        text_collection: List[str],
+        docs: List[str],
         k: int,
-        max_iterations: int = 300,
+        max_iterations: int = 100,
         tolerance: float = 1e-4,
         n_init: int = 10,
         min_iterations: int = 5,
@@ -339,15 +339,20 @@ class WordLlamaInference:
         Cluster the given text collection into k clusters.
 
         Parameters:
-        text_collection (List[str]): The list of text documents to cluster.
+        docs (List[str]): The list of text documents to cluster.
         k (int): The number of clusters.
+        max_iterations (int, optional): The maximum number of iterations to run the algorithm. Defaults to 300.
+        tolerance (float, optional): The tolerance to declare convergence. Defaults to 1e-4.
+        n_init (int, optional): Number of times the algorithm will be run with different centroid seeds. The final result will be the best output in terms of loss. Defaults to 10.
+        min_iterations (int, optional): Minimum number of iterations before checking for convergence. Defaults to 5.
+        random_state (int or np.random.RandomState, optional): Random state for reproducibility.
 
         Returns:
-        Tuple[List[int], float]: A list of cluster labels and the final loss
+        Tuple[List[int], float]: A list of cluster labels and the final loss (inertia)
         """
         if self.binary:
             raise ValueError("KMeans clustering only implemented for dense embeddings")
-        embeddings = self.embed(text_collection, norm=True)
+        embeddings = self.embed(docs, norm=True)
         cluster_labels, loss = kmeans_clustering(
             embeddings,
             k,

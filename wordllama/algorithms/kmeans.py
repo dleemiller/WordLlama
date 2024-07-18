@@ -63,7 +63,7 @@ def calculate_inertia(
 def kmeans_clustering(
     embeddings: np.ndarray,
     k: int,
-    max_iterations: int = 300,
+    max_iterations: int = 100,
     tolerance: float = 1e-4,
     n_init: int = 10,
     min_iterations: int = 5,
@@ -75,7 +75,7 @@ def kmeans_clustering(
     Parameters:
     embeddings (np.ndarray): The input data points (embeddings) to cluster.
     k (int): The number of clusters.
-    max_iterations (int, optional): The maximum number of iterations to run the algorithm. Defaults to 300.
+    max_iterations (int, optional): The maximum number of iterations to run the algorithm. Defaults to 100.
     tolerance (float, optional): The tolerance to declare convergence. Defaults to 1e-4.
     n_init (int, optional): Number of times the algorithm will be run with different centroid seeds. The final result will be the best output in terms of loss. Defaults to 10.
     min_iterations (int, optional): Minimum number of iterations before checking for convergence. Defaults to 5.

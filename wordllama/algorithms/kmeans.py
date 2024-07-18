@@ -142,4 +142,4 @@ def kmeans_clustering(
             best_labels = labels
             best_losses = losses
 
-    return best_labels.tolist(), best_losses[-1].item()
+    return best_labels.tolist(), best_losses

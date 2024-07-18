@@ -325,7 +325,16 @@ class WordLlamaInference:
         ]
         return filtered_docs
 
-    def cluster(self, text_collection: List[str], k: int) -> Tuple[List[int], float]:
+    def cluster(
+        self,
+        text_collection: List[str],
+        k: int,
+        max_iterations: int = 300,
+        tolerance: float = 1e-4,
+        n_init: int = 10,
+        min_iterations: int = 5,
+        random_state=None,
+    ) -> Tuple[List[int], float]:
         """
         Cluster the given text collection into k clusters.
 
@@ -339,5 +348,13 @@ class WordLlamaInference:
         if self.binary:
             raise ValueError("KMeans clustering only implemented for dense embeddings")
         embeddings = self.embed(text_collection, norm=True)
-        cluster_labels, loss = kmeans_clustering(embeddings, k)
-        return cluster_labels, loss
+        cluster_labels, loss = kmeans_clustering(
+            embeddings,
+            k,
+            max_iterations=max_iterations,
+            tolerance=tolerance,
+            n_init=n_init,
+            min_iterations=min_iterations,
+            random_state=random_state,
+        )
+        return cluster_labels, loss[-1].item()

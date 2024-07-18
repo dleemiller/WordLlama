@@ -1,9 +1,10 @@
 import numpy as np
 from tokenizers import Tokenizer
-from typing import Union, List
+from typing import Union, List, Tuple
 import logging
 
-from wordllama.config import WordLlamaConfig
+from .algorithms import kmeans_clustering
+from .config import WordLlamaConfig
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -323,3 +324,20 @@ class WordLlamaInference:
             if score > threshold
         ]
         return filtered_docs
+
+    def cluster(self, text_collection: List[str], k: int) -> Tuple[List[int], float]:
+        """
+        Cluster the given text collection into k clusters.
+
+        Parameters:
+        text_collection (List[str]): The list of text documents to cluster.
+        k (int): The number of clusters.
+
+        Returns:
+        Tuple[List[int], float]: A list of cluster labels and the final loss
+        """
+        if self.binary:
+            raise ValueError("KMeans clustering only implemented for dense embeddings")
+        embeddings = self.embed(text_collection, norm=True)
+        cluster_labels, loss = kmeans_clustering(embeddings, k)
+        return cluster_labels, loss

@@ -1,9 +1,10 @@
 import numpy as np
 from tokenizers import Tokenizer
-from typing import Union, List
+from typing import Union, List, Tuple
 import logging
 
-from wordllama.config import WordLlamaConfig
+from .algorithms import kmeans_clustering
+from .config import WordLlamaConfig
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -323,3 +324,42 @@ class WordLlamaInference:
             if score > threshold
         ]
         return filtered_docs
+
+    def cluster(
+        self,
+        docs: List[str],
+        k: int,
+        max_iterations: int = 100,
+        tolerance: float = 1e-4,
+        n_init: int = 10,
+        min_iterations: int = 5,
+        random_state=None,
+    ) -> Tuple[List[int], float]:
+        """
+        Cluster the given text collection into k clusters.
+
+        Parameters:
+        docs (List[str]): The list of text documents to cluster.
+        k (int): The number of clusters.
+        max_iterations (int, optional): The maximum number of iterations to run the algorithm. Defaults to 300.
+        tolerance (float, optional): The tolerance to declare convergence. Defaults to 1e-4.
+        n_init (int, optional): Number of times the algorithm will be run with different centroid seeds. The final result will be the best output in terms of loss. Defaults to 10.
+        min_iterations (int, optional): Minimum number of iterations before checking for convergence. Defaults to 5.
+        random_state (int or np.random.RandomState, optional): Random state for reproducibility.
+
+        Returns:
+        Tuple[List[int], float]: A list of cluster labels and the final loss (inertia)
+        """
+        if self.binary:
+            raise ValueError("KMeans clustering only implemented for dense embeddings")
+        embeddings = self.embed(docs, norm=True)
+        cluster_labels, loss = kmeans_clustering(
+            embeddings,
+            k,
+            max_iterations=max_iterations,
+            tolerance=tolerance,
+            n_init=n_init,
+            min_iterations=min_iterations,
+            random_state=random_state,
+        )
+        return cluster_labels, loss[-1].item()

@@ -52,6 +52,7 @@ print(ranked_docs)
 
 # additional inference methods
 wl.deduplicate(candidates, threshold=0.8) # fuzzy deduplication
+wl.cluster(docs, k=5, max_iterations=100, tolerance=1e-4) # labels using kmeans/kmeans++ init
 wl.filter(query, candidates, threshold=0.3) # filter candidates based on query
 wl.topk(query, candidates, k=3) # return topk strings based on query
 ```
@@ -78,6 +79,7 @@ The final weights are saved *after* weighting, projection and truncation of the 
 It's good option for some nlp-lite tasks. You can train sklearn classifiers on it, perform basic semantic matching, fuzzy deduplication, ranking and clustering.
 I think it should work well for creating LLM output evaluators, or other preparatory tasks involved in multi-hop or agentic workflows.
 You can perform your own llm surgery and train your own model on consumer GPUs in a few hours.
+Because of its fast and portable size, it makes a good "Swiss-Army Knife" utility for exploratory analysis and utility applications.
 
 ## MTEB Results (l2_supercat)
 

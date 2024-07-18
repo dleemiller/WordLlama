@@ -44,3 +44,5 @@ classifiers = { file = "classifiers.txt" }
 
 [tool.setuptools_scm]
 write_to = "wordllama/_version.py"
+version_scheme = "post-release"
+local_scheme = "no-local-version"

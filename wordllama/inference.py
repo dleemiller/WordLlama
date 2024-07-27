@@ -3,7 +3,7 @@ from tokenizers import Tokenizer
 from typing import Union, List, Tuple
 import logging
 
-from .algorithms import kmeans_clustering
+from .algorithms import kmeans_clustering, hamming_distance
 from .config import WordLlamaConfig
 
 # Set up logging
@@ -145,9 +145,7 @@ class WordLlamaInference:
         max_dist = a.shape[1] * 32
 
         # Calculate Hamming distance
-        xor_result = np.bitwise_xor(a[:, np.newaxis], b)
-        dist = np.sum(np.unpackbits(xor_result.view(np.uint8), axis=2), axis=2)
-
+        dist = hamming_distance(a, b)
         return 1.0 - 2.0 * (dist / max_dist)
 
     @staticmethod

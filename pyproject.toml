@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm"]
+requires = ["setuptools>=42", "wheel", "setuptools_scm", "Cython", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -37,7 +37,7 @@ Repository = "https://github.com/dleemiller/WordLlama"
 packages = ["wordllama"]
 
 [tool.setuptools.package-data]
-wordllama = ["**/*.toml", "tokenizers/*.json", "weights/*.safetensors"]
+wordllama = ["algorithms/*.so", "algorithms/*.pyd", "**/*.pyx", "**/*.pyd", "**/*.toml", "tokenizers/*.json", "weights/*.safetensors"]
 
 [tool.setuptools.dynamic]
 classifiers = { file = "classifiers.txt" }
@@ -46,3 +46,4 @@ classifiers = { file = "classifiers.txt" }
 write_to = "wordllama/_version.py"
 version_scheme = "post-release"
 local_scheme = "no-local-version"
+

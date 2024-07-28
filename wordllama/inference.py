@@ -1,9 +1,9 @@
 import numpy as np
 from tokenizers import Tokenizer
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 import logging
 
-from .algorithms import kmeans_clustering
+from .algorithms import kmeans_clustering, hamming_distance, process_batches_cy
 from .config import WordLlamaConfig
 
 # Set up logging
@@ -145,9 +145,7 @@ class WordLlamaInference:
         max_dist = a.shape[1] * 32
 
         # Calculate Hamming distance
-        xor_result = np.bitwise_xor(a[:, np.newaxis], b)
-        dist = np.sum(np.unpackbits(xor_result.view(np.uint8), axis=2), axis=2)
-
+        dist = hamming_distance(a, b)
         return 1.0 - 2.0 * (dist / max_dist)
 
     @staticmethod
@@ -230,7 +228,7 @@ class WordLlamaInference:
         return similarities
 
     def deduplicate(
-        self, docs: List[str], threshold: float = 0.9, batch_size: int = 100
+        self, docs: List[str], threshold: float = 0.9, batch_size: Optional[int] = None
     ) -> List[str]:
         """
         Deduplicate a list of documents based on similarity threshold.
@@ -238,43 +236,19 @@ class WordLlamaInference:
         Args:
             docs (List[str]): List of document texts to deduplicate.
             threshold (float): Similarity threshold for deduplication.
-            batch_size (int): Batch size for processing embeddings.
+            batch_size (Optional[int]): Batch size for processing embeddings.
 
         Returns:
             List[str]: Deduplicated list of document texts.
         """
-        # Embed all documents
         doc_embeddings = self.embed(docs, norm=not self.binary)
 
-        num_embeddings = doc_embeddings.shape[0]
-        duplicate_indices = set()
-        seen_docs = set()
+        if batch_size is None:
+            batch_size = 500 if self.binary else 5000
+        duplicate_indices = process_batches_cy(
+            doc_embeddings, threshold, batch_size, self.vector_similarity
+        )
 
-        for i in range(0, num_embeddings, batch_size):
-            start_i = i
-            end_i = min(i + batch_size, num_embeddings)
-            batch_i = doc_embeddings[start_i:end_i]
-
-            for j in range(
-                i, num_embeddings, batch_size
-            ):  # Start from i to avoid redundant comparisons
-                start_j = j
-                end_j = min(j + batch_size, num_embeddings)
-                batch_j = doc_embeddings[start_j:end_j]
-
-                sim_matrix = self.vector_similarity(batch_i, batch_j)
-
-                # Find indices where similarity exceeds the threshold
-                sim_indices = np.argwhere(sim_matrix > threshold)
-                for idx in sim_indices:
-                    if idx[0] + start_i != idx[1] + start_j:  # Ignore self-comparison
-                        doc_idx_1 = idx[0] + start_i
-                        doc_idx_2 = idx[1] + start_j
-                        if doc_idx_2 not in seen_docs:
-                            seen_docs.add(doc_idx_1)
-                            duplicate_indices.add(doc_idx_2)
-
-        # Filter out embeddings that are not in duplicate_indices
         unique_docs = [
             doc for idx, doc in enumerate(docs) if idx not in duplicate_indices
         ]

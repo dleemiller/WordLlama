@@ -1,3 +1,5 @@
 include LICENSE
 include README.md
 recursive-include wordllama *.py *.toml *.json
+include wordllama/algorithms/*.pyx
+include wordllama/algorithms/*.pxd

@@ -82,11 +82,11 @@ class TestWordLlamaInference(unittest.TestCase):
         return_value=np.array([[0.1] * 64, [0.1] * 64, np.random.rand(64), [0.1] * 64]),
     )
     def test_deduplicate_cosine(self, mock_embed):
-        docs = ["doc1", "doc1_dup", "doc2", "doc1_dup2"]
+        docs = ["doc1", "doc1_dup", "a second document that is different", "doc1_dup2"]
         deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
         self.assertEqual(len(deduplicated_docs), 2)
         self.assertIn("doc1", deduplicated_docs)
-        self.assertIn("doc2", deduplicated_docs)
+        self.assertIn("a second document that is different", deduplicated_docs)
 
     @patch.object(
         WordLlamaInference,

@@ -76,7 +76,6 @@ def approximate_function(x, o):
 
 
 class Binarizer(nn.Module):
-
     def __init__(self, ste="tanh"):
         super().__init__()
         assert ste in ["ste", "reste", "stochastic", "tanh"]

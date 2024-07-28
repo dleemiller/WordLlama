@@ -3,8 +3,7 @@ from tokenizers import Tokenizer
 from typing import Union, List, Tuple, Optional
 import logging
 
-from .algorithms.deduplicate_helpers import process_batches_cy
-from .algorithms import kmeans_clustering, hamming_distance
+from .algorithms import kmeans_clustering, hamming_distance, process_batches_cy
 from .config import WordLlamaConfig
 
 # Set up logging

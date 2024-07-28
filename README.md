@@ -1,5 +1,5 @@
 
-# Word Llama
+# WordLlama
 
 The power of 15 trillion tokens of training, extracted, flogged and minimized into a cute little package for word embedding.
 
@@ -59,7 +59,7 @@ wl.topk(query, candidates, k=3) # return topk strings based on query
 
 ## What is it?
 
-WordLlama is a word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations (such as GloVe, Word2Vec or FastText).
+WordLlama is a utility for NLP and word embedding model that recycles components from large language models (LLMs) to create efficient and compact word representations (such as GloVe, Word2Vec or FastText).
 WordLlama begins by extracting the token embedding codebook from a state-of-the-art LLM (e.g., LLama3 70B), and training a small context-less model in a general purpose embedding framework.
 
 WordLlama improves on all MTEB benchmarks above word models like GloVe 300d, while being substantially smaller in size (**16MB default model** @ 256-dim vs >2GB).
@@ -95,8 +95,6 @@ Because of its fast and portable size, it makes a good "Swiss-Army Knife" utilit
 
 The [l2_supercat](https://huggingface.co/dleemiller/word-llama-l2-supercat) is a Llama2-vocabulary model. To train this model, I concatenated codebooks from several models, including Llama2 70B and phi3 medium (after removing additional special tokens).
 Because several models have used the Llama2 tokenizer, their codebooks can be concatenated and trained together. Performance of the resulting model is comparable to training the Llama3 70B codebook, while being 4x smaller (32k vs 128k vocabulary).
-
-I anticipate the best results will come from training using the Llama3 405B codebook, when released.
 
 ## Embed Text
 
@@ -134,7 +132,7 @@ ranked_docs = wl.rank("i went to the car", ["van", "truck"])
 wl.binary = False # turn off hamming and use cosine
 
 # load a different model class
-wl = WordLlama.load(config="llama3_400B", dim=1024) # downloads model from HF
+wl = WordLlama.load(config="l3_supercat", dim=1024) # downloads model from HF
 ```
 
 ## Training Notes
@@ -145,8 +143,11 @@ L2 Supercat was trained using a batch size of 512 on a single A100 for 12 hours.
 
 ## Roadmap
 
-- Test distillation training from a larger embedding model
-- Retrain on llama3 405B (waiting on release...), concat with llama guard 2, llama3 70B
+- Working on adding inference features:
+  - Semantic text splitting
+- Add example notebooks
+  - DSPy evaluators
+  - RAG pipelines
 
 ## Extracting Token Embeddings
 
@@ -180,7 +181,7 @@ If you use WordLlama in your research or project, please consider citing it as f
   title = {WordLlama: Recycled Token Embeddings from Large Language Models},
   year = {2024},
   url = {https://github.com/dleemiller/wordllama},
-  version = {0.2.1}
+  version = {0.2.3}
 }
 ```
 

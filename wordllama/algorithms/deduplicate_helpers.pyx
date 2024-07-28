@@ -1,6 +1,8 @@
-# In Cython (deduplicate_helpers.pyx)
+# cython: language_level=3, boundscheck=False, wraparound=False
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 import numpy as np
 cimport numpy as np
+from numpy cimport PyArray_DIMS
 
 ctypedef fused embedding_dtype:
     np.uint32_t
@@ -9,7 +11,7 @@ ctypedef fused embedding_dtype:
 
 def process_batches_cy(np.ndarray[embedding_dtype, ndim=2] doc_embeddings, 
                        double threshold, int batch_size, vector_similarity):
-    cdef int num_embeddings = doc_embeddings.shape[0]
+    cdef int num_embeddings = PyArray_DIMS(doc_embeddings)[0]
     cdef set duplicate_indices = set()
     cdef set seen_docs = set()
     cdef int i, j, start_i, end_i, start_j, end_j
@@ -37,3 +39,4 @@ def process_batches_cy(np.ndarray[embedding_dtype, ndim=2] doc_embeddings,
                         duplicate_indices.add(doc_idx_2)
     
     return duplicate_indices
+

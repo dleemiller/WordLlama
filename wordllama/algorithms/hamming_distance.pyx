@@ -1,7 +1,12 @@
 # cython: language_level=3, boundscheck=False, wraparound=False
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 import numpy as np
 cimport numpy as np
+from numpy cimport int32_t, uint32_t, uint8_t, PyArrayObject, PyArray_DIMS
 from libc.stdint cimport uint32_t, uint8_t
+
+np.import_array()
 
 cdef extern from *:
     """
@@ -28,12 +33,13 @@ cdef extern from *:
     """
     int popcount(uint32_t x) nogil
 
-cpdef np.ndarray[np.int32_t, ndim=2] hamming_distance(np.ndarray[np.uint32_t, ndim=2] a, np.ndarray[np.uint32_t, ndim=2] b):
-    cdef int i, j, k, dist
-    cdef int n = a.shape[0]
-    cdef int m = b.shape[0]
-    cdef int width = a.shape[1]
-    cdef np.ndarray[np.int32_t, ndim=2] distance = np.zeros((n, m), dtype=np.int32)
+cpdef np.ndarray[int32_t, ndim=2] hamming_distance(np.ndarray[uint32_t, ndim=2] a, np.ndarray[uint32_t, ndim=2] b):
+    cdef Py_ssize_t i, j, k
+    cdef int dist
+    cdef Py_ssize_t n = PyArray_DIMS(a)[0]
+    cdef Py_ssize_t m = PyArray_DIMS(b)[0]
+    cdef Py_ssize_t width = PyArray_DIMS(a)[1]
+    cdef np.ndarray[int32_t, ndim=2] distance = np.zeros((n, m), dtype=np.int32)
     
     # Calculate Hamming distance
     for i in range(n):

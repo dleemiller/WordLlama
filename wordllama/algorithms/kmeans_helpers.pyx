@@ -1,9 +1,10 @@
-# cython: boundscheck=False, wraparound=False, nonecheck=False
+# cython: language_level=3, boundscheck=False, wraparound=False
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 import numpy as np
-cimport numpy as cnp
+cimport numpy as np
 from libc.math cimport sqrt
 
-ctypedef cnp.npy_intp DTYPE_t
+ctypedef np.npy_intp DTYPE_t
 
 cdef inline double squared_euclidean_distance(const double[:] vec1, const double[:] vec2, Py_ssize_t dim) nogil:
     cdef Py_ssize_t i
@@ -45,3 +46,4 @@ def update_centroids(const double[:, :] embeddings, const DTYPE_t[:] labels, Py_
                 new_centroids[i, j] /= count[i]
 
     return np.asarray(new_centroids)
+

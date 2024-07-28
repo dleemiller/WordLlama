@@ -10,8 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  build-and-publish-linux:
-    runs-on: ubuntu-latest
+  build-and-publish:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -21,7 +26,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.9'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
@@ -29,71 +34,13 @@ jobs:
         python -m pip install --upgrade setuptools wheel twine cibuildwheel
 
     - name: Build package
-      run: |
-        cibuildwheel --platform linux
-        ls wheelhouse
-
-    - name: Publish package
       env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        CIBW_ARCHS_MACOS: "x86_64 arm64"
       run: |
-        twine upload wheelhouse/*
-
-  build-and-publish-windows:
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel twine cibuildwheel
-
-    - name: Build package
-      run: |
-        cibuildwheel --platform windows
-        ls wheelhouse
+        cibuildwheel --output-dir wheelhouse
 
     - name: Publish package
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        twine upload wheelhouse/*
-
-  build-and-publish-macos:
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel twine cibuildwheel
-
-    - name: Build package
-      run: |
-        cibuildwheel --platform macos
-        ls wheelhouse
-
-    - name: Publish package
+      if: github.event_name == 'push'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}

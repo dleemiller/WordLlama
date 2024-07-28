@@ -1,5 +1,6 @@
 import numpy as np
 from typing import List, Tuple
+from .kmeans_helpers import compute_distances, update_centroids
 
 
 def kmeans_plusplus_initialization(
@@ -39,27 +40,6 @@ def kmeans_plusplus_initialization(
     return centroids
 
 
-def calculate_inertia(
-    embeddings: np.ndarray, labels: np.ndarray, centroids: np.ndarray
-) -> float:
-    """
-    Calculate the inertia (sum of squared distances to the closest centroid).
-
-    Parameters:
-    embeddings (np.ndarray): The input data points (embeddings) to cluster.
-    labels (np.ndarray): The cluster labels for each point.
-    centroids (np.ndarray): The cluster centroids.
-
-    Returns:
-    float: The calculated inertia.
-    """
-    inertia = 0.0
-    for i, centroid in enumerate(centroids):
-        cluster_points = embeddings[labels == i]
-        inertia += np.sum((cluster_points - centroid) ** 2)
-    return inertia
-
-
 def kmeans_clustering(
     embeddings: np.ndarray,
     k: int,
@@ -84,6 +64,7 @@ def kmeans_clustering(
     Returns:
     Tuple[List[int], List[float]]: A tuple containing the cluster labels and the list of loss values for each iteration.
     """
+
     if random_state is None:
         random_state = np.random.RandomState()
     elif isinstance(random_state, int):
@@ -95,21 +76,16 @@ def kmeans_clustering(
 
     for init_run in range(n_init):
         centroids = kmeans_plusplus_initialization(embeddings, k, random_state)
-
         prev_inertia = float("inf")
         losses = []
 
         for iteration in range(max_iterations):
-            # Step 2: Assign each point to the nearest centroid
-            distances = np.sqrt(
-                ((embeddings[:, np.newaxis, :] - centroids[np.newaxis, :, :]) ** 2).sum(
-                    axis=2
-                )
-            )
+            # Step 2: Assign each point to the nearest centroid using the Cython optimized function
+            distances = compute_distances(embeddings, centroids)
             labels = np.argmin(distances, axis=1)
 
-            # Step 2: Calculate inertia
-            inertia = calculate_inertia(embeddings, labels, centroids)
+            # Calculate inertia using distances directly
+            inertia = np.sum(np.min(distances, axis=1) ** 2)
             losses.append(inertia)
 
             # Check for convergence based on inertia
@@ -118,23 +94,16 @@ def kmeans_clustering(
 
             prev_inertia = inertia
 
-            # Step 3: Update centroids to the mean of the points in each cluster
-            new_centroids = np.array(
-                [
-                    embeddings[labels == i].mean(axis=0)
-                    if np.sum(labels == i) > 0
-                    else centroids[i]
-                    for i in range(k)
-                ]
-            )
+            # Step 3: Update centroids using the Cython optimized function
+            centroids = update_centroids(embeddings, labels, k, embeddings.shape[1])
 
             # Check for convergence based on centroids
             if iteration >= min_iterations and np.allclose(
-                centroids, new_centroids, atol=tolerance
+                centroids,
+                update_centroids(embeddings, labels, k, embeddings.shape[1]),
+                atol=tolerance,
             ):
                 break
-
-            centroids = new_centroids
 
         # Check if this initialization run has the best result
         if inertia < best_inertia:

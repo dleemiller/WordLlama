@@ -1,4 +1,4 @@
-# cython: language_level=3
+# cython: language_level=3, boundscheck=False, wraparound=False
 import numpy as np
 cimport numpy as np
 from libc.stdint cimport uint32_t, uint8_t
@@ -28,7 +28,7 @@ cdef extern from *:
     """
     int popcount(uint32_t x) nogil
 
-def hamming_distance(np.ndarray[np.uint32_t, ndim=2] a, np.ndarray[np.uint32_t, ndim=2] b):
+def hamming_distance(uint32_t[:, :] a, uint32_t[:, :] b):
     cdef int i, j, k, dist
     cdef int n = a.shape[0]
     cdef int m = b.shape[0]

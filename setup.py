@@ -27,11 +27,19 @@ extensions = [
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     ),
+    Extension(
+        "wordllama.algorithms.kmeans_helpers",
+        ["wordllama/algorithms/kmeans_helpers.pyx"],
+        include_dirs=[np.get_include()],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+    ),
+
 ]
 
 setup(
     name="Text Processing Tools",
-    ext_modules=cythonize(extensions, compiler_directives={"language_level": "3"}),
+    ext_modules=cythonize(extensions, compiler_directives={"language_level": "3"}, annotate=True),
     zip_safe=False,
     install_requires=["numpy"],
 )

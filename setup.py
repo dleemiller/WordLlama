@@ -34,12 +34,20 @@ extensions = [
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     ),
-
+    Extension(
+        "wordllama.algorithms.deduplicate_helpers",
+        ["wordllama/algorithms/deduplicate_helpers.pyx"],
+        include_dirs=[np.get_include()],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+    ),
 ]
 
 setup(
     name="Text Processing Tools",
-    ext_modules=cythonize(extensions, compiler_directives={"language_level": "3"}, annotate=True),
+    ext_modules=cythonize(
+        extensions, compiler_directives={"language_level": "3"}, annotate=True
+    ),
     zip_safe=False,
     install_requires=["numpy"],
 )

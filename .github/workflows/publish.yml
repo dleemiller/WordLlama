@@ -1,4 +1,4 @@
-name: Upload Python Package
+name: Deploy
 
 on:
   push:
@@ -9,61 +9,101 @@ on:
 permissions:
   contents: read
 
-jobs:
-  build-and-publish:
-    strategy:
-      matrix:
-        os: [macos-latest]
-        python-version: ['3.8']
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
+  build_wheels:
     runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            archs: x86_64
+          - os: macos-latest
+            archs: x86_64 arm64
+          - os: ubuntu-latest
+            archs: aarch64
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel twine cibuildwheel delocate==0.10.7
+      - name: Set up QEMU to build non-native architectures
+        if: ${{ matrix.archs == 'aarch64' }}
+        uses: docker/setup-qemu-action@v3
 
-    - name: Ensure Docker service is running
-      if: runner.os == 'Linux'
-      run: |
-        sudo service docker start
+      - name: Install required Python packages
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install 'cibuildwheel>=2.2.0' twine
 
-    - name: Build package
-      env:
-        CIBW_ARCHS_MACOS: "x86_64 arm64"
-        CIBW_ARCHS_LINUX: "x86_64 i686"
-        CIBW_ARCHS_WINDOWS: "x86_64"
-      run: |
-        cibuildwheel --platform auto --output-dir wheelhouse
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir dist
+        env:
+          CIBW_ARCHS: ${{ matrix.archs }}
+          CIBW_SKIP: "cp38-musllinux_* pp38-* pp*-manylinux_i686"
 
-    - name: List wheelhouse contents
-      run: ls -l wheelhouse
+      - name: Check packages
+        run: twine check dist/*
 
-    - name: List wheel dependencies
-      if: matrix.os == 'macos-latest'
-      run: |
-        delocate-listdeps wheelhouse/*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "packages-${{ matrix.os }}-${{ matrix.archs }}"
+          path: dist/
 
-    - name: Repair wheel
-      if: matrix.os == 'macos-latest'
-      run: |
-        delocate-wheel --require-archs x86_64 -w repaired_wheel wheelhouse/*.whl
+  build_sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Publish package
-      if: github.event_name == 'push'
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        twine upload wheelhouse/*
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install required Python packages
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install build twine
+
+      - name: Build sdist
+        run: |
+          python -m build --sdist
+          python -m venv test_venv
+          . test_venv/bin/activate
+          python -m pip install dist/*.tar.gz
+          python -c 'import wordllama; print(wordllama.__version__)'
+
+      - name: Check packages
+        run: twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-sdist
+          path: dist/
+
+  upload_pypi:
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: dist
+          pattern: packages-*
+
+      - name: Display structure of downloaded files
+        run: ls -R dist/
+
+      - name: Publish to PyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.repository_owner == 'dleemiller'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
 

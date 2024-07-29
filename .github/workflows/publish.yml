@@ -33,6 +33,11 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools wheel twine cibuildwheel delocate
 
+    - name: Ensure Docker service is running
+      if: runner.os == 'Linux'
+      run: |
+        sudo service docker start
+
     - name: Build package
       env:
         CIBW_ARCHS_MACOS: "x86_64 arm64"

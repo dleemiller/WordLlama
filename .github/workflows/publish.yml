@@ -13,8 +13,8 @@ jobs:
   build-and-publish:
     strategy:
       matrix:
-        os: [macos-latest]
-        python-version: ['3.8']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     runs-on: ${{ matrix.os }}
 
@@ -45,6 +45,9 @@ jobs:
         CIBW_ARCHS_WINDOWS: "x86_64"
       run: |
         cibuildwheel --platform auto --output-dir wheelhouse
+
+    - name: List wheelhouse contents
+      run: ls -l wheelhouse
 
     - name: List wheel dependencies
       if: matrix.os == 'macos-latest'

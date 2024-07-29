@@ -49,5 +49,4 @@ local_scheme = "no-local-version"
 
 [tool.cibuildwheel]
 archs = ["x86_64", "i686"]
-build = ["pp39-manylinux2014_i686"]
 

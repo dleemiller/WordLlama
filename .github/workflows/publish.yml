@@ -37,7 +37,7 @@ jobs:
       env:
         CIBW_ARCHS_MACOS: "x86_64 arm64"
       run: |
-        cibuildwheel --output-dir wheelhouse
+        cibuildwheel --platform ${{ matrix.os }} --output-dir wheelhouse
 
     - name: Publish package
       if: github.event_name == 'push'

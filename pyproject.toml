@@ -47,3 +47,8 @@ write_to = "wordllama/_version.py"
 version_scheme = "post-release"
 local_scheme = "no-local-version"
 
+[tool.cibuildwheel]
+platform = "linux"
+archs = ["x86", "x64"]
+build = ["pp39-manylinux2014_i686"]
+

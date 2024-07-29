@@ -41,11 +41,15 @@ jobs:
       run: |
         cibuildwheel --platform auto --output-dir wheelhouse
 
-    - name: Debug delocate
+    - name: List wheel dependencies
       if: matrix.os == 'macos-latest'
       run: |
-        delocate-listdeps wheelhouse/*.whl  # List dependencies
-        delocate-wheel -w repaired_wheel wheelhouse/*.whl  # Attempt to repair
+        delocate-listdeps wheelhouse/*.whl
+
+    - name: Repair wheel
+      if: matrix.os == 'macos-latest'
+      run: |
+        delocate-wheel --require-archs x86_64 -w repaired_wheel wheelhouse/*.whl
 
     - name: Publish package
       if: github.event_name == 'push'

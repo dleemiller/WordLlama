@@ -36,6 +36,8 @@ jobs:
     - name: Build package
       env:
         CIBW_ARCHS_MACOS: "x86_64 arm64"
+        CIBW_ARCHS_LINUX: "x86_64 i686"
+        CIBW_ARCHS_WINDOWS: "x86_64"
       run: |
         cibuildwheel --platform auto --output-dir wheelhouse
 

@@ -48,5 +48,6 @@ version_scheme = "post-release"
 local_scheme = "no-local-version"
 
 [tool.cibuildwheel]
-archs = ["x86", "x64"]
+archs = ["x86_64", "i686"]
+build = ["pp39-manylinux2014_i686"]
 

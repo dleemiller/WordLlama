@@ -30,10 +30,6 @@ else:  # Linux and others
         extra_compile_args.extend(["-march=native", "-mpopcnt"])
         extra_link_args.extend(["-march=native", "-mpopcnt"])
 
-# Log the compile and link args for debugging
-print("extra_compile_args:", extra_compile_args)
-print("extra_link_args:", extra_link_args)
-
 extra_compile_args.extend(["-O3", "-ffast-math"])
 
 extensions = [
@@ -83,4 +79,3 @@ setup(
     zip_safe=False,
     install_requires=["numpy"],
 )
-

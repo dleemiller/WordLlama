@@ -49,14 +49,33 @@ local_scheme = "no-local-version"
 
 [tool.cibuildwheel]
 archs = ["x86_64", "arm64"]
-repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
+test-command = """
+python -c 'import wordllama; print(wordllama.__version__); \
+from wordllama import WordLlama, Config, WordLlamaConfig; \
+wl = WordLlama.load(); \
+similarity_score = wl.similarity("i went to the car", "i went to the pawn shop"); \
+print(similarity_score);'
+"""
 
 [tool.cibuildwheel.linux]
-manylinux-x86_64-image = "manylinux2014"
-manylinux-i686-image = "manylinux2014"
-manylinux-pypy_x86_64-image = "manylinux2014"
-manylinux-pypy_i686-image = "manylinux2014"
+before-all = """
+if command -v yum; then
+    yum -y install zlib-devel
+elif command -v apk; then
+    apk add zlib-dev
+else
+    apt-get -y install libz-dev
+fi
+"""
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
-repair-wheel-command = "delocate-wheel --require-archs x86_64 -w {dest_dir} -v {wheel}"
+before-all = """
+brew install openblas && cat > ~/.numpy-site.cfg <<EOF
+[openblas]
+libraries = openblas
+library_dirs = $(brew --prefix openblas)/lib
+include_dirs = $(brew --prefix openblas)/include
+runtime_library_dirs = $(brew --prefix openblas)/lib
+EOF
+"""
+

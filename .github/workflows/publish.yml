@@ -35,6 +35,7 @@ jobs:
 
     - name: Build package
       env:
+        CIBW_ENVIRONMENT: "NPY_CPU_DISPATCH=; NPY_DISABLE_SVML=1"
         CIBW_ARCHS_MACOS: "x86_64 arm64"
       run: |
         cibuildwheel --output-dir wheelhouse

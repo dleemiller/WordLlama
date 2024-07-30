@@ -29,6 +29,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -42,6 +44,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install 'cibuildwheel>=2.2.0' twine
+
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir dist
@@ -61,6 +64,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -68,16 +73,19 @@ jobs:
 
       - name: Install required Python packages
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip setuptools wheel cython
           python -m pip install build twine
 
       - name: Build sdist
         run: |
-          python -m build --sdist
+          python setup.py sdist
           python -m venv test_venv
           . test_venv/bin/activate
           python -m pip install dist/*.tar.gz
-          python -c 'import wordllama; print(wordllama.__version__)'
+          python -c 'import wordllama; print(wordllama.__version__); \
+          from wordllama import WordLlama, Config, WordLlamaConfig; \
+          wl = WordLlama.load(); \
+          similarity_score = wl.similarity("i went to the car", "i went to the pawn shop");' \
 
       - name: Check packages
         run: twine check dist/*

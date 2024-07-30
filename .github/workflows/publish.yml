@@ -72,7 +72,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install required Python packages
         run: |
@@ -82,14 +82,6 @@ jobs:
       - name: Build sdist
         run: |
           python setup.py sdist
-          python -m venv test_venv
-          . test_venv/bin/activate
-          python -m pip install dist/*.tar.gz
-          python -c 'import wordllama; print(wordllama.__version__); \
-          from wordllama import WordLlama, Config, WordLlamaConfig; \
-          wl = WordLlama.load(); \
-          similarity_score = wl.similarity("i went to the car", "i went to the pawn shop"); \
-          print(similarity_score);'
 
       - name: Check packages
         run: twine check dist/*

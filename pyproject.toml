@@ -57,17 +57,6 @@ similarity_score = wl.similarity("i went to the car", "i went to the pawn shop")
 print(similarity_score);'
 """
 
-[tool.cibuildwheel.linux]
-before-all = """
-if command -v yum; then
-    yum -y install zlib-devel
-elif command -v apk; then
-    apk add zlib-dev
-else
-    apt-get -y install libz-dev
-fi
-"""
-
 [tool.cibuildwheel.macos]
 before-all = """
 brew install openblas && cat > ~/.numpy-site.cfg <<EOF

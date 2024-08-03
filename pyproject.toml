@@ -68,3 +68,8 @@ runtime_library_dirs = $(brew --prefix openblas)/lib
 EOF
 """
 
+[tool.cibuildwheel.windows]
+before-all = """
+python -m ensurepip
+python -m pip install --upgrade pip
+"""

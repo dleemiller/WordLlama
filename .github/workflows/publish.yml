@@ -20,14 +20,75 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Windows 64-bit
+          - os: windows-latest
+            archs: AMD64
+            python: 3.9
+          - os: windows-latest
+            archs: AMD64
+            python: 3.10
+          - os: windows-latest
+            archs: AMD64
+            python: 3.11
+          - os: windows-latest
+            archs: AMD64
+            python: 3.12
+
+          # Linux 64-bit
           - os: ubuntu-latest
             archs: x86_64
-          - os: macos-latest
-            archs: x86_64 arm64
+            python: 3.9
+          - os: ubuntu-latest
+            archs: x86_64
+            python: 3.10
+          - os: ubuntu-latest
+            archs: x86_64
+            python: 3.11
+          - os: ubuntu-latest
+            archs: x86_64
+            python: 3.12
+
+          # Linux aarch64
           - os: ubuntu-latest
             archs: aarch64
-          - os: windows-latest
+            python: 3.9
+          - os: ubuntu-latest
+            archs: aarch64
+            python: 3.10
+          - os: ubuntu-latest
+            archs: aarch64
+            python: 3.11
+          - os: ubuntu-latest
+            archs: aarch64
+            python: 3.12
+
+          # macOS x86_64
+          - os: macos-latest
             archs: x86_64
+            python: 3.9
+          - os: macos-latest
+            archs: x86_64
+            python: 3.10
+          - os: macos-latest
+            archs: x86_64
+            python: 3.11
+          - os: macos-latest
+            archs: x86_64
+            python: 3.12
+
+          # macOS arm64
+          - os: macos-latest
+            archs: arm64
+            python: 3.9
+          - os: macos-latest
+            archs: arm64
+            python: 3.10
+          - os: macos-latest
+            archs: arm64
+            python: 3.11
+          - os: macos-latest
+            archs: arm64
+            python: 3.12
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +97,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: ${{ matrix.python }}
 
       - name: Set up QEMU to build non-native architectures
         if: ${{ matrix.archs == 'aarch64' }}
@@ -47,6 +108,23 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel cython
           python -m pip install 'cibuildwheel>=2.2.0' twine
 
+      - name: Install conda for macOS arm64
+        if: ${{ matrix.os == 'macos-latest' && matrix.archs == 'arm64' }}
+        run: |
+          set -ex
+          EXPECTED_SHA="dd832d8a65a861b5592b2cf1d55f26031f7c1491b30321754443931e7b1e6832"
+          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/23.11.0-0/Mambaforge-23.11.0-0-MacOSX-arm64.sh"
+          curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
+          file_sha=$(shasum -a 256 miniforge.sh | awk '{print $1}')
+          if [ "$EXPECTED_SHA" != "$file_sha" ]; then
+              echo "SHA values did not match!"
+              exit 1
+          fi
+          MINIFORGE_PATH=$HOME/miniforge
+          bash ./miniforge.sh -b -p $MINIFORGE_PATH
+          echo "$MINIFORGE_PATH/bin" >> $GITHUB_PATH
+          echo "CONDA_HOME=$MINIFORGE_PATH" >> $GITHUB_ENV
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
@@ -55,7 +133,6 @@ jobs:
             cp38-musllinux_* 
             pp38-* 
             pp*-manylinux_i686
-            ${{ matrix.archs == 'aarch64' && 'pp*' }}
             macosx_arm64_python3.8
 
       - name: Check packages

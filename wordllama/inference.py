@@ -3,7 +3,12 @@ from tokenizers import Tokenizer
 from typing import Union, List, Tuple, Optional
 import logging
 
-from .algorithms import kmeans_clustering, hamming_distance, process_batches_cy
+from .algorithms import (
+    kmeans_clustering,
+    hamming_distance,
+    binarize_and_packbits,
+    process_batches_cy,
+)
 from .config import WordLlamaConfig
 
 # Set up logging
@@ -20,7 +25,7 @@ class WordLlamaInference:
         binary: bool = False,
     ):
         self.binary = binary
-        self.embedding = embedding
+        self.embedding = embedding.astype(np.float32)
         self.config = config
         self.tokenizer = tokenizer
         self.tokenizer_kwargs = self.config.tokenizer.model_dump()
@@ -89,9 +94,7 @@ class WordLlamaInference:
             x = self.normalize_embeddings(x)
 
         if self.binary:
-            x = x > 0
-            x = np.packbits(x, axis=-1)
-            x = x.view(np.uint32)  # Change to uint32
+            x = binarize_and_packbits(x)
 
         if return_np:
             return x
@@ -110,9 +113,13 @@ class WordLlamaInference:
         Returns:
             np.ndarray: The pooled embeddings.
         """
-        x = np.sum(x * mask[..., np.newaxis], axis=1) / np.maximum(
-            mask.sum(axis=1, keepdims=True), 1
-        )
+        # Ensure mask is float32 to avoid promotion
+        mask = mask.astype(np.float32)
+
+        # Perform sum and division in float32 to prevent promotion to float64
+        x = np.sum(x * mask[..., np.newaxis], axis=1, dtype=np.float32) / np.maximum(
+            mask.sum(axis=1, keepdims=True, dtype=np.float32), 1
+        ).astype(np.float32)
 
         return x
 
@@ -136,16 +143,16 @@ class WordLlamaInference:
         Calculate the Hamming similarity between vectors.
 
         Parameters:
-        - a (np.ndarray): A 2D array of dtype np.uint32.
-        - b (np.ndarray): A 2D array of dtype np.uint32.
+        - a (np.ndarray): A 2D array of dtype np.uint64.
+        - b (np.ndarray): A 2D array of dtype np.uint64.
 
         Returns:
         - np.ndarray: A 2D array of Hamming similarity scores.
         """
-        max_dist = a.shape[1] * 32
+        max_dist = a.shape[1] * 64
 
         # Calculate Hamming distance
-        dist = hamming_distance(a, b)
+        dist = hamming_distance(a, b).astype(np.float32)
         return 1.0 - 2.0 * (dist / max_dist)
 
     @staticmethod

@@ -6,6 +6,7 @@ from numpy cimport PyArray_DIMS
 
 ctypedef fused embedding_dtype:
     np.uint32_t
+    np.uint64_t
     np.float32_t
     np.float64_t
 
@@ -16,7 +17,7 @@ def process_batches_cy(np.ndarray[embedding_dtype, ndim=2] doc_embeddings,
     cdef set seen_docs = set()
     cdef int i, j, start_i, end_i, start_j, end_j
     cdef np.ndarray[embedding_dtype, ndim=2] batch_i, batch_j
-    cdef np.ndarray[double, ndim=2] sim_matrix
+    cdef np.ndarray[np.float32_t, ndim=2] sim_matrix
     cdef np.ndarray[np.int64_t, ndim=2] sim_indices
     cdef int doc_idx_1, doc_idx_2
     

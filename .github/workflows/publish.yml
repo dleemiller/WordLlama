@@ -59,13 +59,13 @@ jobs:
             python: 312
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 313t
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-            # TODO: remove next line when Python 3.13 is released
-            prerelease_pythons: True
-            free_threaded_support: True
+              #- os: ubuntu-latest
+              #  python: 313t
+              #  platform_id: manylinux_x86_64
+              #  manylinux_image: manylinux2014
+              #  # TODO: remove next line when Python 3.13 is released
+              #  prerelease_pythons: True
+              #  free_threaded_support: True
 
           # MacOS x86_64
           - os: macos-12
@@ -154,7 +154,7 @@ jobs:
             #CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
 
-        run: bash build_wheels.sh
+        run: bash build_tools/build_wheels.sh
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4

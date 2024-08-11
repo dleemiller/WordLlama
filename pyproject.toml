@@ -50,11 +50,11 @@ local_scheme = "no-local-version"
 [tool.cibuildwheel]
 archs = ["x86_64", "arm64"]
 test-command = """
-python -c 'import wordllama; print(wordllama.__version__); \
+python -c "import wordllama; print(wordllama.__version__); \
 from wordllama import WordLlama, Config, WordLlamaConfig; \
 wl = WordLlama.load(); \
-similarity_score = wl.similarity("i went to the car", "i went to the pawn shop"); \
-print(similarity_score);'
+similarity_score = wl.similarity(\\"i went to the car\\", \\"i went to the pawn shop\\"); \
+print(similarity_score);"
 """
 
 [tool.cibuildwheel.macos]
@@ -73,3 +73,4 @@ before-all = """
 python -m ensurepip
 python -m pip install --upgrade pip
 """
+

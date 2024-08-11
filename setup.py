@@ -1,4 +1,5 @@
 from setuptools import setup, Extension
+import setuptools_scm
 from Cython.Build import cythonize
 import numpy as np
 import platform
@@ -66,7 +67,9 @@ extensions = [
 ]
 
 setup(
-    name="Text Processing Tools",
+    name="Embedding and lightweight NLP utility.",
+    use_scm_version=True,
+    setup_requires=['setuptools_scm'],
     ext_modules=cythonize(
         extensions,
         compiler_directives={

@@ -175,8 +175,12 @@ jobs:
 
       - name: Install required Python packages
         run: |
-          python -m pip install --upgrade pip setuptools wheel cython numpy
+          python -m pip install --upgrade pip setuptools setuptools_scm wheel cython numpy
           python -m pip install build twine
+
+      - name: Print detected version
+        run: |
+          python -c "import setuptools_scm; print(setuptools_scm.get_version())"
 
       - name: Build sdist
         run: |
@@ -198,19 +202,15 @@ jobs:
         with:
           merge-multiple: true
           path: dist
-          pattern: packages-*
-
-      - name: Print detected version
-        run: |
-          python -c "import setuptools_scm; print(setuptools_scm.get_version())"
 
       - name: Display structure of downloaded files
         run: ls -R dist/
 
       - name: Publish to PyPI
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.repository_owner == 'dleemiller'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.repository_owner == 'dleemiller')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
+          packages_dir: dist/
 

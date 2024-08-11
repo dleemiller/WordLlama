@@ -30,6 +30,14 @@ class WordLlama:
         tokenizer_config="l2_supercat_tokenizer_config.json",
     )
 
+    l3_supercat = ModelURI(
+        repo_id="dleemiller/wordllama-l3-supercat",
+        available_dims=[64, 128, 256, 512, 1024],
+        binary_dims=[64, 128, 256, 512, 1024],
+        tokenizer_config="l3_supercat_tokenizer_config.json",
+    )
+
+
     @staticmethod
     def get_filename(config_name: str, dim: int, binary: bool = False) -> str:
         """

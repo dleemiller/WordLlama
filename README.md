@@ -1,10 +1,10 @@
 
 # WordLlama
 
-The power of 15 trillion tokens of training, extracted, flogged and minimized into a cute little package for word embedding.
+**WordLlama** is a fast, lightweight NLP toolkit that handles tasks like fuzzy-deduplication, similarity and ranking with minimal inference-time dependencies and optimized for CPU hardware.
 
 <p align="center">
-  <img src="wordllama.png" alt="Word Llama" width="60%">
+  <img src="wordllama.png" alt="Word Llama" width="50%">
 </p>
 
 
@@ -96,6 +96,11 @@ Because of its fast and portable size, it makes a good "Swiss-Army Knife" utilit
 The [l2_supercat](https://huggingface.co/dleemiller/word-llama-l2-supercat) is a Llama2-vocabulary model. To train this model, I concatenated codebooks from several models, including Llama2 70B and phi3 medium (after removing additional special tokens).
 Because several models have used the Llama2 tokenizer, their codebooks can be concatenated and trained together. Performance of the resulting model is comparable to training the Llama3 70B codebook, while being 4x smaller (32k vs 128k vocabulary).
 
+### Other Models
+[Results](wordllama/RESULTS.md)
+
+Llama3-based: [l3_supercat](https://huggingface.co/dleemiller/wordllama-l3-supercat)
+
 ## Embed Text
 
 Here’s how you can load pre-trained embeddings and use them to embed text:
@@ -115,10 +120,10 @@ print(embeddings.shape)  # (2, 64)
 Binary embedding models can be used like this:
 
 ```python
-# Binary embeddings are packed into uint32
-# 64-dims => array of 2x uint32 
+# Binary embeddings are packed into uint64
+# 64-dims => array of 1x uint64 
 wl = WordLlama.load(trunc_dim=64, binary=True)  # this will download the binary model from huggingface
-wl.embed("I went to the car") # Output: array([[3029168104, 2427562626]], dtype=uint32)
+wl.embed("I went to the car") # Output: array([[3029168427562626]], dtype=uint64)
 
 # load binary trained model trained with straight through estimator
 wl = WordLlama.load(dim=1024, binary=True)
@@ -181,7 +186,7 @@ If you use WordLlama in your research or project, please consider citing it as f
   title = {WordLlama: Recycled Token Embeddings from Large Language Models},
   year = {2024},
   url = {https://github.com/dleemiller/wordllama},
-  version = {0.2.3}
+  version = {0.2.5}
 }
 ```
 

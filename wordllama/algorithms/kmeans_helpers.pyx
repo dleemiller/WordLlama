@@ -6,18 +6,18 @@ from libc.math cimport sqrt
 
 ctypedef np.npy_intp DTYPE_t
 
-cdef inline double squared_euclidean_distance(const double[:] vec1, const double[:] vec2, Py_ssize_t dim) nogil:
+cdef inline float squared_euclidean_distance(const float[:] vec1, const float[:] vec2, Py_ssize_t dim) nogil:
     cdef Py_ssize_t i
-    cdef double dist = 0.0
+    cdef float dist = 0.0
     for i in range(dim):
         dist += (vec1[i] - vec2[i]) ** 2
     return dist
 
-def compute_distances(const double[:, :] embeddings, const double[:, :] centroids):
+def compute_distances(const float[:, :] embeddings, const float[:, :] centroids):
     cdef Py_ssize_t num_points = embeddings.shape[0]
     cdef Py_ssize_t num_centroids = centroids.shape[0]
     cdef Py_ssize_t dim = embeddings.shape[1]
-    cdef double[:, :] distances = np.empty((num_points, num_centroids), dtype=np.float64)
+    cdef float[:, :] distances = np.empty((num_points, num_centroids), dtype=np.float32)
     cdef Py_ssize_t i, j
 
     for i in range(num_points):
@@ -26,8 +26,8 @@ def compute_distances(const double[:, :] embeddings, const double[:, :] centroid
 
     return np.asarray(distances)
 
-def update_centroids(const double[:, :] embeddings, const DTYPE_t[:] labels, Py_ssize_t num_clusters, Py_ssize_t dim):
-    cdef double[:, :] new_centroids = np.zeros((num_clusters, dim), dtype=np.float64)
+def update_centroids(const float[:, :] embeddings, const DTYPE_t[:] labels, Py_ssize_t num_clusters, Py_ssize_t dim):
+    cdef float[:, :] new_centroids = np.zeros((num_clusters, dim), dtype=np.float32)
     cdef DTYPE_t[:] count = np.zeros(num_clusters, dtype=np.intp)
     cdef Py_ssize_t i, j
     cdef DTYPE_t label

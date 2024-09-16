@@ -41,6 +41,11 @@ jobs:
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
+            python: 38
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+
+          - os: ubuntu-latest
             python: 39
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
@@ -68,6 +73,9 @@ jobs:
               #  free_threaded_support: True
 
           # MacOS x86_64
+          - os: macos-12
+            python: 38
+            platform_id: macosx_x86_64
           - os: macos-12
             python: 39
             platform_id: macosx_x86_64

@@ -68,7 +68,7 @@ Features of WordLlama include:
 
 1. **Matryoshka Representations**: Truncate embedding dimension as needed.
 2. **Low Resource Requirements**: A simple token lookup with average pooling, enables this to operate fast on CPU.
-3. **Binarization**: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations. (coming soon)
+3. **Binarization**: Models trained using the straight through estimator can be packed to small integer arrays for even faster hamming distance calculations.
 4. **Numpy-only inference**: Lightweight and simple.
 
 For flexibility, WordLlama employs the Matryoshka representation learning training technique. The largest model (1024-dim) can be truncated to 64, 128, 256 or 512.
@@ -156,10 +156,12 @@ L2 Supercat was trained using a batch size of 512 on a single A100 for 12 hours.
 
 ## Extracting Token Embeddings
 
+[Extract Token Embeddings Tutorial](tutorials/extract_token_embeddings.md)
+
 To extract token embeddings from a model, ensure you have agreed to the user agreement and logged in using the Hugging Face CLI (for llama3 models). You can then use the following snippet:
 
 ```python
-from wordllama.extract import extract_safetensors
+from wordllama.extract.extract_safetensors import extract_safetensors
 
 # Extract embeddings for the specified configuration
 extract_safetensors("llama3_70B", "path/to/saved/model-0001-of-00XX.safetensors")

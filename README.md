@@ -178,6 +178,10 @@ $ python train.py save --config your_new_config --checkpoint ... --outdir /path/
 (saves 1 model per matryoshka dim)
 ```
 
+## Community Projects
+
+[Gradio Demo HF Space](https://huggingface.co/spaces/1littlecoder/wordllama)
+
 ## Citations
 
 If you use WordLlama in your research or project, please consider citing it as follows:

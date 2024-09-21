@@ -229,7 +229,7 @@ class TestWordLlamaInference(unittest.TestCase):
         self.assertEqual(truncated_model.embedding.shape[1], 32)
 
     def test_error_on_wrong_embedding_type(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.model.embed(np.array([1, 2]))
 
     def test_binarization_and_packing(self):

@@ -2,9 +2,10 @@
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 import numpy as np
 cimport numpy as np
-from libc.math cimport sqrt
+from libc.math cimport sqrtf
 
 ctypedef np.npy_intp DTYPE_t
+ctypedef np.float32_t FLOAT_t
 
 cdef inline float squared_euclidean_distance(const float[:] vec1, const float[:] vec2, Py_ssize_t dim) nogil:
     cdef Py_ssize_t i
@@ -22,7 +23,7 @@ def compute_distances(const float[:, :] embeddings, const float[:, :] centroids)
 
     for i in range(num_points):
         for j in range(num_centroids):
-            distances[i, j] = sqrt(squared_euclidean_distance(embeddings[i], centroids[j], dim))
+            distances[i, j] = sqrtf(squared_euclidean_distance(embeddings[i], centroids[j], dim))
 
     return np.asarray(distances)
 
@@ -46,4 +47,3 @@ def update_centroids(const float[:, :] embeddings, const DTYPE_t[:] labels, Py_s
                 new_centroids[i, j] /= count[i]
 
     return np.asarray(new_centroids)
-

@@ -3,6 +3,8 @@ from tokenizers import Tokenizer
 from typing import Union, List, Tuple, Optional
 import logging
 
+from more_itertools import chunked
+
 from .algorithms import (
     kmeans_clustering,
     hamming_distance,
@@ -59,6 +61,7 @@ class WordLlamaInference:
         norm: bool = False,
         return_np: bool = True,
         pool_embeddings: bool = True,
+        batch_size: int = 512,
     ) -> Union[np.ndarray, List]:
         """
         Generate embeddings for input texts with options for normalization and binarization.
@@ -68,38 +71,57 @@ class WordLlamaInference:
             norm (bool): Apply normalization to embeddings.
             return_np (bool): Return result as a numpy array if True, otherwise as a list.
             pool_embeddings (bool): Apply average pooling to embeddings.
+            batch_size (int): Number of texts to process in each batch.
 
         Returns:
             Union[np.ndarray, List]: Embeddings as numpy array or list.
         """
-        # Tokenize the texts
-        encoded_texts = self.tokenize(texts)
-        input_ids = np.array([enc.ids for enc in encoded_texts], dtype=np.int32)
-        attention_mask = np.array(
-            [enc.attention_mask for enc in encoded_texts], dtype=np.int32
-        )
+        if isinstance(texts, str):
+            texts = [texts]
+        elif not isinstance(texts, list):
+            raise TypeError("Input 'texts' must be a string or a list of strings")
 
-        # Clamp out-of-bounds input_ids
-        input_ids = np.clip(input_ids, 0, self.embedding.shape[0] - 1)
+        if texts and not isinstance(texts[0], str):
+            raise TypeError("All elements in 'texts' must be strings")
 
-        # Compute the embeddings
-        x = self.embedding[input_ids]
-        if not pool_embeddings:
-            return x
+        all_embeddings = []
 
-        # Apply average pooling
-        x = self.avg_pool(x, attention_mask)
+        for chunk in chunked(texts, batch_size):
+            # Tokenize the texts
+            encoded_texts = self.tokenize(chunk)
+            input_ids = np.array([enc.ids for enc in encoded_texts], dtype=np.int32)
+            attention_mask = np.array(
+                [enc.attention_mask for enc in encoded_texts], dtype=np.int32
+            )
 
-        if norm:
-            x = self.normalize_embeddings(x)
+            # Clamp out-of-bounds input_ids
+            input_ids = np.clip(input_ids, 0, self.embedding.shape[0] - 1)
 
-        if self.binary:
-            x = binarize_and_packbits(x)
+            # Compute the embeddings
+            x = self.embedding[input_ids]
+
+            if pool_embeddings:
+                # Apply average pooling
+                x = self.avg_pool(x, attention_mask)
+
+            if norm:
+                x = self.normalize_embeddings(x)
+
+            if self.binary:
+                x = binarize_and_packbits(x)
+
+            all_embeddings.append(x)
+
+        # Concatenate all batches
+        if pool_embeddings:
+            final_embeddings = np.concatenate(all_embeddings, axis=0)
+        else:
+            final_embeddings = np.concatenate(all_embeddings, axis=0)
 
         if return_np:
-            return x
+            return final_embeddings
 
-        return x.tolist()
+        return final_embeddings.tolist()
 
     @staticmethod
     def avg_pool(x: np.ndarray, mask: np.ndarray) -> np.ndarray:

@@ -3,8 +3,6 @@ from tokenizers import Tokenizer
 from typing import Union, List, Tuple, Optional
 import logging
 
-from more_itertools import chunked
-
 from .algorithms import (
     kmeans_clustering,
     hamming_distance,
@@ -86,7 +84,9 @@ class WordLlamaInference:
 
         all_embeddings = []
 
-        for chunk in chunked(texts, batch_size):
+        for i in range(0, len(texts), batch_size):
+            chunk = texts[i : i + batch_size]
+
             # Tokenize the texts
             encoded_texts = self.tokenize(chunk)
             input_ids = np.array([enc.ids for enc in encoded_texts], dtype=np.int32)

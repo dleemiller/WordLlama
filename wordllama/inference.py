@@ -356,6 +356,9 @@ class WordLlamaInference:
         if self.binary:
             raise ValueError("KMeans clustering only implemented for dense embeddings")
         embeddings = self.embed(docs, norm=True)
+        assert isinstance(docs, list), "`docs` must be a list of strings"
+        assert len(docs) >= k, "number of clusters cannot be larger than len(docs)"
+        assert isinstance(docs[0], str), "`docs` must be a list of strings"
 
         cluster_labels, inertia = kmeans_clustering(
             embeddings,

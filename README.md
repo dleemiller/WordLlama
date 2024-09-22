@@ -52,9 +52,23 @@ print(ranked_docs)
 
 # additional inference methods
 wl.deduplicate(candidates, threshold=0.8) # fuzzy deduplication
-wl.cluster(candidates, k=2, max_iterations=100, tolerance=1e-4, n_init=3) # labels using kmeans/kmeans++ init
+# Output:
+# ['i went to the park',
+#  'i went to the shop',
+#  'i went to the truck',
+#  'i went to the vehicle']
+
+wl.cluster(candidates, k=3, max_iterations=100, tolerance=1e-4, n_init=3) # kmeans w/ kmeans++ init
+# Output (labels, inertia):
+# ([2, 0, 1, 1], 0.4150409400463104)
+
 wl.filter(query, candidates, threshold=0.3) # filter candidates based on query
+# Output:
+# ['i went to the vehicle']
+
 wl.topk(query, candidates, k=3) # return topk strings based on query
+# Output:
+# ['i went to the vehicle', 'i went to the truck']
 ```
 
 ## What is it?

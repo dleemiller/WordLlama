@@ -52,7 +52,7 @@ print(ranked_docs)
 
 # additional inference methods
 wl.deduplicate(candidates, threshold=0.8) # fuzzy deduplication
-wl.cluster(docs, k=5, max_iterations=100, tolerance=1e-4) # labels using kmeans/kmeans++ init
+wl.cluster(candidates, k=2, max_iterations=100, tolerance=1e-4) # labels using kmeans/kmeans++ init
 wl.filter(query, candidates, threshold=0.3) # filter candidates based on query
 wl.topk(query, candidates, k=3) # return topk strings based on query
 ```

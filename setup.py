@@ -57,8 +57,8 @@ extensions = [
         extra_link_args=extra_link_args,
     ),
     Extension(
-        "wordllama.algorithms.kmeans_helpers",
-        ["wordllama/algorithms/kmeans_helpers.pyx"],
+        "wordllama.algorithms.kmeans",
+        ["wordllama/algorithms/kmeans.pyx"],
         include_dirs=[numpy_include],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
         extra_compile_args=extra_compile_args,

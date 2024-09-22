@@ -64,6 +64,15 @@ extensions = [
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     ),
+    Extension(
+        "wordllama.algorithms.splitter",
+        ["wordllama/algorithms/splitter.pyx"],
+        include_dirs=[],
+        define_macros=[],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+    ),
+
 ]
 
 setup(

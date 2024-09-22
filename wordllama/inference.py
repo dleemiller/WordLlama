@@ -356,7 +356,8 @@ class WordLlamaInference:
         if self.binary:
             raise ValueError("KMeans clustering only implemented for dense embeddings")
         embeddings = self.embed(docs, norm=True)
-        cluster_labels, loss = kmeans_clustering(
+
+        cluster_labels, inertia = kmeans_clustering(
             embeddings,
             k,
             max_iterations=max_iterations,
@@ -365,4 +366,4 @@ class WordLlamaInference:
             min_iterations=min_iterations,
             random_state=random_state,
         )
-        return cluster_labels, loss[-1].item()
+        return cluster_labels, inertia

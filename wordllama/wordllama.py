@@ -37,7 +37,6 @@ class WordLlama:
         tokenizer_config="l3_supercat_tokenizer_config.json",
     )
 
-
     @staticmethod
     def get_filename(config_name: str, dim: int, binary: bool = False) -> str:
         """

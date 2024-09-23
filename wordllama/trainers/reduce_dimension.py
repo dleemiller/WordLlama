@@ -1,9 +1,7 @@
 import logging
 
-from typing import Tuple, Dict, List
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset
 from sentence_transformers import (
-    SentenceTransformer,
     SentenceTransformerTrainer,
     losses,
 )

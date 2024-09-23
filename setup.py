@@ -1,9 +1,7 @@
 from setuptools import setup, Extension
-import setuptools_scm
 from Cython.Build import cythonize
 import numpy as np
 import platform
-import sys
 
 numpy_include = np.get_include()
 

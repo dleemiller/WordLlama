@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 from __future__ import annotations
 import os
 
@@ -145,7 +146,6 @@ if __name__ == "__main__":
     )
 
     # all tasks
-    from mteb.benchmarks import MTEB_MAIN_EN
     from datetime import datetime
 
     CONFIG_NAME = "l2_supercat"

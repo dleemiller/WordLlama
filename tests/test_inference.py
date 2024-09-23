@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock, create_autospec
+from unittest.mock import patch, MagicMock
 import numpy as np
 from wordllama.inference import WordLlamaInference
 from wordllama.config import (

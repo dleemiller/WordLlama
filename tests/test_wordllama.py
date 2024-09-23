@@ -71,7 +71,7 @@ class TestWordLlama(unittest.TestCase):
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
-        cached_file_path = WordLlama.download_file_from_hf(
+        WordLlama.download_file_from_hf(
             repo_id="dummy-repo",
             filename="dummy-file",
             cache_dir=Path("/dummy/cache"),

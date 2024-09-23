@@ -1,4 +1,3 @@
-import os
 import safetensors.torch
 
 from ..config import Config

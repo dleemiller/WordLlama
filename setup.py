@@ -73,8 +73,10 @@ extensions = [
     Extension(
         "wordllama.algorithms.find_local_minima",
         ["wordllama/algorithms/find_local_minima.pyx"],
-        include_dirs=[np.get_include()],
-        extra_compile_args=["-O3", "-march=native", "-ffast-math", "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION"],
+        include_dirs=[numpy_include],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
         language="c++"
     )
 

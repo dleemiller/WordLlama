@@ -316,7 +316,7 @@ def display_strings_markdown_preserved(strings):
     markdown_content = "# Text Spans\n\n"
     for i, string in enumerate(strings, 1):
         formatted_string = format_text_for_markdown(string)
-        markdown_content += f"## Split {i}\n--------------\n\n{formatted_string}\n\n"
+        markdown_content += f"## Split {i}\n\n{formatted_string}\n\n"
     
     from IPython.display import Markdown, display
     display(Markdown(markdown_content))
@@ -329,7 +329,6 @@ display_strings_markdown_preserved(text_span[0:20])
 # Text Spans
 
 ## Split 1
---------------
 
     J. R. R. Tolkien — The Lord Of The Rings. (1/4)
     \-----------------------------------------------
@@ -361,7 +360,6 @@ display_strings_markdown_preserved(text_span[0:20])
                    One Ring to rule them all, One Ring to find them,
 
 ## Split 2
---------------
 
                    One Ring to bring them all and in the darkness bind them
                In the Land of Mordor where the Shadows lie._
@@ -452,7 +450,6 @@ display_strings_markdown_preserved(text_span[0:20])
      Chapter 4 The Siege of Gondor
 
 ## Split 3
---------------
 
      Chapter 5 The Ride of the Rohirrim
      Chapter 6 The Battle of the Pelennor Fields
@@ -521,7 +518,6 @@ display_strings_markdown_preserved(text_span[0:20])
 
 
 ## Split 4
---------------
 
     \----------------------------------------------
 
@@ -537,7 +533,6 @@ display_strings_markdown_preserved(text_span[0:20])
     Those who had asked for more information about hobbits eventually got it, but they had to wait a long time; for the composition of _The Lord of the Rings_ went on at intervals during the years 1936 to 1949, a period in which I had many duties that I did not neglect, and many other interests as a learner and teacher that often absorbed me.
 
 ## Split 5
---------------
 
     The delay was, of course, also increased by the outbreak of war in 1939, by the end of which year the tale had not yet reached the end of Book One.In spite of the darkness of the next five years I found that the story could not now be wholly abandoned, and I plodded on, mostly by night, till I stood by Balin's tomb in Moria.There I halted for a long while.
     It was almost a year later when I went on and so came to Lothlórien and the Great River late in 1941.In the next year I wrote the first drafts of the matter that now stands as Book Three, and the beginnings of chapters I and III of Book Five; and there as the beacons flared in Anórien and Théoden came to Harrowdale I stopped.Foresight had failed and there was no time for thought.
@@ -547,7 +542,6 @@ display_strings_markdown_preserved(text_span[0:20])
     _The Lord of the Rings_ has been read by many people since it finally appeared in print; and I should like to say something here with reference to the many opinions or guesses that I have received or have read concerning the motives and meaning of the tale.
 
 ## Split 6
---------------
 
     The prime motive was the desire of a tale-teller to try his hand at a really long story that would hold the attention of readers, amuse them, delight them, and at times maybe excite them or deeply move them.As a guide I had only my own feelings for what is appealing or moving, and for many the guide was inevitably often at fault.
     Some who have read the book, or at any rate have reviewed it, have found it boring, absurd, or contemptible; and I have no cause to complain, since I have similar opinions of their works, or of the kinds of writing that they evidently prefer.But even from the points of view of many who have enjoyed my story there is much that fails to please.
@@ -557,7 +551,6 @@ display_strings_markdown_preserved(text_span[0:20])
     The crucial chapter, "The Shadow of the Past', is one of the oldest parts of the tale.It was written long before the foreshadow of 1939 had yet become a threat of inevitable disaster, and from that point the story would have developed along essentially the same lines, if that disaster had been averted.
 
 ## Split 7
---------------
 
     Its sources are things long before in mind, or in some cases already written, and little or nothing in it was modified by the war that began in 1939 or its sequels.
     The real war does not resemble the legendary war in its process or its conclusion.If it had inspired or directed the development of the legend, then certainly the Ring would have been seized and used against Sauron; he would not have been annihilated but enslaved, and Barad-dûr would not have been destroyed but occupied.
@@ -569,7 +562,6 @@ display_strings_markdown_preserved(text_span[0:20])
     It is also false, though naturally attractive, when the lives of an author and critic have overlapped, to suppose that the movements of thought or the events of times common to both were necessarily the most powerful influences.
 
 ## Split 8
---------------
 
     One has indeed personally to come under the shadow of war to feel fully its oppression; but as the years go by it seems now often forgotten that to be caught in youth by 1914 was no less hideous an experience than to be involved in 1939 and the following years.By 1918 all but one of my close friends were dead.
     Or to take a less grievous matter: it has been supposed by some that 'The Scouring of the Shire' reflects the situation in England at the time when I was finishing my tale.It does not.
@@ -579,7 +571,6 @@ display_strings_markdown_preserved(text_span[0:20])
     _The Lord of the Rings_ is now issued in a new edition, and the opportunity has been taken of revising it.A number of errors and inconsistencies that still remained in the text have been corrected, and an attempt has been made to provide information on a few points which attentive readers have raised.
 
 ## Split 9
---------------
 
     I have considered all their comments and enquiries, and if some seem to have been passed over that may be because I have failed to keep my notes in order; but many enquiries could only be answered by additional appendices, or indeed by the production of an accessory volume containing much of the material that I did not include in the original edition, in particular more detailed linguistic information.
     In the meantime this edition offers this Foreword, an addition to the Prologue, some notes, and an index of the names of persons and places.This index is in intention complete in items but not in references, since for the present purpose it has been necessary to reduce its bulk.A complete index, making full use of the material prepared for me by Mrs.N.Smith, belongs rather to the accessory volume.
@@ -593,7 +584,6 @@ display_strings_markdown_preserved(text_span[0:20])
          Many, however, may wish to know more about this remarkable people from the outset, while some may not possess the earlier book. For such readers a few notes on the more important points are here collected from Hobbit-lore, and the first adventure is briefly recalled.
 
 ## Split 10
---------------
 
     Hobbits are an unobtrusive but very ancient people, more numerous formerly than they are today; for they love peace and quiet and good tilled earth: a well-ordered and well-farmed countryside was their favourite haunt.They do not and did not understand or like machines more complicated than a forge-bellows, a water-mill, or a hand-loom, though they were skilful with tools.
     Even in ancient days they were, as a rule, shy of 'the Big Folk', as they call us, and now they avoid us with dismay and are becoming hard to find.They are quick of hearing and sharp-eyed, and though they are inclined to be fat and do not hurry unnecessarily, they are nonetheless nimble and deft in their movements.
@@ -603,7 +593,6 @@ display_strings_markdown_preserved(text_span[0:20])
     According to the Red Book, Bandobras Took (Bullroarer), son of Isengrim the Second, was four foot five and able to ride a horse.He was surpassed in all Hobbit records only by two famous characters of old; but that curious matter is dealt with in this book.
 
 ## Split 11
---------------
 
     As for the Hobbits of the Shire, with whom these tales are concerned, in the days of their peace and prosperity they were a merry folk.They dressed in bright colours, being notably fond of yellow and green; but they seldom wore shoes, since their feet had tough leathery soles and were clad in a thick curling hair, much like the hair of their heads, which was commonly brown.
     Thus, the only craft little practised among them was shoe-making; but they had long and skilful fingers and could make many other useful and comely things.Their faces were as a rule good-natured rather than beautiful, broad, bright-eyed, red-cheeked, with mouths apt to laughter, and to eating and drinking.
@@ -614,7 +603,6 @@ display_strings_markdown_preserved(text_span[0:20])
     But in the days of Bilbo, and of Frodo his heir, they suddenly became, by no wish of their own, both important and renowned, and troubled the counsels of the Wise and the Great.
 
 ## Split 12
---------------
 
     Those days, the Third Age of Middle-earth, are now long past, and the shape of all lands has been changed; but the regions in which Hobbits then lived were doubtless the same as those in which they still linger: the North-West of the Old World, east of the Sea.Of their original home the Hobbits in Bilbo's time preserved no knowledge.
     A love of learning (other than genealogical lore) was far from general among them, but there remained still a few in the older families who studied their own books, and even gathered reports of old times and distant lands from Elves, Dwarves, and Men.Their own records began only after the settlement of the Shire, and their most ancient legends hardly looked further back than their Wandering Days.
@@ -624,7 +612,6 @@ display_strings_markdown_preserved(text_span[0:20])
     The Stoors were broader, heavier in build; their feet and hands were larger, and they preferred flat lands and riversides.The Fallohides were fairer of skin and also of hair, and they were taller and slimmer than the others; they were lovers of trees and of woodlands.
 
 ## Split 13
---------------
 
     The Harfoots had much to do with Dwarves in ancient times, and long lived in the foothills of the mountains.They moved westward early, and roamed over Eriador as far as Weathertop while the others were still in the Wilderland.They were the most normal and representative variety of Hobbit, and far the most numerous.
     They were the most inclined to settle in one place, and longest preserved their ancestral habit of living in tunnels and holes.
@@ -634,7 +621,6 @@ display_strings_markdown_preserved(text_span[0:20])
     In the westlands of Eriador, between the Misty Mountains and the Mountains of Lune, the Hobbits found both Men and Elves.Indeed, a remnant still dwelt there of the Dúnedain, the kings of Men that came over the Sea out of Westernesse; but they were dwindling fast and the lands of their North Kingdom were falling far and wide into waste.
 
 ## Split 14
---------------
 
     There was room and to spare for incomers, and ere long the Hobbits began to settle in ordered communities.Most of their earlier settlements had long disappeared and been forgotten in Bilbo's time; but one of the first to become important still endured, though reduced in size; this was at Bree and in the Chetwood that lay round about, some forty miles east of the Shire.
     It was in these early days, doubtless, that the Hobbits learned their letters and began to write after the manner of the Dúnedain, who had in their turn long before learned the art from the Elves.
@@ -644,7 +630,6 @@ display_strings_markdown_preserved(text_span[0:20])
     They passed over the Bridge of Stonebows, that had been built in the days of the power of the North Kingdom, and they took ail the land beyond to dwell in, between the river and the Far Downs.All that was demanded of them was that they should keep the Great Bridge in repair, and all other bridges and roads, speed the king's messengers, and acknowledge his lordship.
 
 ## Split 15
---------------
 
     Thus began the _Shire-reckoning,_ for the year of the crossing of the Brandywine (as the Hobbits turned the name) became Year One of the Shire, and all later dates were reckoned from it.At once the western Hobbits fell in love with their new land, and they remained there, and soon passed once more out of the history of Men and of Elves.
     While there was still a king they were in name his subjects, but they were, in fact, ruled by their own chieftains and meddled not at all with events in the world outside.To the last battle at Fornost with the Witch-lord of Angmar they sent some bowmen to the aid of the king, or so they maintained, though no tales of Men record it.
@@ -654,7 +639,6 @@ display_strings_markdown_preserved(text_span[0:20])
     The Hobbits named it the Shire, as the region of the authority of their Thain, and a district of well-ordered business; and there in that pleasant comer of the world they plied their well-ordered business of living, and they heeded less and less the world outside where dark things moved, until they came to think that peace and plenty were the rule in Middle-earth and the right of all sensible folk.
 
 ## Split 16
---------------
 
     They forgot or ignored what little they had ever known of the Guardians, and of the labours of those that made possible the long peace of the Shire.They were, in fact, sheltered, but they had ceased to remember it.
     At no time had Hobbits of any kind been warlike, and they had never fought among themselves.In olden days they had, of course, been often obliged to fight to maintain themselves in a hard world; but in Bilbo's time that was very ancient history.
@@ -663,7 +647,6 @@ display_strings_markdown_preserved(text_span[0:20])
     Their dwellings were apt to become rather crowded with mathoms, and many of the presents that passed from hand to hand were of that son.
 
 ## Split 17
---------------
 
     Nonetheless, ease and peace had left this people still curiously tough.
     They were, if it came to it, difficult to daunt or to kill; and they were, perhaps, so unwearyingly fond of good things not least because they could, when put to it, do without them, and could survive rough handling by grief, foe, or weather in a way that astonished those who did not know them well and looked no further than their bellies and their well-fed faces.
@@ -675,7 +658,6 @@ display_strings_markdown_preserved(text_span[0:20])
     Hobbits had long been accustomed to build sheds and workshops.
 
 ## Split 18
---------------
 
     The habit of building farmhouses and barns was said to have begun among the inhabitants of the Marish down by the Brandywine.The Hobbits of that quarter, the Eastfarthing, were rather large and heavy-legged, and they wore dwarf-boots in muddy weather.But they were well known to be Stoors in a large part of their blood, as indeed was shown by the down that many grew on their chins.
     No Harfoot or Fallohide had any trace of a beard.Indeed, the folk of the Marish, and of Buckland, east of the River, which they afterwards occupied, came for the most part later into the Shire up from south-away; and they still had many peculiar names and strange words not found elsewhere in the Shire.
@@ -685,7 +667,6 @@ display_strings_markdown_preserved(text_span[0:20])
     And as the days of the Shire lengthened they spoke less and less with the Elves, and grew afraid of them, and distrustful of those that had dealings with them; and the Sea became a word of fear among them, and a token of death, and they turned their faces away from the hills in the west.
 
 ## Split 19
---------------
 
     The craft of building may have come from Elves or Men, but the Hobbits used it in their own fashion.They did not go in for towers.Their houses were usually long, low, and comfortable.The oldest kind were, indeed, no more than built imitations of _smials,_ thatched with dry grass or straw, or roofed with turves, and having walls somewhat bulged.
     That stage, however, belonged to the early days of the Shire, and hobbit-building had long since been altered, improved by devices, learned from Dwarves, or discovered by themselves.A preference for round windows, and even round doors, was the chief remaining peculiarity of hobbit-architecture.
@@ -695,7 +676,6 @@ display_strings_markdown_preserved(text_span[0:20])
     The genealogical trees at the end of the Red Book of Westmarch are a small book in themselves, and all but Hobbits would find them exceedingly dull.Hobbits delighted in such things, if they were accurate: they liked to have books filled with things that they already knew, set out fair and square with no contradictions.
 
 ## Split 20
---------------
 
     There is another astonishing thing about Hobbits of old that must be mentioned, an astonishing habit: they imbibed or inhaled, through pipes of clay or wood, the smoke of the burning leaves of a herb, which they called _pipe-weed_ or _leaf,_ a variety probably of _Nicotiana._A great deal of mystery surrounds the origin of this peculiar custom, or 'art' as the Hobbits preferred to call it.
     All that could be discovered about it in antiquity was put together by Meriadoc Brandybuck (later Master of Buckland), and since he and the tobacco of the Southfarthing play a part in the history that follows, his remarks in the introduction to his _Herblore of the Shire_ may be quoted.
@@ -704,23 +684,6 @@ display_strings_markdown_preserved(text_span[0:20])
     'How Old Toby came by the plant is not recorded, for to his dying day he would not tell.He knew much about herbs, but he was no traveller.It is said that in his youth he went often to Bree, though he certainly never went further from the Shire than that.It is thus quite possible that he learned of this plant in Bree, where now, at any rate, it grows well on the south slopes of the hill.
     The Bree-hobbits claim to have been the first actual smokers of the pipe-weed.They claim, of course, to have done everything before the people of the Shire, whom they refer to as "colonists"; but in this case their claim is, I think, likely to be true.
 
-
-
-
-
-```python
-
-```
-
-
-```python
-text_span[0]
-```
-
-
-
-
-    'J. R. R. Tolkien — The Lord Of The Rings. (1/4)\n-----------------------------------------------\n\n\n     THE LORD OF THE RINGS\n\n              by\n\n     J. R. R. TOLKIEN\n\n\n\n Part 1: The Fellowship of the Ring\n Part 2: The Two Towers\n Part 3: The Return of the King\n\n\n_Complete with Index and Full Appendices_\n\n\n\n\n          _Three Rings for the Elven-kings under the sky,\n               Seven for the Dwarf-lords in their halls of stone,\n            Nine for Mortal Men doomed to die,\n              One for the Dark Lord on his dark throne\n           In the Land of Mordor where the Shadows lie.\n               One Ring to rule them all, One Ring to find them,'
 
 
 

@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 import os
 
 # Set environment variables
@@ -11,8 +12,6 @@ import tqdm
 import safetensors.torch
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict
-from sentence_transformers import SentenceTransformer
 from sentence_transformers import (
     SentenceTransformerTrainingArguments,
     SentenceTransformer,

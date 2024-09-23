@@ -25,7 +25,7 @@ class MLP(nn.Module):
             filepath (str): The path where the model should be saved.
         """
         # Ensure tensors are on CPU and converted to the required format for safetensors
-        state_dict = {k: v.cpu() for k, v in self.state_dict().items()}
+        {k: v.cpu() for k, v in self.state_dict().items()}
         metadata = {
             "model": "MLP",
             # "in_dim": self.mlp[0].in_features,

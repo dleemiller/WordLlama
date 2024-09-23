@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 from __future__ import annotations
 import os
 
@@ -9,14 +10,14 @@ os.environ["HF_DATASETS_TRUST_REMOTE_CODE"] = "1"
 
 import mteb
 import logging
+
 from functools import partial
-from typing import Any
+from typing import Any, List
 from wordllama import load_training, Config
 import numpy as np
 from more_itertools import chunked
 
 from mteb.model_meta import ModelMeta
-from mteb.models.text_formatting_utils import corpus_to_texts
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +146,6 @@ if __name__ == "__main__":
     )
 
     # all tasks
-    from mteb.benchmarks import MTEB_MAIN_EN
     from datetime import datetime
 
     CONFIG_NAME = "l2_supercat"

@@ -37,7 +37,6 @@ class WordLlama:
         tokenizer_config="l3_supercat_tokenizer_config.json",
     )
 
-
     @staticmethod
     def get_filename(config_name: str, dim: int, binary: bool = False) -> str:
         """
@@ -205,7 +204,7 @@ class WordLlama:
         if not tokenizer_file_path.exists():
             if disable_download:
                 raise FileNotFoundError(
-                    f"Weights file '{filename}' not found and downloads are disabled."
+                    f"Weights file '{tokenizer_file_path}' not found and downloads are disabled."
                 )
 
             logger.debug(

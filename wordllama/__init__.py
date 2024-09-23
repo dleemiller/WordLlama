@@ -5,10 +5,7 @@ This package provides tools for working with word embeddings, including
 the WordLlama class for managing embeddings and associated configurations.
 """
 
-import toml
-import pathlib
 import logging
-from typing import Union, Optional
 
 from .wordllama import WordLlama
 from .config import Config, WordLlamaConfig

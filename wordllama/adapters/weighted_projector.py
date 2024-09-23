@@ -43,7 +43,7 @@ class WeightedProjector(nn.Module):
             filepath (str): The path where the model should be saved.
         """
         # Ensure tensors are on CPU and converted to the required format for safetensors
-        state_dict = {k: v.cpu() for k, v in self.state_dict().items()}
+        {k: v.cpu() for k, v in self.state_dict().items()}
         metadata = {
             "model": "WeightedProjector",
         }

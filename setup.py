@@ -69,6 +69,7 @@ extensions = [
         define_macros=[],
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
+        language="c++"
     ),
     Extension(
         "wordllama.algorithms.find_local_minima",

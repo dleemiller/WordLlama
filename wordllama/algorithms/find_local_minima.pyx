@@ -7,6 +7,8 @@ from libc.math cimport abs as c_abs
 from libcpp.vector cimport vector
 from math import factorial
 
+ctypedef np.float32_t DTYPE_t
+
 np.import_array()
 
 cdef np.ndarray[double, ndim=1] savitzky_golay(double[:] y, int window_size, int order, int deriv=0, double rate=1.0):
@@ -87,3 +89,34 @@ cdef tuple _find_local_minima_impl(double[:] x, double[:] y, int window_size, in
         y_minima[i] = y_dec[minima[i]]
     
     return x_minima, y_minima
+
+def window_average(np.ndarray[DTYPE_t, ndim=2] matrix, int window_size):
+    """
+    Average over a window in an n×n square matrix to return n values.
+    
+    :param matrix: Input square matrix (n×n numpy array of float32)
+    :param window_size: Size of the window (must be odd)
+    :return: Array of n averaged values
+    """
+    cdef int n = matrix.shape[0]
+    if matrix.shape[1] != n:
+        raise ValueError("Input must be a square matrix")
+    if window_size % 2 == 0:
+        raise ValueError("Window size must be odd")
+    
+    cdef int half_window = window_size // 2
+    cdef np.ndarray[DTYPE_t, ndim=2] padded = np.pad(matrix, half_window, mode='edge')
+    
+    cdef np.ndarray[DTYPE_t, ndim=1] averaged = np.zeros(n, dtype=np.float32)
+    cdef float window_sum
+    cdef int i, j, k
+    cdef float window_area = float(window_size * window_size)
+    
+    for i in range(n):
+        window_sum = 0.0
+        for j in range(window_size):
+            for k in range(window_size):
+                window_sum += padded[i+j, i+k]
+        averaged[i] = window_sum / window_area
+    
+    return averaged

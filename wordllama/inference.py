@@ -9,6 +9,7 @@ from .algorithms import (
     binarize_and_packbits,
     process_batches_cy,
 )
+from .algorithms.semantic_splitter import SemanticSplitter
 from .config import WordLlamaConfig
 
 # Set up logging
@@ -370,3 +371,45 @@ class WordLlamaInference:
             random_state=random_state,
         )
         return cluster_labels, inertia
+
+    def split(
+        self,
+        text: str,
+        target_size: int = 1536,
+        window_size: int = 3,
+        initial_split_size: int = 64,
+        poly_order: int = 2,
+        savgol_window: int = 7,
+    ) -> List[str]:
+        """
+        Perform semantic splitting on the input text.
+
+        Parameters:
+        - text (str): The input text to split.
+        - target_size (int): Target size for text chunks.
+        - window_size (int): Window size for similarity matrix averaging.
+        - initial_split_size (int): Initial size for splitting on newlines.
+        - poly_order (int): Polynomial order for Savitzky-Golay filter.
+        - savgol_window (int): Window size for Savitzky-Golay filter.
+
+        Returns:
+        - List[str]: List of semantically split text chunks.
+        """
+        # split text
+        lines = SemanticSplitter.split(
+            text, target_size=target_size, initial_split_size=initial_split_size
+        )
+
+        # compute cross similarity
+        embeddings = self.embed(lines)
+        cross_similarity = self.vector_similarity(embeddings, embeddings)
+
+        # reconstruct text with similarity signals
+        return SemanticSplitter.reconstruct(
+            lines,
+            cross_similarity,
+            target_size=target_size,
+            window_size=window_size,
+            poly_order=poly_order,
+            savgol_window=savgol_window,
+        )

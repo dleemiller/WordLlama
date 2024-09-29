@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List
+from typing import List, Tuple
 from itertools import chain
 from .find_local_minima import find_local_minima, windowed_cross_similarity
 from .splitter import constrained_coalesce, split_sentences
@@ -14,7 +14,12 @@ class SemanticSplitter:
         return list(chain.from_iterable(nested_list))
 
     @staticmethod
-    def constrained_split(text: str, target_size: int) -> List[str]:
+    def constrained_split(
+        text: str,
+        target_size: int,
+        coalesce_range: Tuple[int, int, int] = (256, 576, 64),
+        separator: str = " ",
+    ) -> List[str]:
         """
         Split text into chunks of approximately target_size.
 
@@ -26,12 +31,18 @@ class SemanticSplitter:
         - List[str]: List of text chunks.
         """
         sentences = split_sentences(text)
-        for i in range(256, 512 + 64, 64):
-            sentences = constrained_coalesce(sentences, i, separator=" ")
+        for i in range(*coalesce_range):
+            sentences = constrained_coalesce(sentences, i, separator=separator)
         return sentences
 
     @classmethod
-    def split(cls, text: str, target_size: int, initial_split_size: int) -> List[str]:
+    def split(
+        cls,
+        text: str,
+        target_size: int,
+        paragraph_range: Tuple[int, int, int] = (16, 60, 8),
+        sentence_range: Tuple[int, int, int] = (256, 576, 64),
+    ) -> List[str]:
         """
         Split the input text into chunks.
 
@@ -43,19 +54,26 @@ class SemanticSplitter:
         Returns:
         - List[str]: List of text chunks.
         """
+        # paragraph splitting
+        # split on newlines and coalesce to cleanup
         lines = text.splitlines()
-        for i in range(16, 64, 8):
-            lines = constrained_coalesce(
-                lines, i, separator="\n"
-            )
+        for i in range(*paragraph_range):
+            lines = constrained_coalesce(lines, i, separator="\n")
+
+        # for paragraphs larger than target_size
+        # split to sentences and coalesce
         chunks = [
-            cls.constrained_split(line, target_size)
+            cls.constrained_split(
+                line, target_size, coalesce_range=sentence_range, separator=" "
+            )
             if len(line) > target_size
             else [line]
             for line in lines
         ]
+
+        # flatten list of lists
         chunks = cls.flatten(chunks)
-        return [chunk for chunk in chunks if chunk.strip()]
+        return list(filter(lambda x: True if x.strip() else False, chunks))
 
     @classmethod
     def reconstruct(
@@ -82,7 +100,9 @@ class SemanticSplitter:
         Returns:
         - List[str]: List of semantically split text chunks.
         """
-        assert len(lines) == norm_embed.shape[0], "Number of texts must equal number of embeddings"
+        assert (
+            len(lines) == norm_embed.shape[0]
+        ), "Number of texts must equal number of embeddings"
 
         # calculate the similarity for the window
         sim_avg = windowed_cross_similarity(norm_embed, window_size)

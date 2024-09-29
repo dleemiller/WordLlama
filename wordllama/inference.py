@@ -379,7 +379,6 @@ class WordLlamaInference:
         text: str,
         target_size: int = 1536,
         window_size: int = 3,
-        initial_split_size: int = 64,
         poly_order: int = 3,
         savgol_window: int = 5,
     ) -> List[str]:
@@ -398,9 +397,7 @@ class WordLlamaInference:
         - List[str]: List of semantically split text chunks.
         """
         # split text
-        lines = SemanticSplitter.split(
-            text, target_size=target_size, initial_split_size=initial_split_size
-        )
+        lines = SemanticSplitter.split(text, target_size=target_size)
 
         # compute cross similarity
         embeddings = self.embed(lines, norm=True)

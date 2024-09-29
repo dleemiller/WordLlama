@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List
 from itertools import chain
-from .find_local_minima import window_average, find_local_minima
+from .find_local_minima import find_local_minima, windowed_cross_similarity
 from .splitter import constrained_coalesce, split_sentences
 
 
@@ -26,7 +26,9 @@ class SemanticSplitter:
         - List[str]: List of text chunks.
         """
         sentences = split_sentences(text)
-        return constrained_coalesce(sentences, target_size, separator=" ")
+        for i in range(256, 512 + 64, 64):
+            sentences = constrained_coalesce(sentences, i, separator=" ")
+        return sentences
 
     @classmethod
     def split(cls, text: str, target_size: int, initial_split_size: int) -> List[str]:
@@ -41,9 +43,11 @@ class SemanticSplitter:
         Returns:
         - List[str]: List of text chunks.
         """
-        lines = constrained_coalesce(
-            text.splitlines(), initial_split_size, separator="\n"
-        )
+        lines = text.splitlines()
+        for i in range(16, 64, 8):
+            lines = constrained_coalesce(
+                lines, i, separator="\n"
+            )
         chunks = [
             cls.constrained_split(line, target_size)
             if len(line) > target_size
@@ -57,7 +61,7 @@ class SemanticSplitter:
     def reconstruct(
         cls,
         lines: List[str],
-        x_sim: np.ndarray,
+        norm_embed: np.ndarray,
         target_size: int,
         window_size: int,
         poly_order: int,
@@ -69,7 +73,7 @@ class SemanticSplitter:
 
         Parameters:
         - lines (List[str]): List of text chunks to reconstruct.
-        - x_sim (np.ndarray): Cross-similarity matrix of text chunks.
+        - norm_embed (np.ndarray): Embeddings (normalized).
         - target_size (int): Target size for final chunks.
         - window_size (int): Window size for similarity matrix averaging.
         - poly_order (int): Polynomial order for Savitzky-Golay filter.
@@ -78,14 +82,19 @@ class SemanticSplitter:
         Returns:
         - List[str]: List of semantically split text chunks.
         """
-        sim_avg = window_average(x_sim, window_size)
+        assert len(lines) == norm_embed.shape[0], "Number of texts must equal number of embeddings"
+
+        # calculate the similarity for the window
+        sim_avg = windowed_cross_similarity(norm_embed, window_size)
+
+        # find the minima
         x = np.arange(len(sim_avg))
         roots, y = find_local_minima(
             x, sim_avg, poly_order=poly_order, window_size=savgol_window
         )
         split_points = np.round(roots).astype(int).tolist()
 
-        # filter to minima within bottom 40% of similarity scores
+        # filter to minima within bottom Nth percentile of similarity scores
         (x_idx,) = np.where(y < np.quantile(sim_avg, max_score_pct))
         split_points = [x for i, x in enumerate(split_points) if i in x_idx]
 

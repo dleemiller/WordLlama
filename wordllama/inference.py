@@ -26,7 +26,7 @@ class WordLlamaInference:
         binary: bool = False,
     ):
         self.binary = binary
-        self.embedding = embedding.astype(np.float32)
+        self.embedding = np.ascontiguousarray(embedding.astype(np.float32))
         self.config = config
         self.tokenizer = tokenizer
         self.tokenizer_kwargs = self.config.tokenizer.model_dump()
@@ -60,7 +60,7 @@ class WordLlamaInference:
         norm: bool = False,
         return_np: bool = True,
         pool_embeddings: bool = True,
-        batch_size: int = 512,
+        batch_size: int = 32,
     ) -> Union[np.ndarray, List]:
         """
         Generate embeddings for input texts with options for normalization and binarization.
@@ -83,46 +83,50 @@ class WordLlamaInference:
         if texts and not isinstance(texts[0], str):
             raise TypeError("All elements in 'texts' must be strings")
 
-        all_embeddings = []
+        # Preallocate final embeddings array
+        num_texts = len(texts)
+        embedding_dim = self.embedding.shape[1]
+        np_type = np.float32 if not self.binary else np.uint64
+        pooled_embeddings = np.empty((num_texts, embedding_dim), dtype=np_type)
 
-        for i in range(0, len(texts), batch_size):
+        for i in range(0, num_texts, batch_size):
             chunk = texts[i : i + batch_size]
 
             # Tokenize the texts
             encoded_texts = self.tokenize(chunk)
             input_ids = np.array([enc.ids for enc in encoded_texts], dtype=np.int32)
             attention_mask = np.array(
-                [enc.attention_mask for enc in encoded_texts], dtype=np.int32
+                [enc.attention_mask for enc in encoded_texts], dtype=np.float32
             )
 
             # Clamp out-of-bounds input_ids
-            input_ids = np.clip(input_ids, 0, self.embedding.shape[0] - 1)
+            np.clip(input_ids, 0, self.embedding.shape[0] - 1, out=input_ids)
 
-            # Compute the embeddings
-            x = self.embedding[input_ids]
+            # Compute embeddings in batch
+            batch_embeddings = self.embedding[input_ids]
 
+            # Apply average pooling to the batch
             if pool_embeddings:
-                # Apply average pooling
-                x = self.avg_pool(x, attention_mask)
+                batch_embeddings = self.avg_pool(batch_embeddings, attention_mask)
 
+            # Normalize embeddings after pooling
             if norm:
-                x = self.normalize_embeddings(x)
+                batch_embeddings /= np.linalg.norm(
+                    batch_embeddings, axis=1, keepdims=True
+                )
 
+            # Binarize embeddings
             if self.binary:
-                x = binarize_and_packbits(x)
+                batch_embeddings = binarize_and_packbits(batch_embeddings)
 
-            all_embeddings.append(x)
+            # Store the computed embeddings in preallocated array
+            pooled_embeddings[i : i + batch_embeddings.shape[0]] = batch_embeddings
 
-        # Concatenate all batches
-        if pool_embeddings:
-            final_embeddings = np.concatenate(all_embeddings, axis=0)
-        else:
-            final_embeddings = np.concatenate(all_embeddings, axis=0)
-
+        # Return embeddings as NumPy array or list based on user preference
         if return_np:
-            return final_embeddings
+            return pooled_embeddings
 
-        return final_embeddings.tolist()
+        return pooled_embeddings.tolist()
 
     @staticmethod
     def avg_pool(x: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -137,14 +141,8 @@ class WordLlamaInference:
             np.ndarray: The pooled embeddings.
         """
         # Ensure mask is float32 to avoid promotion
-        mask = mask.astype(np.float32)
-
-        # Perform sum and division in float32 to prevent promotion to float64
-        x = np.sum(x * mask[..., np.newaxis], axis=1, dtype=np.float32) / np.maximum(
-            mask.sum(axis=1, keepdims=True, dtype=np.float32), 1
-        ).astype(np.float32)
-
-        return x
+        mask_sum = np.maximum(mask.sum(axis=1, keepdims=True), 1.0).astype(np.float32)
+        return np.sum(x * mask[..., np.newaxis], axis=1, dtype=np.float32) / mask_sum
 
     @staticmethod
     def normalize_embeddings(embeddings: np.ndarray) -> np.ndarray:
@@ -191,8 +189,12 @@ class WordLlamaInference:
         - np.ndarray: A 2D array of cosine similarity scores.
         """
         # Normalize the vectors
-        a = WordLlamaInference.normalize_embeddings(a)
-        b = WordLlamaInference.normalize_embeddings(b)
+        if (a == b).all():
+            a = WordLlamaInference.normalize_embeddings(a)
+            b = a
+        else:
+            a = WordLlamaInference.normalize_embeddings(a)
+            b = WordLlamaInference.normalize_embeddings(b)
 
         # Calculate cosine similarity
         return a @ b.T
@@ -378,8 +380,8 @@ class WordLlamaInference:
         target_size: int = 1536,
         window_size: int = 3,
         initial_split_size: int = 64,
-        poly_order: int = 2,
-        savgol_window: int = 7,
+        poly_order: int = 3,
+        savgol_window: int = 5,
     ) -> List[str]:
         """
         Perform semantic splitting on the input text.
@@ -401,13 +403,12 @@ class WordLlamaInference:
         )
 
         # compute cross similarity
-        embeddings = self.embed(lines)
-        cross_similarity = self.vector_similarity(embeddings, embeddings)
+        embeddings = self.embed(lines, norm=True)
 
         # reconstruct text with similarity signals
         return SemanticSplitter.reconstruct(
             lines,
-            cross_similarity,
+            embeddings,
             target_size=target_size,
             window_size=window_size,
             poly_order=poly_order,

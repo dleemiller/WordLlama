@@ -108,9 +108,8 @@ class SemanticSplitter:
         sim_avg = windowed_cross_similarity(norm_embed, window_size)
 
         # find the minima
-        x = np.arange(len(sim_avg))
         roots, y = find_local_minima(
-            x, sim_avg, poly_order=poly_order, window_size=savgol_window
+            sim_avg, poly_order=poly_order, window_size=savgol_window
         )
         split_points = np.round(roots).astype(int).tolist()
 

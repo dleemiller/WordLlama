@@ -122,15 +122,24 @@ cdef tuple _find_local_minima_impl(DTYPE_t[:] y, int window_size, int poly_order
     cdef list minima_values = []
     cdef DTYPE_t[:] dy_view = dy
     cdef DTYPE_t[:] ddy_view = ddy
-    
+
     cdef int i
+    cdef DTYPE_t interp_weight
 
     # Identify minima by checking first derivative change and positive second derivative
     for i in range(1, n - 1):
-        if dy_view[i-1] < 0 < dy_view[i] and ddy_view[i] > 0:
-            minima_indices.append(i)
-            minima_values.append(y[i])
-    
+        if dy_view[i] < 0 < dy_view[i + 1] and ddy_view[i] > 0:
+            # Calculate the weight of the zero crossing between i and i+1
+            interp_weight = -dy_view[i] / (dy_view[i + 1] - dy_view[i])
+
+            # Determine if the zero crossing is closer to i or i+1
+            if interp_weight < 0.5:
+                minima_indices.append(i)
+                minima_values.append(y[i])
+            else:
+                minima_indices.append(i + 1)
+                minima_values.append(y[i + 1])
+
     # Convert the lists to NumPy arrays
     cdef np.ndarray[np.int32_t, ndim=1] minima_idx_np = np.array(minima_indices, dtype=np.int32)
     cdef np.ndarray[DTYPE_t, ndim=1] minima_values_np = np.array(minima_values, dtype=np.float32)

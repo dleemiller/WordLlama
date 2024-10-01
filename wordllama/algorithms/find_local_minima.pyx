@@ -79,7 +79,7 @@ cpdef tuple find_local_minima(np.ndarray[DTYPE_t, ndim=1] y, int window_size=11,
     Returns:
         tuple: Two numpy arrays, one for the indices of the local minima, and one for the values.
     """
-    if window_size % 2 == 0 or window_size < 1:
+    if window_size % 2 == 0 or window_size < 3:
         raise ValueError("Window size must be an odd, positive integer.")
     if poly_order >= window_size:
         raise ValueError("Polynomial order cannot be larger than window size.")

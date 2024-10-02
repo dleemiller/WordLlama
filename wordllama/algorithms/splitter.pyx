@@ -1,10 +1,11 @@
 # distutils: language=c++
 # cython: language_level=3, infer_types=True, binding=True, boundscheck=False, wraparound=False
 import cython
-from cpython cimport PyObject, Py_INCREF
+from cpython cimport PyObject, Py_INCREF, array
 from libcpp.vector cimport vector
 from libcpp.set cimport set as cset
 from libc.string cimport memchr
+
 
 cdef extern from "Python.h":
     int PyObject_Length(object o) except -1
@@ -166,4 +167,32 @@ cdef tuple _combine_pass(list iterable, Py_ssize_t max_size, str separator):
             i += 1
 
     return [<object>combined[j] for j in range(combined.size())], changes
+
+cpdef list reverse_merge(list strings, int n, str separator="\n"):
+    cdef list result = []
+    cdef str current_str
+    cdef int i, str_len
+    cdef str string
+
+    if len(strings) == 0:
+        return result
+
+    current_str = strings[0]  # Start at index 0 with the first string
+
+    for i in range(1, len(strings)):  # Start at index 1
+        string = strings[i]
+        str_len = len(string)
+
+        if str_len < n:
+            if current_str:
+                current_str = separator.join([current_str, string])
+            else:
+                current_str = string
+        else:
+            result.append(current_str)
+            current_str = string
+
+    result.append(current_str)
+
+    return result
 

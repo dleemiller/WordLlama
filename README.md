@@ -195,6 +195,7 @@ $ python train.py save --config your_new_config --checkpoint ... --outdir /path/
 ## Community Projects
 
 [Gradio Demo HF Space](https://huggingface.co/spaces/1littlecoder/wordllama)
+[CPU-ish RAG](https://github.com/dinhanhx/cpu-ish-rag)
 
 ## Citations
 

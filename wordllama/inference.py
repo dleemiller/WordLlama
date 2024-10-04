@@ -11,6 +11,7 @@ from .algorithms import (
 )
 from .algorithms.semantic_splitter import SemanticSplitter
 from .config import WordLlamaConfig
+from .mode_decorators import dense_only
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -330,6 +331,7 @@ class WordLlamaInference:
         ]
         return filtered_docs
 
+    @dense_only
     def cluster(
         self,
         docs: List[str],
@@ -354,8 +356,6 @@ class WordLlamaInference:
         Returns:
             Tuple[List[int], float]: A tuple containing a list of cluster labels for each document and the final inertia (sum of squared distances to cluster centers).
         """
-        if self.binary:
-            raise ValueError("KMeans clustering only implemented for dense embeddings")
         embeddings = self.embed(docs, norm=True)
         assert isinstance(docs, list), "`docs` must be a list of strings"
         assert len(docs) >= k, "number of clusters cannot be larger than len(docs)"
@@ -372,6 +372,7 @@ class WordLlamaInference:
         )
         return cluster_labels, inertia
 
+    @dense_only
     def split(
         self,
         text: str,

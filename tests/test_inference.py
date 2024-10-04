@@ -134,6 +134,16 @@ class TestWordLlamaInference(unittest.TestCase):
         embeddings = self.model.embed("test string", return_np=True)
         self.assertEqual(embeddings.shape, (1, 64))
 
+    def test_cluster_fails_binary(self):
+        self.model.binary = True
+        with self.assertRaises(ValueError):
+            self.model.cluster(["a", "b", "c"])
+
+    def test_split_fails_binary(self):
+        self.model.binary = True
+        with self.assertRaises(ValueError):
+            self.model.split("a" * 1000)
+
     def test_similarity_cosine(self):
         def mock_encode_batch(texts, *args, **kwargs):
             return [MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]) for _ in texts]

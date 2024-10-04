@@ -78,6 +78,8 @@ def split_sentences(str text not None, set punct_chars=None):
                        'ᑌ', 'ᗂ', 'ᗃ', 'ᗉ', 'ᗊ', 'ᗋ', 'ᗌ', 'ᗍ', 'ᗎ', 'ᗏ', 'ᗐ', 'ᗑ', 'ᗒ',
                        'ᗓ', 'ᗔ', 'ᗕ', 'ᗖ', 'ᗗ', '遁', '遂', '᜼', '᜽', '᜾', 'ᩂ', 'ᩃ', 'ꛝ',
                        'ꛞ', '᱁', '᱂', '橮', '橯', '櫵', '欷', '欸', '歄', '벟', '?', '｡', '。'}
+    else:
+        punct_chars = set(punct_chars)
 
     punct_chars_c = cset[Py_UCS4](ord(c) for c in punct_chars)
 
@@ -100,26 +102,29 @@ def split_sentences(str text not None, set punct_chars=None):
 
     return sentences
 
-def constrained_coalesce(list iterable, Py_ssize_t max_size, str separator="\n"):
+def constrained_coalesce(list iterable, Py_ssize_t max_size, str separator="\n", Py_ssize_t max_iterations=100):
     """
     Recursively coalesces pairs of successive items from the iterable as long as the
     combined size of two items doesn't exceed max_size. The separator used for joining
     pairs can be configured.
-    
+
     Parameters:
         iterable (list): List of strings to be coalesced.
         max_size (Py_ssize_t): Maximum allowed size of the combined string.
         separator (str): The string used to join pairs of items (default: newline).
-        
+        max_iterations (Py_ssize_t): Maximum number of list iterations (default: 100).
+
     Returns:
         list: Coalesced list.
     """
     cdef list result = iterable
     cdef Py_ssize_t changes = 1
+    cdef Py_ssize_t iteration = 0
 
-    # recurse the list until no further combinations can be made
-    while changes > 0:
+    # Recurse the list until no further combinations can be made or max_iterations is reached
+    while changes > 0 and iteration < max_iterations:
         result, changes = _combine_pass(result, max_size, separator)
+        iteration += 1
     return result
 
 cdef tuple _combine_pass(list iterable, Py_ssize_t max_size, str separator):

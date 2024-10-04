@@ -1,38 +1,58 @@
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 from itertools import chain
 from .find_local_minima import find_local_minima, windowed_cross_similarity
-from .splitter import constrained_coalesce, split_sentences
+from .splitter import (
+    constrained_batches,
+    constrained_coalesce,
+    split_sentences,
+    reverse_merge,
+)
 
 
 class SemanticSplitter:
-    """A class for semantically splitting and reconstructing text."""
+    """
+    A class for semantically splitting text.
+
+    This class provides methods to split text into chunks based on semantic similarity
+    and reconstruct them while maintaining semantic coherence.
+    """
 
     @staticmethod
-    def flatten(nested_list: List[List]) -> List:
-        """Flatten a list of lists into a single list."""
+    def flatten(nested_list: List[List[any]]) -> List[any]:
+        """
+        Flatten a list of lists into a single list.
+
+        Args:
+            nested_list (List[List[any]]): A list of lists to be flattened.
+
+        Returns:
+            List[any]: A flattened list containing all elements from the nested lists.
+        """
         return list(chain.from_iterable(nested_list))
 
     @staticmethod
     def constrained_split(
         text: str,
         target_size: int,
-        coalesce_range: Tuple[int, int, int] = (256, 576, 64),
         separator: str = " ",
+        min_size: int = 24,
     ) -> List[str]:
         """
         Split text into chunks of approximately target_size.
 
-        Parameters:
-        - text (str): The text to split.
-        - target_size (int): The target size for each chunk.
+        Args:
+            text (str): The text to split.
+            target_size (int): The target size for each chunk.
+            separator (str, optional): The separator to use when joining text. Defaults to " ".
+            min_size (int, optional): The minimum size for each chunk. Defaults to 24.
 
         Returns:
-        - List[str]: List of text chunks.
+            List[str]: List of text chunks.
         """
         sentences = split_sentences(text)
-        for i in range(*coalesce_range):
-            sentences = constrained_coalesce(sentences, i, separator=separator)
+        sentences = constrained_coalesce(sentences, target_size, separator=separator)
+        sentences = reverse_merge(sentences, n=min_size, separator=separator)
         return sentences
 
     @classmethod
@@ -40,40 +60,36 @@ class SemanticSplitter:
         cls,
         text: str,
         target_size: int,
-        paragraph_range: Tuple[int, int, int] = (16, 60, 8),
-        sentence_range: Tuple[int, int, int] = (256, 576, 64),
+        cleanup_size: int = 24,
+        intermediate_size: int = 96,
     ) -> List[str]:
         """
-        Split the input text into chunks.
+        Split the input text into chunks based on semantic coherence.
 
-        Parameters:
-        - text (str): The input text to split.
-        - target_size (int): The target size for final chunks.
-        - initial_split_size (int): The initial size for splitting on newlines.
+        Args:
+            text (str): The input text to split.
+            target_size (int): The target size for final chunks.
+            cleanup_size (int, optional): The minimum size for cleaning up small chunks. Defaults to 24.
+            intermediate_size (int, optional): The initial size for splitting on newlines. Defaults to 96.
 
         Returns:
-        - List[str]: List of text chunks.
+            List[str]: List of text chunks.
         """
-        # paragraph splitting
-        # split on newlines and coalesce to cleanup
         lines = text.splitlines()
-        for i in range(*paragraph_range):
-            lines = constrained_coalesce(lines, i, separator="\n")
+        lines = constrained_coalesce(lines, intermediate_size, separator="\n")
+        lines = reverse_merge(lines, n=cleanup_size, separator="\n")
 
-        # for paragraphs larger than target_size
-        # split to sentences and coalesce
         chunks = [
             cls.constrained_split(
-                line, target_size, coalesce_range=sentence_range, separator=" "
+                line, target_size, min_size=cleanup_size, separator=" "
             )
             if len(line) > target_size
             else [line]
             for line in lines
         ]
 
-        # flatten list of lists
         chunks = cls.flatten(chunks)
-        return list(filter(lambda x: True if x.strip() else False, chunks))
+        return list(filter(lambda x: bool(x.strip()), chunks))
 
     @classmethod
     def reconstruct(
@@ -85,40 +101,44 @@ class SemanticSplitter:
         poly_order: int,
         savgol_window: int,
         max_score_pct: float = 0.4,
-    ) -> List[str]:
+        return_minima: bool = False,
+    ) -> Union[List[str], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
         """
         Reconstruct text chunks based on semantic similarity.
 
-        Parameters:
-        - lines (List[str]): List of text chunks to reconstruct.
-        - norm_embed (np.ndarray): Embeddings (normalized).
-        - target_size (int): Target size for final chunks.
-        - window_size (int): Window size for similarity matrix averaging.
-        - poly_order (int): Polynomial order for Savitzky-Golay filter.
-        - savgol_window (int): Window size for Savitzky-Golay filter.
+        Args:
+            lines (List[str]): List of text chunks to reconstruct.
+            norm_embed (np.ndarray): Normalized embeddings of the text chunks.
+            target_size (int): Target size for final chunks.
+            window_size (int): Window size for similarity matrix averaging.
+            poly_order (int): Polynomial order for Savitzky-Golay filter.
+            savgol_window (int): Window size for Savitzky-Golay filter.
+            max_score_pct (float, optional): Maximum percentile of similarity scores to consider. Defaults to 0.4.
+            return_minima (bool, optional): If True, return minima information instead of reconstructed text. Defaults to False.
 
         Returns:
-        - List[str]: List of semantically split text chunks.
+            Union[List[str], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+                If return_minima is False, returns a list of reconstructed text chunks.
+                If return_minima is True, returns a tuple of (roots, y, sim_avg).
+
+        Raises:
+            AssertionError: If the number of texts doesn't equal the number of embeddings.
         """
         assert (
             len(lines) == norm_embed.shape[0]
         ), "Number of texts must equal number of embeddings"
 
-        # calculate the similarity for the window
         sim_avg = windowed_cross_similarity(norm_embed, window_size)
-
-        # find the minima
         roots, y = find_local_minima(
             sim_avg, poly_order=poly_order, window_size=savgol_window
         )
-        split_points = np.round(roots).astype(int).tolist()
 
-        # filter to minima within bottom Nth percentile of similarity scores
+        if return_minima:
+            return roots, y, sim_avg
+
         (x_idx,) = np.where(y < np.quantile(sim_avg, max_score_pct))
-        split_points = [x for i, x in enumerate(split_points) if i in x_idx]
+        split_points = [int(x) for i, x in enumerate(roots.tolist()) if i in x_idx]
 
-        # reconstruct using the minima as boundaries for coalesce
-        # this ensures that any semantic boundaries are respected
         chunks = []
         start = 0
         for end in split_points + [len(lines)]:
@@ -126,5 +146,6 @@ class SemanticSplitter:
             chunks.extend(chunk)
             start = end
 
-        chunks = constrained_coalesce(chunks, target_size)
-        return chunks
+        return list(
+            map("".join, constrained_batches(lines, max_size=target_size, strict=False))
+        )

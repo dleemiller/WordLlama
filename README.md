@@ -16,7 +16,7 @@
 - [Features](#features)
 - [What is WordLlama?](#what-is-wordllama)
 - [MTEB Results](#mteb-results)
-- [How Fast?](#how-fast)
+- [How Fast?](#how-fast-zap)
 - [Usage Examples](#usage-examples)
   - [Embedding Text](#embedding-text)
   - [Calculating Similarity](#calculating-similarity)

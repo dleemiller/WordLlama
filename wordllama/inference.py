@@ -250,11 +250,14 @@ class WordLlamaInference:
         - list of tuple: A list of (doc, score) tuples, sorted by score in descending order.
         """
         assert isinstance(query, str), "Query must be a string"
+        assert (
+            isinstance(docs, list) and len(docs) > 1
+        ), "Docs must be a list of 2 more more strings."
         query_embedding = self.embed(query)
         doc_embeddings = self.embed(docs)
         scores = self.vector_similarity(query_embedding[0], doc_embeddings)
 
-        scores = scores.squeeze()
+        scores = np.atleast_1d(scores.squeeze())
         similarities = list(zip(docs, scores.tolist()))
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities

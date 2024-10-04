@@ -17,9 +17,11 @@ class TestWordLlamaInference(unittest.TestCase):
     def setUp(self, mock_tokenizer):
         # Mock the tokenizer
         self.mock_tokenizer = MagicMock()
-        self.mock_tokenizer.encode_batch.return_value = [
-            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1])
-        ]
+
+        def mock_encode_batch(texts, *args, **kwargs):
+            return [MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]) for _ in texts]
+
+        self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
         mock_tokenizer.return_value = self.mock_tokenizer
 
         # Example config using Pydantic models
@@ -90,21 +92,6 @@ class TestWordLlamaInference(unittest.TestCase):
         self.assertIn("doc1", deduplicated_docs)
         self.assertIn("a second document that is different", deduplicated_docs)
 
-    # @patch.object(
-    #    WordLlamaInference,
-    #    "embed",
-    #    return_value=np.array(
-    #        [[1, 2, 3], [1, 2, 3], [4, 5, 6], [3, 2, 3]], dtype=np.uint64
-    #    ),
-    # )
-    # def test_deduplicate_hamming(self, mock_embed):
-    #    docs = ["doc1", "doc1_dup", "doc2", "doc1_dup2"]
-    #    self.model.binary = True
-    #    deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
-    #    self.assertEqual(len(deduplicated_docs), 2)
-    #    self.assertIn("doc1", deduplicated_docs)
-    #    self.assertIn("doc2", deduplicated_docs)
-
     @patch.object(
         WordLlamaInference,
         "embed",
@@ -137,9 +124,6 @@ class TestWordLlamaInference(unittest.TestCase):
         self.assertIn("doc1", deduplicated_docs)
 
     def test_tokenize(self):
-        self.mock_tokenizer.encode_batch.return_value = [
-            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1])
-        ]
         tokens = self.model.tokenize("test string")
         self.mock_tokenizer.encode_batch.assert_called_with(
             ["test string"], is_pretokenized=False, add_special_tokens=False
@@ -147,35 +131,32 @@ class TestWordLlamaInference(unittest.TestCase):
         self.assertEqual(len(tokens), 1)
 
     def test_embed(self):
-        self.mock_tokenizer.encode_batch.return_value = [
-            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1])
-        ]
         embeddings = self.model.embed("test string", return_np=True)
         self.assertEqual(embeddings.shape, (1, 64))
 
     def test_similarity_cosine(self):
-        self.mock_tokenizer.encode_batch.return_value = [
-            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]),
-            MagicMock(ids=[4, 5, 6], attention_mask=[1, 1, 1]),
-        ]
+        def mock_encode_batch(texts, *args, **kwargs):
+            return [MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]) for _ in texts]
+
+        self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
         sim_score = self.model.similarity("test string 1", "test string 2")
         self.assertTrue(isinstance(sim_score, float))
 
     def test_similarity_hamming(self):
-        self.mock_tokenizer.encode_batch.return_value = [
-            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]),
-            MagicMock(ids=[4, 5, 6], attention_mask=[1, 1, 1]),
-        ]
+        def mock_encode_batch(texts, *args, **kwargs):
+            return [MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]) for _ in texts]
+
+        self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
 
         self.model.binary = True
         sim_score = self.model.similarity("test string 1", "test string 2")
         self.assertTrue(isinstance(sim_score, float))
 
     def test_vector_similarity(self):
-        self.mock_tokenizer.encode_batch.return_value = [
-            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]),
-            MagicMock(ids=[4, 5, 6], attention_mask=[1, 1, 1]),
-        ]
+        def mock_encode_batch(texts, *args, **kwargs):
+            return [MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]) for _ in texts]
+
+        self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
 
         with patch.object(self.model, "cosine_similarity") as mock_cosine:
             mock_cosine.return_value = np.array([[0.5]])
@@ -192,22 +173,36 @@ class TestWordLlamaInference(unittest.TestCase):
             mock_hamming.assert_called_once()
 
     def test_rank_cosine(self):
-        self.mock_tokenizer.encode_batch.return_value = [
-            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]),
-            MagicMock(ids=[4, 5, 6], attention_mask=[1, 1, 1]),
-            MagicMock(ids=[7, 8, 9], attention_mask=[1, 1, 1]),
-        ]
+        def mock_encode_batch(texts, *args, **kwargs):
+            return [
+                MagicMock(ids=[i + 1, i + 2, i + 3], attention_mask=[1, 1, 1])
+                for i, _ in enumerate(texts)
+            ]
+
+        self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
+
+        # Mock embeddings to be slightly different for each document
+        def mock_embed(texts, *args, **kwargs):
+            if isinstance(texts, str):
+                texts = [texts]
+            embeddings = []
+            for i, text in enumerate(texts):
+                embedding = np.random.rand(64) + i  # Different embeddings
+                embeddings.append(embedding)
+            return np.vstack(embeddings)
+
+        self.model.embed = mock_embed
+
         docs = ["doc1", "doc2", "doc3"]
         ranked_docs = self.model.rank("test query", docs)
         self.assertEqual(len(ranked_docs), len(docs))
         self.assertTrue(all(isinstance(score, float) for doc, score in ranked_docs))
 
     def test_rank_hamming(self):
-        self.mock_tokenizer.encode_batch.return_value = [
-            MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]),
-            MagicMock(ids=[4, 5, 6], attention_mask=[1, 1, 1]),
-            MagicMock(ids=[7, 8, 9], attention_mask=[1, 1, 1]),
-        ]
+        def mock_encode_batch(texts, *args, **kwargs):
+            return [MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]) for _ in texts]
+
+        self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
         docs = ["doc1", "doc2", "doc3"]
 
         with patch.object(self.model, "hamming_similarity") as mock_hamming:

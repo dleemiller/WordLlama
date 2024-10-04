@@ -16,6 +16,7 @@
 - [Features](#features)
 - [What is WordLlama?](#what-is-wordllama)
 - [MTEB Results](#mteb-results)
+- [How Fast?](#how-fast)
 - [Usage Examples](#usage-examples)
   - [Embedding Text](#embedding-text)
   - [Calculating Similarity](#calculating-similarity)
@@ -117,6 +118,16 @@ The following table presents the performance of WordLlama models compared to oth
 
 - LLaMA 3-based: [l3_supercat](https://huggingface.co/dleemiller/wordllama-l3-supercat)
 - [Results](wordllama/RESULTS.md)
+
+## How Fast? :zap:
+
+8k documents from the `ag_news` dataset
+- Single core performance (CPU), i9 12th gen, DDR4 3200
+- NVIDIA A4500 (GPU) 
+
+<p align="center">
+  <img src="benchmark/inference_benchmark.png" alt="Word Llama" width="60%">
+</p>
 
 ## Usage Examples
 

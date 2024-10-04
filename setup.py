@@ -62,6 +62,25 @@ extensions = [
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     ),
+    Extension(
+        "wordllama.algorithms.splitter",
+        ["wordllama/algorithms/splitter.pyx"],
+        include_dirs=[],
+        define_macros=[],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+        language="c++"
+    ),
+    Extension(
+        "wordllama.algorithms.find_local_minima",
+        ["wordllama/algorithms/find_local_minima.pyx"],
+        include_dirs=[numpy_include],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+        language="c++"
+    )
+
 ]
 
 setup(

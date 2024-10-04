@@ -63,7 +63,6 @@ The reconstruction step checks the similarity between adjacent chunks using thei
 
 Using WordLlama embedding with efficient algorithms, this process can handle large texts quickly, making it suitable for various applications and computational environments.
 
-
 ### Load The Lord of the Rings Text
 
 
@@ -397,7 +396,6 @@ zoom, = np.where((x < b) & (x >= a))
 ax2.plot(x[zoom], y[zoom], "r*")
 
 ax2.set_title('Zoomed in: Windowed Cross-similarity')
-ax2.legend()
 ax2.set_xlabel('Line #')
 
 plt.tight_layout()
@@ -405,13 +403,9 @@ plt.show()
 
 ```
 
-    /tmp/ipykernel_139729/2162431424.py:26: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
-      ax2.legend()
-
-
 
     
-![png](output_23_1.png)
+![png](output_23_0.png)
     
 
 
@@ -451,7 +445,7 @@ ax.semilogy(True)
 
 
 
-    [<matplotlib.lines.Line2D at 0x7f2fb8760e90>]
+    [<matplotlib.lines.Line2D at 0x7fd4e06d8590>]
 
 
 
@@ -465,71 +459,42 @@ ax.semilogy(True)
 
 
 ```python
-from IPython.display import HTML, display
+from IPython.display import Markdown, display
 
-def display_strings(strings):
+def display_strings(string_list, offset=0):
     """
-    Display a list of strings in Jupyter notebook with custom styling.
+    Convert a list of strings into a markdown table and display it in a Jupyter notebook.
     
-    Args:
-    strings (list): A list of strings to display.
+    Parameters:
+    - string_list (list): The list of strings to display
+    
+    Returns:
+    - None (displays the table in the notebook)
     """
-    html_content = """
-    <style>
-        .string-container {
-            border: 2px solid navy;
-            border-radius: 0px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        .string-pane {
-            padding: 10px;
-            background-color: #E6F3FF;
-        }
-        .string-pane:not(:last-child) {
-            border-bottom: 1px solid navy;
-        }
-        .string-pane:nth-child(even) {
-            background-color: #CCE6FF;
-        }
-    </style>
-    <div class="string-container">
-    """
+    # Create the table header
+    table = "| Index | Text |\n|-------|------|\n"
     
-    for string in strings:
-        html_content += f'<div class="string-pane">{string}</div>'
+    # Add each string to the table
+    for i, text in enumerate(string_list):
+        row = f"| {i + offset} | {text[:600]}{'...' if len(text) > 600 else ''} |\n"
+        table += row
     
-    html_content += "</div>"
-    
-    display(HTML(html_content))
+    # Display the table
+    display(Markdown(table))
 
-
-display_strings(lines[500:505])
+display_strings(lines[400:406], offset=400)
 ```
 
 
+| Index | Text |
+|-------|------|
+| 400 |      The hobbits grew very weary. They advanced slowly, for they had to pick their way through a pathless country, encumbered by fallen trees and tumbled rocks. As long as they could they avoided climbing for Frodo's sake, and because it was in fact difficult to find any way up out of the narrow dales. They had been two days in this country when the weather turned wet. The wind began to blow steadily out of the West and pour the water of the distant seas on the dark heads of the hills in fine drenching rain. By nightfall they were all soaked, and their camp was cheerless, for they could not ge... |
+| 401 |      That night they camped on a stony shelf with a rock-wall behind them, in which there was a shallow cave, a mere scoop in the cliff. Frodo was restless. The cold and wet had made his wound more painful than ever, and the ache and sense of deadly chill took away all sleep. He lay tossing and turning and listening fearfully to the stealthy night-noises: wind in chinks of rock, water dripping, a crack, the sudden rattling fall of a loosened stone. He felt that black shapes were advancing to smother him; but when he sat up he saw nothing but the back of Strider sitting hunched up, smoking his ... |
+| 402 |      When he returned he was not reassuring. 'We have come too far to the north,' he said, 'and we must find some way to turn back southwards again. If we keep on as we are going we shall get up into the Ettendales far north of Rivendell. That is troll-country, and little known to me. We could perhaps find our way through and come round to Rivendell from the north; but it would take too long, for I do not know the way, and our food would not last. So somehow or other we must find the Ford of Bruinen.'     The rest of that day they spent scrambling over rocky ground. They found a passage betwee... |
+| 403 |      They decided to attempt the climb, but it proved very difficult. Before long Frodo was obliged to dismount and struggle along on foot. Even so they often despaired of getting their pony up, or indeed of finding a path for themselves, burdened as they were. The light was nearly gone, and they were all exhausted, when at last they reached the top. They had climbed on to a narrow saddle between two higher points, and the land fell steeply away again, only a short distance ahead. Frodo threw himself down, and lay on the ground shivering. His left arm was lifeless, and his side and shoulder fe... |
+| 404 |      'Frodo has been touched by the weapons of the Enemy,' said Strider, 'and there is some poison or evil at work that is beyond my skill to drive out. But do not give up hope, Sam!'     Night was cold up on the high ridge. They lit a small fire down under the gnarled roots of an old pine, that hung over a shallow pit: it looked as if stone had once been quarried there. They sat huddled together. The wind blew chill through the pass, and they heard the tree-tops lower down moaning and sighing. Frodo lay half in a dream, imagining that endless dark wings were sweeping by above him, and that on... |
+| 405 |      'We must make for the Road again,' he said. 'We cannot hope to find a path through these hills. Whatever danger may beset it, the Road is our only way to the Ford.'     As soon as they had eaten they set out again. They climbed slowly down the southern side of the ridge; but the way was much easier than they had expected, for the slope was far less steep on this side, and before long Frodo was able to ride again. Bill Ferny's poor old pony was developing an unexpected talent for picking out a path, and for sparing its rider as many jolts as possible. The spirits of the party rose again. E... |
 
-<style>
-    .string-container {
-        border: 2px solid navy;
-        border-radius: 0px;
-        overflow: hidden;
-        margin-bottom: 10px;
-    }
-    .string-pane {
-        padding: 10px;
-        background-color: #E6F3FF;
-    }
-    .string-pane:not(:last-child) {
-        border-bottom: 1px solid navy;
-    }
-    .string-pane:nth-child(even) {
-        background-color: #CCE6FF;
-    }
-</style>
-<div class="string-container">
-<div class="string-pane">     ` "Yes, I have come," I said. "I have come for your aid, Saruman the White." And that title seemed to anger him.     ' "Have you indeed, Gandalf the _Grey_! " he scoffed. "For aid? It has seldom been heard of that Gandalf the Grey sought for aid, one so cunning and so wise, wandering about the lands, and concerning himself in every business, whether it belongs to him or not."     'I looked at him and wondered. "But if I am not deceived," said I, "things are now moving which will require the union of all our strength."     ' "That may be so," he said, "but the thought is late in coming to you. How long. I wonder, have you concealed from me, the head of the Council, a matter of greatest import? What brings you now from your lurking-place in the Shire? "     ' "The Nine have come forth again," I answered. "They have crossed the River. So Radagast said to me."     ` "Radagast the Brown! " laughed Saruman, and he no longer concealed his scorn. "Radagast the Bird-tamer! Radagast the Simple! Radagast the Fool! Yet he had just the wit to play the part that I set him. For you have come, and that was all the purpose of my message. And here you will stay, Gandalf the Grey, and rest from journeys. For I am Saruman the Wise, Saruman Ring-maker, Saruman of Many Colours! "     'I looked then and saw that his robes, which had seemed white, were not so, but were woven of all colours. and if he moved they shimmered and changed hue so that the eye was bewildered.     ' "I liked white better," I said.</div><div class="string-pane">     ' "White! " he sneered. "It serves as a beginning. White cloth may be dyed. The white page can be overwritten; and the white light can be broken."     ' "In which case it is no longer white," said I. "And he that breaks a thing to find out what it is has left the path of wisdom."     ' "You need not speak to me as to one of the fools that you take for friends," said he. "I have not brought you hither to be instructed by you, but to give you a choice."     'He drew himself up then and began to declaim, as if he were making a speech long rehearsed. "The Elder Days are gone. The Middle Days are passing. The Younger Days are beginning. The time of the Elves is over, but our time is at hand: the world of Men, which we must rule. But we must have power, power to order all things as we will, for that good which only the Wise can see.</div><div class="string-pane">     ' "And listen, Gandalf, my old friend and helper! " he said, coming near and speaking now in a softer voice. "I said we, for we it may be, if you will join with me. A new Power is rising. Against it the old allies and policies will not avail us at all. There is no hope left in Elves or dying Númenor. This then is one choice before you. before us. We may join with that Power. It would be wise, Gandalf. There is hope that way. Its victory is at hand; and there will be rich reward for those that aided it. As the Power grows, its proved friends will also grow; and the Wise, such as you and I, may with patience come at last to direct its courses, to control it. We can bide our time, we can keep our thoughts in our hearts, deploring maybe evils done by the way, but approving the high and ultimate purpose: Knowledge, Rule, Order; all the things that we have so far striven in vain to accomplish, hindered rather than helped by our weak or idle friends. There need not be, there would not be, any real change in our designs, only in our means."     ' "Saruman," I said, "I have heard speeches of this kind before, but only in the mouths of emissaries sent from Mordor to deceive the ignorant. I cannot think that you brought me so far only to weary my ears."     'He looked at me sidelong, and paused a while considering. "Well, I see that this wise course does not commend itself to you," he said. "Not yet? Not if some better way can be contrived? "</div><div class="string-pane">     `He came and laid his long hand on my arm. "And why not, Gandalf? " he whispered. "Why not? The Ruling Ring? If we could command that, then the Power would pass to us. That is in truth why I brought you here. For I have many eyes in my service, and I believe that you know where this precious thing now lies. Is it not so? Or why do the Nine ask for the Shire, and what is your business there? " As he said this a lust which he could not conceal shone suddenly in his eyes.     ' "Saruman," I said, standing away from him, "only one hand at a time can wield the One, and you know that well, so do not trouble to say we! But I would not give it, nay, I would not give even news of it to you, now that I learn your mind. You were head of the Council, but you have unmasked yourself at last. Well, the choices are, it seems, to submit to Sauron, or to yourself. I will take neither. Have you others to offer? "     'He was cold now and perilous. "Yes," he said. "I did not expect you to show wisdom, even in your own behalf; but I gave you the chance of aiding me willingly. and so saving yourself much trouble and pain. The third choice is to stay here, until the end."
- ' "Until what end? "     ' "Until you reveal to me where the One may be found. I may find means to persuade you. Or until it is found in your despite, and the Ruler has time to turn to lighter matters: to devise, say, a fitting reward for the hindrance and insolence of Gandalf the Grey."</div><div class="string-pane">     ' "That may not prove to be one of the lighter matters," said I. He laughed at me, for my words were empty, and he knew it.     `They took me and they set me alone on the pinnacle of Orthanc, in the place where Saruman was accustomed to watch the stars. There is no descent save by a narrow stair of many thousand steps, and the valley below seems far away. I looked on it and saw that, whereas it had once been green and fair, it was now filled with pits and forges. Wolves and orcs were housed in Isengard, for Saruman was mustering a great force on his own account, in rivalry of Sauron and not in his service yet. Over all his works a dark smoke hung and wrapped itself about the sides of Orthanc. I stood alone on an island in the clouds; and I had no chance of escape, and my days were bitter. I was pierced with cold, and I had but little room in which to pace to and fro, brooding on the coming of the Riders to the North.</div></div>
 
 
 # wl.split() the algorithm
@@ -557,8 +522,8 @@ print(f"Length of text: {len(text):.2e} chars\n# of chunks: {len(results)}\n\nPr
     # of chunks: 784
     
     Processing time:
-    CPU times: user 1.3 s, sys: 112 ms, total: 1.41 s
-    Wall time: 661 ms
+    CPU times: user 1.31 s, sys: 111 ms, total: 1.43 s
+    Wall time: 677 ms
 
 
 

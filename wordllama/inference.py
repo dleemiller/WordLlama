@@ -20,11 +20,19 @@ logger = logging.getLogger(__name__)
 class WordLlamaInference:
     def __init__(
         self,
-        embedding: np.array,
+        embedding: np.ndarray,
         config: WordLlamaConfig,
         tokenizer: Tokenizer,
         binary: bool = False,
     ):
+        """Initialize WordLlamaInference with embeddings and configurations.
+
+        Args:
+            embedding (np.ndarray): The embedding matrix of shape (vocab_size, embedding_dim).
+            config (WordLlamaConfig): The configuration object.
+            tokenizer (Tokenizer): The tokenizer to use for encoding texts.
+            binary (bool, optional): Whether to use binary embeddings. Defaults to False.
+        """
         self.binary = binary
         self.embedding = np.ascontiguousarray(embedding.astype(np.float32))
         self.config = config
@@ -36,8 +44,7 @@ class WordLlamaInference:
         self.tokenizer.no_truncation()
 
     def tokenize(self, texts: Union[str, List[str]]) -> List:
-        """
-        Tokenize input texts using the configured tokenizer.
+        """Tokenize input texts using the configured tokenizer.
 
         Args:
             texts (Union[str, List[str]]): Single string or list of strings to tokenize.
@@ -62,18 +69,17 @@ class WordLlamaInference:
         pool_embeddings: bool = True,
         batch_size: int = 32,
     ) -> Union[np.ndarray, List]:
-        """
-        Generate embeddings for input texts with options for normalization and binarization.
+        """Generate embeddings for input texts with optional normalization and binarization.
 
         Args:
-            texts (Union[str, List[str]]): Texts to embed.
-            norm (bool): Apply normalization to embeddings.
-            return_np (bool): Return result as a numpy array if True, otherwise as a list.
-            pool_embeddings (bool): Apply average pooling to embeddings.
-            batch_size (int): Number of texts to process in each batch.
+            texts (Union[str, List[str]]): Text or list of texts to embed.
+            norm (bool, optional): If True, normalize embeddings to unit vectors. Defaults to False.
+            return_np (bool, optional): If True, return embeddings as a NumPy array; otherwise, return as a list. Defaults to True.
+            pool_embeddings (bool, optional): If True, apply average pooling to token embeddings. Defaults to True.
+            batch_size (int, optional): Number of texts to process in each batch. Defaults to 32.
 
         Returns:
-            Union[np.ndarray, List]: Embeddings as numpy array or list.
+            Union[np.ndarray, List]: Embeddings as a NumPy array or a list, depending on `return_np`.
         """
         if isinstance(texts, str):
             texts = [texts]
@@ -130,15 +136,14 @@ class WordLlamaInference:
 
     @staticmethod
     def avg_pool(x: np.ndarray, mask: np.ndarray) -> np.ndarray:
-        """
-        Apply average pooling to the embeddings.
+        """Apply average pooling to token embeddings using an attention mask.
 
         Args:
-            x (np.ndarray): The input embeddings.
-            mask (np.ndarray): The attention mask indicating which tokens to consider.
+            x (np.ndarray): Token embeddings of shape (batch_size, seq_length, embedding_dim).
+            mask (np.ndarray): Attention mask of shape (batch_size, seq_length), indicating which tokens to include.
 
         Returns:
-            np.ndarray: The pooled embeddings.
+            np.ndarray: Pooled embeddings of shape (batch_size, embedding_dim).
         """
         # Ensure mask is float32 to avoid promotion
         mask_sum = np.maximum(mask.sum(axis=1, keepdims=True), 1.0).astype(np.float32)
@@ -146,8 +151,7 @@ class WordLlamaInference:
 
     @staticmethod
     def normalize_embeddings(embeddings: np.ndarray) -> np.ndarray:
-        """
-        Normalize embeddings to unit vectors.
+        """Normalize embeddings to unit vectors.
 
         Args:
             embeddings (np.ndarray): The input embeddings.
@@ -160,15 +164,14 @@ class WordLlamaInference:
 
     @staticmethod
     def hamming_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        """
-        Calculate the Hamming similarity between vectors.
+        """Calculate the Hamming similarity between binary vectors.
 
-        Parameters:
-        - a (np.ndarray): A 2D array of dtype np.uint64.
-        - b (np.ndarray): A 2D array of dtype np.uint64.
+        Args:
+            a (np.ndarray): A 2D array of binary vectors (dtype np.uint64).
+            b (np.ndarray): A 2D array of binary vectors (dtype np.uint64).
 
         Returns:
-        - np.ndarray: A 2D array of Hamming similarity scores.
+            np.ndarray: A 2D array containing the Hamming similarity scores between vectors in `a` and `b`.
         """
         max_dist = a.shape[1] * 64
 
@@ -178,15 +181,14 @@ class WordLlamaInference:
 
     @staticmethod
     def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        """
-        Calculate the cosine similarity between vectors.
+        """Calculate the cosine similarity between dense vectors.
 
-        Parameters:
-        - a (np.ndarray): A 2D array of dtype float16, float32, or float64.
-        - b (np.ndarray): A 2D array of dtype float16, float32, or float64.
+        Args:
+            a (np.ndarray): A 2D array of dense vectors.
+            b (np.ndarray): A 2D array of dense vectors.
 
         Returns:
-        - np.ndarray: A 2D array of cosine similarity scores.
+            np.ndarray: A 2D array containing the cosine similarity scores between vectors in `a` and `b`.
         """
         # Normalize the vectors
         if (a == b).all():
@@ -200,15 +202,14 @@ class WordLlamaInference:
         return a @ b.T
 
     def vector_similarity(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        """
-        Calculate the similarity between vectors based on the binary attribute.
+        """Calculate similarity between vectors, using either Hamming or cosine similarity.
 
-        Parameters:
-        - a (np.ndarray): A 1D or 2D array of vectors.
-        - b (np.ndarray): A 1D or 2D array of vectors.
+        Args:
+            a (np.ndarray): A 1D or 2D array of vectors.
+            b (np.ndarray): A 1D or 2D array of vectors.
 
         Returns:
-        - np.ndarray: A 2D array of similarity scores.
+            np.ndarray: A 2D array of similarity scores between vectors in `a` and `b`.
         """
         if a.ndim == 1:
             a = np.expand_dims(a, axis=0)
@@ -224,30 +225,28 @@ class WordLlamaInference:
             return self.cosine_similarity(a, b)
 
     def similarity(self, text1: str, text2: str) -> float:
-        """
-        Compare two strings and return their similarity score.
+        """Compute the similarity score between two texts.
 
-        Parameters:
-        - text1 (str): The first text.
-        - text2 (str): The second text.
+        Args:
+            text1 (str): The first text.
+            text2 (str): The second text.
 
         Returns:
-        - float: The similarity score.
+            float: The similarity score between `text1` and `text2`.
         """
         embedding1 = self.embed(text1)
         embedding2 = self.embed(text2)
         return self.vector_similarity(embedding1[0], embedding2[0]).item()
 
-    def rank(self, query: str, docs: List[str]) -> List[tuple]:
-        """
-        Rank a list of documents based on their similarity to a query.
+    def rank(self, query: str, docs: List[str]) -> List[Tuple[str, float]]:
+        """Rank documents based on their similarity to a query.
 
-        Parameters:
-        - query (str): The query text.
-        - docs (list of str): The list of document texts.
+        Args:
+            query (str): The query text.
+            docs (List[str]): The list of document texts to rank.
 
         Returns:
-        - list of tuple: A list of (doc, score) tuples, sorted by score in descending order.
+            List[Tuple[str, float]]: A list of tuples `(doc, score)`, sorted by similarity score in descending order.
         """
         assert isinstance(query, str), "Query must be a string"
         assert (
@@ -265,16 +264,15 @@ class WordLlamaInference:
     def deduplicate(
         self, docs: List[str], threshold: float = 0.9, batch_size: Optional[int] = None
     ) -> List[str]:
-        """
-        Deduplicate a list of documents based on similarity threshold.
+        """Deduplicate documents based on a similarity threshold.
 
         Args:
-            docs (List[str]): List of document texts to deduplicate.
-            threshold (float): Similarity threshold for deduplication.
-            batch_size (Optional[int]): Batch size for processing embeddings.
+            docs (List[str]): List of documents to deduplicate.
+            threshold (float, optional): Similarity threshold above which documents are considered duplicates. Defaults to 0.9.
+            batch_size (Optional[int], optional): Batch size for processing embeddings. Defaults to None.
 
         Returns:
-            List[str]: Deduplicated list of document texts.
+            List[str]: A list of unique documents after deduplication.
         """
         doc_embeddings = self.embed(docs, norm=not self.binary)
 
@@ -290,16 +288,15 @@ class WordLlamaInference:
         return unique_docs
 
     def topk(self, query: str, candidates: List[str], k: int = 3) -> List[str]:
-        """
-        Retrieve the top-k documents based on their similarity to the query.
+        """Retrieve the top-k most similar documents to a query.
 
-        Parameters:
-        - query (str): The query text.
-        - candidates (list of str): The list of candidate document texts.
-        - k (int): The number of top documents to return.
+        Args:
+            query (str): The query text.
+            candidates (List[str]): The list of candidate documents.
+            k (int, optional): The number of top documents to return. Defaults to 3.
 
         Returns:
-        - list of str: The top-k document texts.
+            List[str]: The top-k documents most similar to the query.
         """
         assert (
             len(candidates) > k
@@ -310,16 +307,15 @@ class WordLlamaInference:
     def filter(
         self, query: str, candidates: List[str], threshold: float = 0.3
     ) -> List[str]:
-        """
-        Filter documents based on their similarity to the query.
+        """Filter documents to include only those similar to the query above a threshold.
 
-        Parameters:
-        - query (str): The query text.
-        - candidates (list of str): The list of candidate document texts.
-        - threshold (float): The similarity threshold for filtering.
+        Args:
+            query (str): The query text.
+            candidates (List[str]): The list of candidate documents.
+            threshold (float, optional): The similarity threshold for filtering. Defaults to 0.3.
 
         Returns:
-        - list of str: The filtered document texts.
+            List[str]: The documents that have a similarity score above the threshold.
         """
         query_embedding = self.embed(query)
         candidate_embeddings = self.embed(candidates)
@@ -344,20 +340,19 @@ class WordLlamaInference:
         min_iterations: int = 5,
         random_state=None,
     ) -> Tuple[List[int], float]:
-        """
-        Cluster the given text collection into k clusters.
+        """Cluster documents into `k` clusters using KMeans clustering.
 
-        Parameters:
-        docs (List[str]): The list of text documents to cluster.
-        k (int): The number of clusters.
-        max_iterations (int, optional): The maximum number of iterations to run the algorithm. Defaults to 300.
-        tolerance (float, optional): The tolerance to declare convergence. Defaults to 1e-4.
-        n_init (int, optional): Number of times the algorithm will be run with different centroid seeds. The final result will be the best output in terms of loss. Defaults to 10.
-        min_iterations (int, optional): Minimum number of iterations before checking for convergence. Defaults to 5.
-        random_state (int or np.random.RandomState, optional): Random state for reproducibility.
+        Args:
+            docs (List[str]): The list of documents to cluster.
+            k (int): The number of clusters.
+            max_iterations (int, optional): Maximum number of iterations for the clustering algorithm. Defaults to 100.
+            tolerance (float, optional): Convergence tolerance. Defaults to 1e-4.
+            n_init (int, optional): Number of times the algorithm is run with different centroid seeds. Defaults to 10.
+            min_iterations (int, optional): Minimum number of iterations before checking for convergence. Defaults to 5.
+            random_state (Optional[int or np.random.RandomState], optional): Random state for reproducibility. Defaults to None.
 
         Returns:
-        Tuple[List[int], float]: A list of cluster labels and the final loss (inertia)
+            Tuple[List[int], float]: A tuple containing a list of cluster labels for each document and the final inertia (sum of squared distances to cluster centers).
         """
         if self.binary:
             raise ValueError("KMeans clustering only implemented for dense embeddings")
@@ -388,21 +383,22 @@ class WordLlamaInference:
         intermediate_size: int = 96,
         return_minima: bool = False,
     ) -> List[str]:
-        """
-        Perform semantic splitting on the input text.
+        """Split text into semantically coherent chunks.
 
-        Parameters:
-        - text (str): The input text to split.
-        - target_size (int): Target size for text chunks.
-        - window_size (int): Window size for similarity matrix averaging.
-        - initial_split_size (int): Initial size for splitting on newlines.
-        - poly_order (int): Polynomial order for Savitzky-Golay filter.
-        - savgol_window (int): Window size for Savitzky-Golay filter.
+        Args:
+            text (str): The input text to split.
+            target_size (int, optional): Desired size of text chunks. Defaults to 1536.
+            window_size (int, optional): Window size for similarity matrix averaging. Defaults to 3.
+            poly_order (int, optional): Polynomial order for Savitzky-Golay filter. Defaults to 2.
+            savgol_window (int, optional): Window size for Savitzky-Golay filter. Defaults to 3.
+            cleanup_size (int, optional): Size for cleanup operations. Defaults to 24.
+            intermediate_size (int, optional): Intermediate size for initial splitting. Defaults to 96.
+            return_minima (bool, optional): If True, return the indices of minima instead of chunks. Defaults to False.
 
         Returns:
-        - List[str]: List of semantically split text chunks.
+            List[str]: List of semantically split text chunks.
         """
-        # split text
+        # Split text
         lines = SemanticSplitter.split(
             text,
             target_size=target_size,
@@ -410,10 +406,10 @@ class WordLlamaInference:
             cleanup_size=cleanup_size,
         )
 
-        # embed lines and normalize
+        # Embed lines and normalize
         embeddings = self.embed(lines, norm=True)
 
-        # reconstruct text with similarity signals
+        # Reconstruct text with similarity signals
         return SemanticSplitter.reconstruct(
             lines,
             embeddings,

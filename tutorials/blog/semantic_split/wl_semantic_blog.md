@@ -360,9 +360,9 @@ print("\n".join([lines[i] if i != 308 else f">>>>>>>>>>>>>{lines[i]}<<<<<<<<<<<<
 
 ### Avast, a chapter break!
 
-Land Ho! Find the minima.
+Land Ho, find the minima.
 
-OMG, Savitzky-Golay do your thing. It's a smoothing filter with derivatives and zero phase shift. This filter is the basis of our `find_local_minima` algorithm, which looks for the roots of the first derivative (mins and maxes), and checks the sign of the second derivative to determine minima. It then interpolates between points to determine which index to split at.
+Savitzky-Golay, time do your thing. It's a smoothing filter with derivatives and zero phase shift. This filter is the basis of our `find_local_minima` algorithm, which looks for the roots of the first derivative (mins and maxes), and checks the sign of the second derivative to determine minima. It then interpolates between points to determine which index to split at.
 
 The process goes like this:
 1. Apply the Savitzky-Golay filter to calculate the first and second derivatives

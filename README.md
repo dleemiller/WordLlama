@@ -224,11 +224,23 @@ print(top_docs)
 Split text into semantic chunks:
 
 ```python
-long_text = "Your very long text goes here..."
+long_text = "Your very long text goes here... " * 100
 chunks = wl.split(long_text, target_size=1536)
-print(chunks)
-# Output: ['Chunk 1 text...', 'Chunk 2 text...', ...]
+
+print(list(map(len, chunks)))
+# Output: [1055, 1055, 1187]
 ```
+
+Note that the target size is also the maximum size. The `.split()` feature attempts to aggregate sections up to the `target_size`,
+but will retain the order of the text as well as sentence and, as much as possible, paragraph structure.
+It uses wordllama embeddings to locate more natural indexes to split on. As a result, there will be a range of chunk sizes in the output
+up to the target size.
+
+The recommended target size is from 512 to 2048 characters, with the default size at 1536. Chunks that need to be much larger should
+probably be batched after splitting, and will often be aggregated from multiple semantic chunks already.
+
+For more information see: [technical overview](tutorials/blog/semantic_split/wl_semantic_blog.md)
+
 
 ## Training Notes
 

@@ -126,7 +126,7 @@ The following table presents the performance of WordLlama models compared to oth
 - NVIDIA A4500 (GPU) 
 
 <p align="center">
-  <img src="benchmark/inference_benchmark.png" alt="Word Llama" width="60%">
+  <img src="benchmark/inference_benchmark.png" alt="Word Llama" width="80%">
 </p>
 
 ## Usage Examples

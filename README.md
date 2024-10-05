@@ -17,7 +17,7 @@
 - [What is WordLlama?](#what-is-wordllama)
 - [MTEB Results](#mteb-results)
 - [How Fast?](#how-fast-zap)
-- [Usage Examples](#usage-examples)
+- [Usage](#usage)
   - [Embedding Text](#embedding-text)
   - [Calculating Similarity](#calculating-similarity)
   - [Ranking Documents](#ranking-documents)
@@ -129,7 +129,7 @@ The following table presents the performance of WordLlama models compared to oth
   <img src="benchmark/inference_benchmark.png" alt="Word Llama" width="80%">
 </p>
 
-## Usage Examples
+## Usage
 
 ### Embedding Text
 

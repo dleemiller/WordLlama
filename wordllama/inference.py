@@ -192,7 +192,7 @@ class WordLlamaInference:
             np.ndarray: A 2D array containing the cosine similarity scores between vectors in `a` and `b`.
         """
         # Normalize the vectors
-        if (a == b).all():
+        if a.shape == b.shape and (a == b).all():
             a = WordLlamaInference.normalize_embeddings(a)
             b = a
         else:

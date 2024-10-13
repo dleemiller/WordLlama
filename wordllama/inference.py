@@ -239,15 +239,18 @@ class WordLlamaInference:
         embedding2 = self.embed(text2)
         return self.vector_similarity(embedding1[0], embedding2[0]).item()
 
-    def rank(self, query: str, docs: List[str]) -> List[Tuple[str, float]]:
+    def rank(self, query: str, docs: List[str], sort: bool = True) -> List[Tuple[str, float]]:
         """Rank documents based on their similarity to a query.
+
+        Result may be sorted by similarity score in descending order, or not (see `sort` parameter)
 
         Args:
             query (str): The query text.
             docs (List[str]): The list of document texts to rank.
+            sort (bool): Sort documents by similarity, or not (respect the order in `docs`)
 
         Returns:
-            List[Tuple[str, float]]: A list of tuples `(doc, score)`, sorted by similarity score in descending order.
+            List[Tuple[str, float]]: A list of tuples `(doc, score)`.
         """
         assert isinstance(query, str), "Query must be a string"
         assert (
@@ -259,7 +262,8 @@ class WordLlamaInference:
 
         scores = np.atleast_1d(scores.squeeze())
         similarities = list(zip(docs, scores.tolist()))
-        similarities.sort(key=lambda x: x[1], reverse=True)
+        if sort:
+            similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities
 
     def deduplicate(

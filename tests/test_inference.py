@@ -15,6 +15,8 @@ from wordllama.config import (
 class TestWordLlamaInference(unittest.TestCase):
     @patch("wordllama.inference.Tokenizer.from_pretrained")
     def setUp(self, mock_tokenizer):
+        np.random.seed(42)
+
         # Mock the tokenizer
         self.mock_tokenizer = MagicMock()
 

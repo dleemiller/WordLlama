@@ -207,13 +207,18 @@ class WordLlamaInference:
         return similarities
 
     def deduplicate(
-        self, docs: List[str], threshold: float = 0.9, batch_size: Optional[int] = None
-    ) -> List[str]:
+        self,
+        docs: List[str],
+        threshold: float = 0.9,
+        return_indices: bool = False,
+        batch_size: Optional[int] = None,
+    ) -> List[Union[str, int]]:
         """Deduplicate documents based on a similarity threshold.
 
         Args:
             docs (List[str]): List of documents to deduplicate.
             threshold (float, optional): Similarity threshold above which documents are considered duplicates. Defaults to 0.9.
+            return_indices (bool, optional): Return indices of duplicated documents, rather than deduplicated list of documents.
             batch_size (Optional[int], optional): Batch size for processing embeddings. Defaults to None.
 
         Returns:
@@ -226,6 +231,10 @@ class WordLlamaInference:
         duplicate_indices = deduplicate_embeddings(
             doc_embeddings, threshold, batch_size
         )
+        if return_indices:
+            # turn set of numpy int into sorted list of python int
+            duplicate_indices = list(map(lambda x: x.item(), duplicate_indices))
+            return sorted(duplicate_indices)
 
         unique_docs = [
             doc for idx, doc in enumerate(docs) if idx not in duplicate_indices

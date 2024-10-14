@@ -178,7 +178,7 @@ class WordLlamaInference:
         return self.vector_similarity(embedding1[0], embedding2[0]).item()
 
     def rank(
-        self, query: str, docs: List[str], sort: bool = True
+        self, query: str, docs: List[str], sort: bool = True, batch_size: int = 64
     ) -> List[Tuple[str, float]]:
         """Rank documents based on their similarity to a query.
 
@@ -188,6 +188,7 @@ class WordLlamaInference:
             query (str): The query text.
             docs (List[str]): The list of document texts to rank.
             sort (bool): Sort documents by similarity, or not (respect the order in `docs`)
+            batch_size (int, optional): Number of texts to process in each batch. Defaults to 32.
 
         Returns:
             List[Tuple[str, float]]: A list of tuples `(doc, score)`.
@@ -197,7 +198,7 @@ class WordLlamaInference:
             isinstance(docs, list) and len(docs) > 1
         ), "Docs must be a list of 2 more more strings."
         query_embedding = self.embed(query)
-        doc_embeddings = self.embed(docs)
+        doc_embeddings = self.embed(docs, batch_size=batch_size)
         scores = self.vector_similarity(query_embedding[0], doc_embeddings)
 
         scores = np.atleast_1d(scores.squeeze())
@@ -208,10 +209,10 @@ class WordLlamaInference:
 
     def deduplicate(
         self,
-        docs: List[str],
-        threshold: float = 0.9,
-        return_indices: bool = False,
-        batch_size: Optional[int] = None,
+	docs: List[str],
+	threshold: float = 0.9,
+	return_indices: bool = False,
+	batch_size: Optional[int] = None
     ) -> List[Union[str, int]]:
         """Deduplicate documents based on a similarity threshold.
 

@@ -162,7 +162,7 @@ Rank documents based on their similarity to a query:
 ```python
 query = "I went to the car"
 candidates = ["I went to the park", "I went to the shop", "I went to the truck", "I went to the vehicle"]
-ranked_docs = wl.rank(query, candidates, sort=True)
+ranked_docs = wl.rank(query, candidates, sort=True, batch_size=64)
 print(ranked_docs)
 # Output:
 # [

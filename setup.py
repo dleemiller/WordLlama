@@ -39,14 +39,6 @@ extensions = [
         extra_link_args=extra_link_args,
     ),
     Extension(
-        "wordllama.algorithms.hamming_distance",
-        ["wordllama/algorithms/hamming_distance.pyx"],
-        include_dirs=[numpy_include],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-        extra_compile_args=extra_compile_args,
-        extra_link_args=extra_link_args,
-    ),
-    Extension(
         "wordllama.algorithms.deduplicate_helpers",
         ["wordllama/algorithms/deduplicate_helpers.pyx"],
         include_dirs=[numpy_include],
@@ -79,7 +71,16 @@ extensions = [
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
         language="c++"
+    ),
+    Extension(
+        "wordllama.algorithms.vector_similarity",
+        ["wordllama/algorithms/vector_similarity.pyx"],
+        include_dirs=[numpy_include],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
     )
+
 
 ]
 

@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Union
 from itertools import chain
 from .find_local_minima import find_local_minima, windowed_cross_similarity
 from .splitter import (

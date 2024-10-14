@@ -162,26 +162,6 @@ class TestWordLlamaInference(unittest.TestCase):
         sim_score = self.model.similarity("test string 1", "test string 2")
         self.assertTrue(isinstance(sim_score, float))
 
-    def test_vector_similarity(self):
-        def mock_encode_batch(texts, *args, **kwargs):
-            return [MagicMock(ids=[1, 2, 3], attention_mask=[1, 1, 1]) for _ in texts]
-
-        self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
-
-        with patch.object(self.model, "cosine_similarity") as mock_cosine:
-            mock_cosine.return_value = np.array([[0.5]])
-            self.model.binary = False
-            sim_score = self.model.similarity("test string 1", "test string 2")
-            self.assertTrue(isinstance(sim_score, float))
-            mock_cosine.assert_called_once()
-
-        with patch.object(self.model, "hamming_similarity") as mock_hamming:
-            mock_hamming.return_value = np.array([[0.5]])
-            self.model.binary = True
-            sim_score = self.model.similarity("test string 1", "test string 2")
-            self.assertTrue(isinstance(sim_score, float))
-            mock_hamming.assert_called_once()
-
     def test_rank_cosine(self):
         def mock_encode_batch(texts, *args, **kwargs):
             return [
@@ -215,7 +195,7 @@ class TestWordLlamaInference(unittest.TestCase):
         self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
         docs = ["doc1", "doc2", "doc3"]
 
-        with patch.object(self.model, "hamming_similarity") as mock_hamming:
+        with patch.object(self.model, "vector_similarity") as mock_hamming:
             mock_hamming.return_value = np.array([[0.5, 0.7, 0.6]])
             self.model.binary = True
             ranked_docs = self.model.rank("test query", docs)
@@ -247,18 +227,6 @@ class TestWordLlamaInference(unittest.TestCase):
         normalized_output = self.model.embed("test string", norm=True)
         norm = np.linalg.norm(normalized_output)
         self.assertAlmostEqual(norm, 1, places=5)
-
-    def test_cosine_similarity_direct(self):
-        vec1 = np.random.rand(1, 64)
-        vec2 = np.random.rand(1, 64)
-        result = WordLlamaInference.cosine_similarity(vec1, vec2)
-        self.assertIsInstance(result.item(), float)
-
-    def test_hamming_similarity_direct(self):
-        vec1 = np.expand_dims(np.random.randint(2, size=64, dtype=np.uint64), axis=0)
-        vec2 = np.expand_dims(np.random.randint(2, size=64, dtype=np.uint64), axis=0)
-        result = WordLlamaInference.hamming_similarity(vec1, vec2)
-        self.assertIsInstance(result.item(), float)
 
 
 if __name__ == "__main__":

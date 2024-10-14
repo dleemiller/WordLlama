@@ -178,7 +178,7 @@ print(ranked_docs)
 Remove duplicate texts based on a similarity threshold:
 
 ```python
-deduplicated_docs = wl.deduplicate(candidates, threshold=0.5)
+deduplicated_docs = wl.deduplicate(candidates, return_indices=False, threshold=0.5)
 print(deduplicated_docs)
 # Output:
 # ['I went to the park',
@@ -294,7 +294,7 @@ If you use WordLlama in your research or project, please consider citing it as f
   title = {WordLlama: Recycled Token Embeddings from Large Language Models},
   year = {2024},
   url = {https://github.com/dleemiller/wordllama},
-  version = {0.3.1}
+  version = {0.3.2}
 }
 ```
 

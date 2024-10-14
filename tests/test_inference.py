@@ -11,10 +11,14 @@ from wordllama.config import (
     TokenizerInferenceConfig,
 )
 
+np.random.seed(42)
+
 
 class TestWordLlamaInference(unittest.TestCase):
     @patch("wordllama.inference.Tokenizer.from_pretrained")
     def setUp(self, mock_tokenizer):
+        np.random.seed(42)
+
         # Mock the tokenizer
         self.mock_tokenizer = MagicMock()
 
@@ -122,6 +126,20 @@ class TestWordLlamaInference(unittest.TestCase):
         deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
         self.assertEqual(len(deduplicated_docs), 1)
         self.assertIn("doc1", deduplicated_docs)
+
+    @patch.object(
+        WordLlamaInference,
+        "embed",
+        return_value=np.array([[0.1] * 64, [0.1] * 64, [0.1] * 64], dtype=np.float32),
+    )
+    def test_deduplicate_return_indices(self, mock_embed):
+        docs = ["doc1", "doc1_dup", "doc1_dup2"]
+        duplicated_idx = self.model.deduplicate(
+            docs, return_indices=True, threshold=0.9
+        )
+        self.assertEqual(len(duplicated_idx), 2)
+        self.assertIn(1, duplicated_idx)
+        self.assertIn(2, duplicated_idx)
 
     def test_tokenize(self):
         tokens = self.model.tokenize("test string")

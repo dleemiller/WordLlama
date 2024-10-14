@@ -11,6 +11,8 @@ from wordllama.config import (
     TokenizerInferenceConfig,
 )
 
+np.random.seed(42)
+
 
 class TestWordLlamaInference(unittest.TestCase):
     @patch("wordllama.inference.Tokenizer.from_pretrained")

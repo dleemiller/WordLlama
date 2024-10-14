@@ -162,7 +162,7 @@ Rank documents based on their similarity to a query:
 ```python
 query = "I went to the car"
 candidates = ["I went to the park", "I went to the shop", "I went to the truck", "I went to the vehicle"]
-ranked_docs = wl.rank(query, candidates)
+ranked_docs = wl.rank(query, candidates, sort=True)
 print(ranked_docs)
 # Output:
 # [
@@ -294,7 +294,7 @@ If you use WordLlama in your research or project, please consider citing it as f
   title = {WordLlama: Recycled Token Embeddings from Large Language Models},
   year = {2024},
   url = {https://github.com/dleemiller/wordllama},
-  version = {0.2.6}
+  version = {0.3.1}
 }
 ```
 

@@ -1,14 +1,9 @@
 # cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
-# deduplicate_helpers.pyx
 
 import numpy as np
 cimport numpy as np
-from libc.stdlib cimport malloc, free
-from cython cimport boundscheck, wraparound
-from cython cimport floating
-from cython cimport cdivision
-from wordllama.algorithms.vector_similarity cimport vector_similarity
+from .vector_similarity cimport vector_similarity
 
 cdef extern from "math.h":
     double sqrt(double)
@@ -17,7 +12,7 @@ ctypedef fused embedding_dtype:
     np.float32_t
     np.uint64_t
 
-def deduplicate_embeddings(np.ndarray[embedding_dtype, ndim=2] doc_embeddings, 
+def deduplicate_embeddings(np.ndarray[embedding_dtype, ndim=2] doc_embeddings,
                            double threshold, int batch_size):
     """
     Identify duplicate document indices based on vector similarity.

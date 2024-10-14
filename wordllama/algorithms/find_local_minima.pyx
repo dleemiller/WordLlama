@@ -3,9 +3,6 @@
 
 import numpy as np
 cimport numpy as np
-from libc.math cimport abs as c_abs
-from libcpp.vector cimport vector
-from math import factorial
 
 ctypedef np.float32_t DTYPE_t
 

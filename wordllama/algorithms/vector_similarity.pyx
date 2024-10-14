@@ -2,19 +2,15 @@
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
 import numpy as np
-cimport numpy as cnp
+cimport numpy as np
 from numpy cimport (
     uint64_t,
     float32_t,
     uint32_t,
-    PyArrayObject,
-    PyArray_DIMS,
+    uint8_t
 )
-from libc.stdint cimport int32_t, uint64_t, uint8_t
-from cython cimport boundscheck, wraparound
-cimport cython
 
-cnp.import_array()
+np.import_array()
 
 cdef extern from *:
     """

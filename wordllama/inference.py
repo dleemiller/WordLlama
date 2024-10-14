@@ -77,7 +77,7 @@ class WordLlamaInference:
             norm (bool, optional): If True, normalize embeddings to unit vectors. Defaults to False.
             return_np (bool, optional): If True, return embeddings as a NumPy array; otherwise, return as a list. Defaults to True.
             pool_embeddings (bool, optional): If True, apply average pooling to token embeddings. Defaults to True.
-            batch_size (int, optional): Number of texts to process in each batch. Defaults to 32.
+            batch_size (int, optional): Number of texts to process in each batch. Defaults to 64.
 
         Returns:
             Union[np.ndarray, List]: Embeddings as a NumPy array or a list, depending on `return_np`.
@@ -188,7 +188,7 @@ class WordLlamaInference:
             query (str): The query text.
             docs (List[str]): The list of document texts to rank.
             sort (bool): Sort documents by similarity, or not (respect the order in `docs`)
-            batch_size (int, optional): Number of texts to process in each batch. Defaults to 32.
+            batch_size (int, optional): Number of texts to process in each batch. Defaults to 64.
 
         Returns:
             List[Tuple[str, float]]: A list of tuples `(doc, score)`.

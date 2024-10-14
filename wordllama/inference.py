@@ -5,9 +5,9 @@ import logging
 
 from .algorithms import (
     kmeans_clustering,
-    hamming_distance,
+    vector_similarity,
     binarize_and_packbits,
-    process_batches_cy,
+    deduplicate_embeddings,
 )
 from .algorithms.semantic_splitter import SemanticSplitter
 from .config import WordLlamaConfig
@@ -68,7 +68,7 @@ class WordLlamaInference:
         norm: bool = False,
         return_np: bool = True,
         pool_embeddings: bool = True,
-        batch_size: int = 32,
+        batch_size: int = 64,
     ) -> Union[np.ndarray, List]:
         """Generate embeddings for input texts with optional normalization and binarization.
 
@@ -129,7 +129,6 @@ class WordLlamaInference:
             # Store the computed embeddings in preallocated array
             pooled_embeddings[i : i + batch_embeddings.shape[0]] = batch_embeddings
 
-        # Return embeddings as NumPy array or list based on user preference
         if return_np:
             return pooled_embeddings
 
@@ -150,58 +149,6 @@ class WordLlamaInference:
         mask_sum = np.maximum(mask.sum(axis=1, keepdims=True), 1.0).astype(np.float32)
         return np.sum(x * mask[..., np.newaxis], axis=1, dtype=np.float32) / mask_sum
 
-    @staticmethod
-    def normalize_embeddings(embeddings: np.ndarray) -> np.ndarray:
-        """Normalize embeddings to unit vectors.
-
-        Args:
-            embeddings (np.ndarray): The input embeddings.
-
-        Returns:
-            np.ndarray: Normalized embeddings.
-        """
-        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-        return embeddings / norms
-
-    @staticmethod
-    def hamming_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        """Calculate the Hamming similarity between binary vectors.
-
-        Args:
-            a (np.ndarray): A 2D array of binary vectors (dtype np.uint64).
-            b (np.ndarray): A 2D array of binary vectors (dtype np.uint64).
-
-        Returns:
-            np.ndarray: A 2D array containing the Hamming similarity scores between vectors in `a` and `b`.
-        """
-        max_dist = a.shape[1] * 64
-
-        # Calculate Hamming distance
-        dist = hamming_distance(a, b).astype(np.float32)
-        return 1.0 - 2.0 * (dist / max_dist)
-
-    @staticmethod
-    def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        """Calculate the cosine similarity between dense vectors.
-
-        Args:
-            a (np.ndarray): A 2D array of dense vectors.
-            b (np.ndarray): A 2D array of dense vectors.
-
-        Returns:
-            np.ndarray: A 2D array containing the cosine similarity scores between vectors in `a` and `b`.
-        """
-        # Normalize the vectors
-        if a.shape == b.shape and (a == b).all():
-            a = WordLlamaInference.normalize_embeddings(a)
-            b = a
-        else:
-            a = WordLlamaInference.normalize_embeddings(a)
-            b = WordLlamaInference.normalize_embeddings(b)
-
-        # Calculate cosine similarity
-        return a @ b.T
-
     def vector_similarity(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         """Calculate similarity between vectors, using either Hamming or cosine similarity.
 
@@ -212,18 +159,9 @@ class WordLlamaInference:
         Returns:
             np.ndarray: A 2D array of similarity scores between vectors in `a` and `b`.
         """
-        if a.ndim == 1:
-            a = np.expand_dims(a, axis=0)
-        if b.ndim == 1:
-            b = np.expand_dims(b, axis=0)
-
-        assert a.ndim == 2, "a must be a 2D array"
-        assert b.ndim == 2, "b must be a 2D array"
-
-        if self.binary:
-            return self.hamming_similarity(a, b)
-        else:
-            return self.cosine_similarity(a, b)
+        # Vector similarity uses cosine similarity for dense embeddings (self.binary = False)
+        # and uses hamming for binarized embeddings (self.binary = True)
+        return vector_similarity(a, b, self.binary)
 
     def similarity(self, text1: str, text2: str) -> float:
         """Compute the similarity score between two texts.
@@ -239,7 +177,9 @@ class WordLlamaInference:
         embedding2 = self.embed(text2)
         return self.vector_similarity(embedding1[0], embedding2[0]).item()
 
-    def rank(self, query: str, docs: List[str], sort: bool = True) -> List[Tuple[str, float]]:
+    def rank(
+        self, query: str, docs: List[str], sort: bool = True
+    ) -> List[Tuple[str, float]]:
         """Rank documents based on their similarity to a query.
 
         Result may be sorted by similarity score in descending order, or not (see `sort` parameter)
@@ -283,8 +223,8 @@ class WordLlamaInference:
 
         if batch_size is None:
             batch_size = 500 if self.binary else 5000
-        duplicate_indices = process_batches_cy(
-            doc_embeddings, threshold, batch_size, self.vector_similarity
+        duplicate_indices = deduplicate_embeddings(
+            doc_embeddings, threshold, batch_size
         )
 
         unique_docs = [

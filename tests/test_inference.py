@@ -177,7 +177,8 @@ class TestWordLlamaInference(unittest.TestCase):
                 texts = [texts]
             embeddings = []
             for i, text in enumerate(texts):
-                embedding = np.random.rand(64) + i  # Different embeddings
+                embedding = np.zeros(64, dtype=np.float32)
+                embedding[1 if len(texts) == 1 else i] = 1
                 embeddings.append(embedding)
             return np.vstack(embeddings)
 
@@ -187,6 +188,13 @@ class TestWordLlamaInference(unittest.TestCase):
         ranked_docs = self.model.rank("test query", docs)
         self.assertEqual(len(ranked_docs), len(docs))
         self.assertTrue(all(isinstance(score, float) for doc, score in ranked_docs))
+        self.assertEqual(ranked_docs[0], ("doc2", 1.0))
+
+        # test turning off sorting
+        unsorted_docs = self.model.rank("test query", docs, sort=False)
+        self.assertEqual(len(unsorted_docs), len(docs))
+        self.assertTrue(all(isinstance(score, float) for doc, score in unsorted_docs))
+        self.assertEqual(unsorted_docs[1], ("doc2", 1.0))
 
     def test_rank_hamming(self):
         def mock_encode_batch(texts, *args, **kwargs):

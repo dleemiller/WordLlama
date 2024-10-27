@@ -94,7 +94,10 @@ class WordLlamaInference:
         num_texts = len(texts)
         embedding_dim = self.embedding.shape[1]
         np_type = np.float32 if not self.binary else np.uint64
-        pooled_embeddings = np.empty((num_texts, embedding_dim), dtype=np_type)
+        pooled_embeddings = np.empty(
+            (num_texts, embedding_dim if not self.binary else embedding_dim // 64),
+            dtype=np_type,
+        )
 
         for i in range(0, num_texts, batch_size):
             chunk = texts[i : i + batch_size]
@@ -209,10 +212,10 @@ class WordLlamaInference:
 
     def deduplicate(
         self,
-	docs: List[str],
-	threshold: float = 0.9,
-	return_indices: bool = False,
-	batch_size: Optional[int] = None
+        docs: List[str],
+        threshold: float = 0.9,
+        return_indices: bool = False,
+        batch_size: Optional[int] = None,
     ) -> List[Union[str, int]]:
         """Deduplicate documents based on a similarity threshold.
 

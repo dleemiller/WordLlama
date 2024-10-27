@@ -7,6 +7,7 @@ numpy_include = np.get_include()
 
 extra_compile_args = ["-O3", "-ffast-math"]
 extra_link_args = []
+define_macros = [("NPY_NO_DEPRECATED_API", "NPY_2_0_API_VERSION")]
 
 extensions = [
     Extension(
@@ -19,7 +20,7 @@ extensions = [
         "wordllama.algorithms.deduplicate_helpers",
         ["wordllama/algorithms/deduplicate_helpers.pyx"],
         include_dirs=[numpy_include],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        define_macros=define_macros,
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     ),
@@ -27,7 +28,7 @@ extensions = [
         "wordllama.algorithms.kmeans",
         ["wordllama/algorithms/kmeans.pyx"],
         include_dirs=[numpy_include],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        define_macros=define_macros,
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     ),
@@ -44,7 +45,7 @@ extensions = [
         "wordllama.algorithms.find_local_minima",
         ["wordllama/algorithms/find_local_minima.pyx"],
         include_dirs=[numpy_include],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        define_macros=define_macros,
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
         language="c++",
@@ -53,7 +54,7 @@ extensions = [
         "wordllama.algorithms.vector_similarity",
         ["wordllama/algorithms/vector_similarity.pyx"],
         include_dirs=[numpy_include],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        define_macros=define_macros,
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     ),

@@ -12,36 +12,8 @@ from numpy cimport (
 
 np.import_array()
 
-cdef extern from *:
-    """
-    #if defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
-    #include <x86intrin.h>
-    static inline int popcount(uint64_t x) {
-        return __builtin_popcountll(x);
-    }
-    #elif defined(__GNUC__) && (defined(__ARM_NEON) || defined(__aarch64__))
-    #include <arm_neon.h>
-    static inline int popcount(uint64_t x) {
-        // No direct 64-bit popcount in NEON, need to split into two 32-bit parts
-        uint32_t lo = (uint32_t)x;
-        uint32_t hi = (uint32_t)(x >> 32);
-        return vaddv_u8(vcnt_u8(vcreate_u8(lo))) + vaddv_u8(vcnt_u8(vcreate_u8(hi)));
-    }
-    #else
-    static inline int popcount(uint64_t x) {
-        x = x - ((x >> 1) & 0x5555555555555555);
-        x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333);
-        x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0F;
-        x = x + (x >> 8);
-        x = x + (x >> 16);
-        x = x + (x >> 32);
-        return x & 0x0000007F;
-    }
-    #endif
-    """
-    int popcount(uint64_t x) nogil
-
-cpdef object hamming_distance(object a, object b):
+cpdef object hamming_distance(np.ndarray[np.uint64_t, ndim=2, mode='c'] a,
+                              np.ndarray[np.uint64_t, ndim=2, mode='c'] b):
     """
     Compute the Hamming distance between two arrays of binary vectors.
 
@@ -52,32 +24,32 @@ cpdef object hamming_distance(object a, object b):
     Returns:
         np.ndarray: A 2D array containing the Hamming distances.
     """
-    cdef Py_ssize_t i, j, k
-    cdef int dist
+    cdef Py_ssize_t i
     cdef Py_ssize_t n = a.shape[0]
     cdef Py_ssize_t m = b.shape[0]
     cdef Py_ssize_t width = a.shape[1]
-    
-    # Allocate distance array
-    distance = np.zeros((n, m), dtype=np.uint32)
-    
-    # Create a typed memoryview
-    cdef uint32_t[:, :] distance_view = distance
 
-    # Ensure contiguous
     if not a.flags.c_contiguous or not b.flags.c_contiguous:
         raise ValueError("Input arrays must be C-contiguous")
 
-    # Create typed memoryviews
-    cdef uint64_t[:, :] a_view = a
-    cdef uint64_t[:, :] b_view = b
+    cdef np.ndarray[np.uint32_t, ndim=2, mode='c'] distance = np.zeros((n, m), dtype=np.uint32)
+    cdef np.ndarray[np.uint64_t, ndim=1] a_row
+    cdef np.ndarray[np.uint64_t, ndim=2] xor_result
+    cdef np.ndarray[np.uint8_t, ndim=2] popcounts
+    cdef np.ndarray[np.uint32_t, ndim=1] distances_i
 
     for i in range(n):
-        for j in range(m):
-            dist = 0
-            for k in range(width):
-                dist += popcount(a_view[i, k] ^ b_view[j, k])
-            distance_view[i, j] = dist
+        a_row = a[i, :]
+
+        # XOR 'a_row' and all rows in 'b'
+        xor_result = np.bitwise_xor(a_row[np.newaxis, :], b)
+
+        # Compute popcounts
+        popcounts = np.bitwise_count(xor_result)
+
+        # Sum to get Hamming distance
+        distances_i = np.sum(popcounts, axis=1, dtype=np.uint32)
+        distance[i, :] = distances_i
 
     return distance
 

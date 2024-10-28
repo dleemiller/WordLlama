@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools", "wheel", "setuptools_scm[toml]", "Cython", "numpy"]
+requires = ["setuptools", "wheel", "setuptools_scm[toml]", "Cython", "numpy>=2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "wordllama"
 dynamic = ["version"]
-description = "WordLlama Embedding Utility"
+description = "WordLlama NLP Utility"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [{ name = "Lee Miller", email = "dleemiller@gmail.com" }]
 dependencies = [
-  "numpy",
+  "numpy>=2",
   "safetensors",
   "tokenizers",
   "toml",

@@ -54,7 +54,10 @@ class WordLlama:
         return f"{config_name}_{dim}{suffix}.safetensors"
 
     @staticmethod
-    def get_cache_dir(is_tokenizer_config: bool = False) -> Path:
+    def get_cache_dir(
+            is_tokenizer_config: bool = False, 
+            base_cache_dir: Optional[Path] = None
+        ) -> Path:
         """
         Get the cache directory path for weights or tokenizer configuration.
 
@@ -64,7 +67,8 @@ class WordLlama:
         Returns:
             Path: The path to the cache directory.
         """
-        base_cache_dir = Path.home() / ".cache" / "wordllama"
+        if base_cache_dir is None:
+            base_cache_dir = Path.home() / ".cache" / "wordllama"
         return base_cache_dir / ("tokenizers" if is_tokenizer_config else "weights")
 
     @staticmethod
@@ -88,8 +92,7 @@ class WordLlama:
         Returns:
             Path: The path to the cached file.
         """
-        if cache_dir is None:
-            cache_dir = WordLlama.get_cache_dir()
+        cache_dir = WordLlama.get_cache_dir(base_cache_dir=cache_dir)
 
         cache_dir.mkdir(parents=True, exist_ok=True)
         cached_file_path = cache_dir / filename
@@ -141,8 +144,7 @@ class WordLlama:
         if weights_dir is None:
             weights_dir = Path(__file__).parent / "weights"
 
-        if cache_dir is None:
-            cache_dir = cls.get_cache_dir()
+        cache_dir = WordLlama.get_cache_dir(base_cache_dir=cache_dir)
 
         filename = cls.get_filename(config_name=config_name, dim=dim, binary=binary)
         weights_file_path = weights_dir / filename
@@ -172,7 +174,7 @@ class WordLlama:
                     f"Weights file '{filename}' not found in cache directory '{cache_dir}'. Downloading..."
                 )
                 weights_file_path = cls.download_file_from_hf(
-                    repo_id=model_uri.repo_id, filename=filename
+                    repo_id=model_uri.repo_id, filename=filename, cache_dir=cache_dir
                 )
 
         if not weights_file_path.exists():
@@ -184,7 +186,10 @@ class WordLlama:
 
     @classmethod
     def check_and_download_tokenizer(
-        cls, config_name: str, disable_download: bool = False
+        cls, 
+        config_name: str, 
+        cache_dir: Optional[Path] = None,
+        disable_download: bool = False, 
     ) -> Path:
         """
         Check if tokenizer configuration exists locally, if not, download it.
@@ -192,13 +197,16 @@ class WordLlama:
         Args:
             config_name (str): The name of the model configuration.
             tokenizer_filename (str): The filename of the tokenizer configuration.
+            cache_dir (Path, optional): Directory where cached files are stored. Defaults to the appropriate cache directory.
             disable_download (bool, optional): Disable downloading for models not in cache.
 
         Returns:
             Path: Path to the tokenizer configuration file.
         """
         model_uri = getattr(cls, config_name)
-        cache_dir = cls.get_cache_dir(is_tokenizer_config=True)
+
+        cache_dir = cls.get_cache_dir(is_tokenizer_config=True, base_cache_dir=cache_dir)
+
         tokenizer_file_path = cache_dir / model_uri.tokenizer_config
 
         if not tokenizer_file_path.exists():
@@ -287,6 +295,7 @@ class WordLlama:
         # Check and download tokenizer config if necessary
         tokenizer_file_path = cls.check_and_download_tokenizer(
             config_name=config,
+            cache_dir=cache_dir,
             disable_download=disable_download,
         )
 

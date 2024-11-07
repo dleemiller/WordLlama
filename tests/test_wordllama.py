@@ -101,7 +101,7 @@ class TestWordLlama(unittest.TestCase):
             cache_dir=Path("/dummy/cache"),
         )
         self.assertEqual(
-            weights_file_path, Path("/dummy/cache/l2_supercat_256.safetensors")
+            weights_file_path, Path("/dummy/cache/weights/l2_supercat_256.safetensors")
         )
 
     @patch(
@@ -181,7 +181,9 @@ class TestWordLlama(unittest.TestCase):
             disable_download=False,
         )
         mock_check_tokenizer.assert_called_once_with(
-            config_name="l2_supercat", disable_download=False
+            config_name="l2_supercat", 
+            cache_dir=Path('/dummy/cache'), 
+            disable_download=False,
         )
         mock_load_tokenizer.assert_called_once()
         mock_safe_open.assert_called_once_with(

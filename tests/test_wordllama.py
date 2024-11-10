@@ -57,6 +57,7 @@ class TestWordLlama(unittest.TestCase):
 
         # Assemble WordLlamaConfig
         self.config = WordLlamaConfig(
+            config_name="test",
             model=model_config,
             tokenizer=tokenizer_config,
             training=training_config,
@@ -156,20 +157,20 @@ class TestWordLlama(unittest.TestCase):
             # Assert resolve_file was called twice: once for weights, once for tokenizer
             expected_calls = [
                 call(
-                    config_name=self.config,
+                    config_name="test",
                     dim=self.dim,
                     binary=self.binary,
                     file_type="weights",
                     cache_dir=default_cache_dir,
-                    disable_download=False,
+                    disable_download=True,
                 ),
                 call(
-                    config_name=self.config,
+                    config_name="test",
                     dim=self.dim,
                     binary=False,
                     file_type="tokenizer",
                     cache_dir=default_cache_dir,
-                    disable_download=False,
+                    disable_download=True,
                 ),
             ]
             mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
@@ -257,21 +258,21 @@ class TestWordLlama(unittest.TestCase):
                     expected_calls = [
                         call(
                             # WordLlama,
-                            config_name=self.config,
+                            config_name="test",
                             dim=self.dim,
                             binary=self.binary,
                             file_type="weights",
                             cache_dir=expected_resolved_dirs[key],
-                            disable_download=False,
+                            disable_download=True,
                         ),
                         call(
                             # WordLlama,
-                            config_name=self.config,
+                            config_name="test",
                             dim=self.dim,
                             binary=False,
                             file_type="tokenizer",
                             cache_dir=expected_resolved_dirs[key],
-                            disable_download=False,
+                            disable_download=True,
                         ),
                     ]
                     mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
@@ -315,7 +316,7 @@ class TestWordLlama(unittest.TestCase):
         # Assert resolve_file was called twice: once for weights, once for tokenizer
         expected_calls = [
             call(
-                config_name=self.config,
+                config_name="test",
                 dim=self.dim,
                 binary=self.binary,
                 file_type="weights",
@@ -364,20 +365,20 @@ class TestWordLlama(unittest.TestCase):
             # Assert resolve_file was called twice
             expected_calls = [
                 call(
-                    config_name=self.config,
+                    config_name="test",
                     dim=self.dim,
                     binary=self.binary,
                     file_type="weights",
                     cache_dir=Path("/dummy/cache"),
-                    disable_download=False,
+                    disable_download=True,
                 ),
                 call(
-                    config_name=self.config,
+                    config_name="test",
                     dim=self.dim,
                     binary=False,
                     file_type="tokenizer",
                     cache_dir=Path("/dummy/cache"),
-                    disable_download=False,
+                    disable_download=True,
                 ),
             ]
             mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
@@ -442,20 +443,20 @@ class TestWordLlama(unittest.TestCase):
             # Assert resolve_file was called twice: weights and tokenizer
             expected_calls = [
                 call(
-                    config_name=self.config,
+                    config_name="test",
                     dim=self.dim,
                     binary=self.binary,
                     file_type="weights",
                     cache_dir=Path("/dummy/cache"),
-                    disable_download=False,
+                    disable_download=True,
                 ),
                 call(
-                    config_name=self.config,
+                    config_name="test",
                     dim=self.dim,
                     binary=False,
                     file_type="tokenizer",
                     cache_dir=Path("/dummy/cache"),
-                    disable_download=False,
+                    disable_download=True,
                 ),
             ]
             mock_resolve_file.assert_has_calls(expected_calls, any_order=False)

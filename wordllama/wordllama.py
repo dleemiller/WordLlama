@@ -77,9 +77,6 @@ class WordLlama:
     @classmethod
     def get_file_path(
         cls,
-        config_name: str,
-        dim: int,
-        binary: bool,
         file_type: str,  # 'weights' or 'tokenizer'
         cache_dir: Optional[Path] = None,
     ) -> Path:
@@ -87,9 +84,6 @@ class WordLlama:
         Determine the directory path for weights or tokenizer files.
 
         Args:
-            config_name (str): The configuration name.
-            dim (int): The dimensionality of the model.
-            binary (bool): Indicates whether the weights file is binary.
             file_type (str): Specifies the type of file ('weights' or 'tokenizer').
             cache_dir (Path, optional): Custom cache directory. Defaults to None.
 
@@ -137,9 +131,7 @@ class WordLlama:
             raise ValueError("file_type must be either 'weights' or 'tokenizer'.")
 
         project_root_path = Path(__file__).parent / "wordllama" / file_type / filename
-        cache_path = (
-            cls.get_file_path(config_name, dim, binary, file_type, cache_dir) / filename
-        )
+        cache_path = cls.get_file_path(file_type, cache_dir) / filename
 
         # Check in project root directory
         if project_root_path.exists():
@@ -199,19 +191,18 @@ class WordLlama:
         """
         Load the WordLlama model by resolving and loading the necessary weights and tokenizer files.
 
-        The order of operations for loading files is as follows:
-        - **Weights:**
+        Weights:
             1. Check in project root (`project_root / wordllama / weights / ...`).
             2. If not found, check in `cache_dir / weights / ...`.
             3. If still not found, download from Hugging Face to `cache_dir / weights / ...`.
-        - **Tokenizer:**
+        Tokenizer:
             1. Check in project root (`project_root / wordllama / tokenizers / ...`).
             2. If not found, check in `cache_dir / tokenizers / ...`.
             3. If still not found, download from Hugging Face to `cache_dir / tokenizers / ...`.
 
         Args:
             config (Union[str, WordLlamaConfig], optional):
-                The configuration name or an instance of WordLlamaConfig to load.
+                The configuration name or a custom instance of WordLlamaConfig to load.
                 Defaults to "l2_supercat".
             cache_dir (Optional[Path], optional):
                 The directory to use for caching files.
@@ -251,12 +242,9 @@ class WordLlama:
             config_name = config
         elif isinstance(config, WordLlamaConfig):
             config_obj = config
-            # config_name = getattr(config_obj, "name", None)
-            config_name = config
-            if config_name is None:
-                raise ValueError(
-                    "WordLlamaConfig instance must have a 'name' attribute."
-                )
+            config_name = getattr(config, "config_name")
+            disable_download = True  # disable for custom config
+            logger.debug("Downloads are disabled for custom configs.")
         else:
             raise ValueError(
                 "Invalid configuration type provided. It must be either a string or an instance of WordLlamaConfig."

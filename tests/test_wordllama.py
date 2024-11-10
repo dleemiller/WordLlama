@@ -246,7 +246,7 @@ class TestWordLlama(unittest.TestCase):
 
                     # Call load with custom cache_dir
                     model = WordLlama.load(
-                        config=self.config_name,
+                        config=self.config,
                         cache_dir=cache_dir_input,
                         binary=self.binary,
                         dim=self.dim,
@@ -257,7 +257,7 @@ class TestWordLlama(unittest.TestCase):
                     expected_calls = [
                         call(
                             # WordLlama,
-                            config_name=self.config_name,
+                            config_name=self.config,
                             dim=self.dim,
                             binary=self.binary,
                             file_type="weights",
@@ -266,7 +266,7 @@ class TestWordLlama(unittest.TestCase):
                         ),
                         call(
                             # WordLlama,
-                            config_name=self.config_name,
+                            config_name=self.config,
                             dim=self.dim,
                             binary=False,
                             file_type="tokenizer",

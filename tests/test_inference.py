@@ -70,6 +70,7 @@ class TestWordLlamaInference(unittest.TestCase):
         matryoshka_config = MatryoshkaConfig(dims=[1024, 512, 256, 128, 64])
 
         self.config = WordLlamaConfig(
+            config_name="test",
             model=model_config,
             tokenizer=tokenizer_config,
             training=training_config,

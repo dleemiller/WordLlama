@@ -47,6 +47,7 @@ class WordLlamaModel(BaseModel):
 
 
 class WordLlamaConfig(BaseModel):
+    config_name: str
     model: WordLlamaModel
     tokenizer: TokenizerConfig
     training: TrainingConfig
@@ -71,6 +72,7 @@ class Config:
         for config_file in config_dir.glob("*.toml"):
             config_data = toml.load(config_file)
             config_name = config_file.stem  # Filename without extension
+            config_data["config_name"] = config_name
             configs[config_name] = WordLlamaConfig(**config_data)
         return configs
 

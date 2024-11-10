@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch, MagicMock
 import numpy as np
 
 from wordllama.algorithms import vector_similarity, binarize_and_packbits

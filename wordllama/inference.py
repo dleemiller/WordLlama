@@ -38,7 +38,7 @@ class WordLlamaInference:
         self.embedding = np.ascontiguousarray(embedding.astype(np.float32))
         self.config = config
         self.tokenizer = tokenizer
-        self.tokenizer_kwargs = self.config.tokenizer.model_dump()
+        self.tokenizer_kwargs = self.config.tokenizer.dict()
 
         # Default settings for all inference
         self.tokenizer.enable_padding()

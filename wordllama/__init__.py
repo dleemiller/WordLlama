@@ -8,6 +8,7 @@ the WordLlama class for managing embeddings and associated configurations.
 import logging
 
 from .wordllama import WordLlama
+from .inference import WordLlamaInference
 from .config import Config, WordLlamaConfig
 from ._version import __version__
 
@@ -15,7 +16,7 @@ from ._version import __version__
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-__all__ = ["WordLlama", "Config", "WordLlamaConfig", "load_training", "__version__"]
+__all__ = ["WordLlama", "WordLlamaInference", "Config", "WordLlamaConfig", "load_training", "__version__"]
 
 
 def load_training(weights, config, dims=None):

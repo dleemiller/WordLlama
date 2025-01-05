@@ -28,7 +28,7 @@
   - [Top-K Retrieval](#top-k-retrieval)
   - [Semantic Text Splitting](#semantic-text-splitting)
   - [Loading Model2Vec](#loading-model2vec)
-  - [Inference Class](#wordllama-inference)
+  - [Inference Class](#inference-class)
 - [Training Notes](#training-notes)
 - [Roadmap](#roadmap)
 - [Extracting Token Embeddings](#extracting-token-embeddings)
@@ -247,7 +247,7 @@ For more information see: [technical overview](tutorials/blog/semantic_split/wl_
 
 ### Loading Model2Vec
 
-```
+```python
 wl = WordLlama.list_configs()
 # dict of config names
 
@@ -263,7 +263,7 @@ Check them out on huggingface! [minishlab](https://huggingface.co/minishlab)
 
 ### Inference Class
 
-```
+```python
 from wordllama import WordLlamaInference
 from tokenizers import Tokenizer
 

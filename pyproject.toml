@@ -59,13 +59,20 @@ print(similarity_score);"
 
 [tool.cibuildwheel.macos]
 before-all = """
-brew install openblas && cat > ~/.numpy-site.cfg <<EOF
+brew install openblas libomp
+
+# Create a NumPy site.cfg so that it detects your Homebrew-installed OpenBLAS
+cat > ~/.numpy-site.cfg <<EOF
 [openblas]
 libraries = openblas
 library_dirs = $(brew --prefix openblas)/lib
 include_dirs = $(brew --prefix openblas)/include
 runtime_library_dirs = $(brew --prefix openblas)/lib
 EOF
+
+# Point the compiler to the libomp headers and library
+export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
+export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib -lomp"
 """
 
 [tool.cibuildwheel.windows]

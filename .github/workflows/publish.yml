@@ -170,19 +170,19 @@ jobs:
       #       conda activate base
       #     fi
 
-      # 7. Install OpenMP via Conda for macOS environments
-      - name: Install OpenMP via Conda (macOS only)
-        if: startsWith(matrix.platform_id, 'macosx_')
-        run: |
-          conda install -y -c conda-forge libomp llvm-openmp
+      # # 7. Install OpenMP via Conda for macOS environments
+      # - name: Install OpenMP via Conda (macOS only)
+      #   if: startsWith(matrix.platform_id, 'macosx_')
+      #   run: |
+      #     conda install -y -c conda-forge libomp llvm-openmp
 
-      # 8. Set Compiler Flags for OpenMP (macOS only)
-      - name: Set Compiler Flags for OpenMP (macOS only)
-        if: startsWith(matrix.platform_id, 'macosx_')
-        run: |
-          # Export OpenMP include and lib paths
-          echo "CXXFLAGS=-I${CONDA_HOME}/include" >> $GITHUB_ENV
-          echo "LDFLAGS=-L${CONDA_HOME}/lib -lomp" >> $GITHUB_ENV
+      # # 8. Set Compiler Flags for OpenMP (macOS only)
+      # - name: Set Compiler Flags for OpenMP (macOS only)
+      #   if: startsWith(matrix.platform_id, 'macosx_')
+      #   run: |
+      #     # Export OpenMP include and lib paths
+      #     echo "CXXFLAGS=-I${CONDA_HOME}/include" >> $GITHUB_ENV
+      #     echo "LDFLAGS=-L${CONDA_HOME}/lib -lomp" >> $GITHUB_ENV
 
       # 9. Build and test wheels
       - name: Build and test wheels

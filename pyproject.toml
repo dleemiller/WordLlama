@@ -37,7 +37,15 @@ Repository = "https://github.com/dleemiller/WordLlama"
 packages = ["wordllama"]
 
 [tool.setuptools.package-data]
-wordllama = ["algorithms/*.so", "algorithms/*.pyd", "**/*.pyx", "**/*.pyd", "**/*.toml", "tokenizers/*.json", "weights/*.safetensors"]
+wordllama = [
+    "algorithms/*.so",
+    "algorithms/*.pyd",
+    "**/*.pyx",
+    "**/*.pyd",
+    "**/*.toml",
+    "tokenizers/*.json",
+    "weights/*.safetensors"
+]
 
 [tool.setuptools.dynamic]
 classifiers = { file = "classifiers.txt" }
@@ -65,14 +73,14 @@ brew install openblas libomp
 cat > ~/.numpy-site.cfg <<EOF
 [openblas]
 libraries = openblas
-library_dirs = $(brew --prefix openblas)/lib
-include_dirs = $(brew --prefix openblas)/include
-runtime_library_dirs = $(brew --prefix openblas)/lib
+library_dirs = /usr/local/opt/openblas/lib
+include_dirs = /usr/local/opt/openblas/include
+runtime_library_dirs = /usr/local/opt/openblas/lib
 EOF
 
-# Point the compiler to the libomp headers and library
-export CXXFLAGS="$CXXFLAGS -Xclang -fopenmp -I$(brew --prefix libomp)/include"
-export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib -lomp"
+# Add the necessary flags for libomp and openblas
+export CXXFLAGS="$CXXFLAGS -Xclang -fopenmp -I/usr/local/opt/libomp/include -I/usr/local/opt/openblas/include"
+export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -L/usr/local/opt/openblas/lib -lomp"
 """
 
 [tool.cibuildwheel.windows]

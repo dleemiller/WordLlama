@@ -105,11 +105,11 @@ jobs:
           fetch-depth: 0
           tags: true
 
-      # 2. Setup Python using the matrix.python version
+      # 2. Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "${{ matrix.python }}"  # Corrected to use matrix variable
+          python-version: "3.11"
 
       # 3. Install Conda for macOS arm64
       - name: Install Conda for macOS arm64

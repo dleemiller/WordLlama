@@ -156,10 +156,10 @@ jobs:
           echo "CONDA_HOME=$HOME/miniforge" >> $GITHUB_ENV
 
       # 5. Set conda environment for non-macos arm64 environments
-      - name: Set conda environment for non-macos arm64 environments
-        if: ${{ matrix.platform_id != 'macosx_arm64' }}
+      - name: Set conda environment for other environments
+        if: ${{ matrix.platform_id != 'macosx_arm64' && matrix.platform_id != 'macosx_x86_64' }}
         run: |
-          # Non-macos arm64 environments already have conda installed
+          # For other environments, assume Conda is at /usr/local/miniconda
           echo "CONDA_HOME=/usr/local/miniconda" >> $GITHUB_ENV
 
       # # 6. Initialize Conda

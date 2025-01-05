@@ -28,58 +28,8 @@ class TestWordLlamaInference(unittest.TestCase):
         self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
         mock_tokenizer.return_value = self.mock_tokenizer
 
-        # Example config using Pydantic models
-        tokenizer_inference_config = TokenizerInferenceConfig(
-            use_local_config=True, config_filename="tokenizer_config.json"
-        )
-
-        model_config = WordLlamaModel(
-            n_vocab=32000,
-            dim=64,
-            n_layers=12,
-            n_heads=12,
-            hf_model_id="meta-llama/Meta-Llama-3-8B",
-            pad_token="",
-        )
-
-        tokenizer_config = TokenizerConfig(
-            return_tensors="pt",
-            return_attention_mask=True,
-            max_length=128,
-            padding="max_length",
-            truncation=True,
-            add_special_tokens=True,
-            inference=tokenizer_inference_config,
-        )
-
-        training_config = TrainingConfig(
-            output_dir="output/matryoshka_sts_custom",
-            num_train_epochs=2,
-            per_device_train_batch_size=512,
-            warmup_steps=256,
-            evaluation_strategy="steps",
-            eval_steps=250,
-            save_steps=1000,
-            fp16=True,
-            include_num_input_tokens_seen=False,
-            learning_rate=0.01,
-            multi_dataset_batch_sampler="PROPORTIONAL",
-            binarizer_ste="tanh",
-        )
-
-        matryoshka_config = MatryoshkaConfig(dims=[1024, 512, 256, 128, 64])
-
-        self.config = WordLlamaConfig(
-            config_name="test",
-            model=model_config,
-            tokenizer=tokenizer_config,
-            training=training_config,
-            matryoshka=matryoshka_config,
-        )
-
         self.model = WordLlamaInference(
             embedding=np.random.rand(32000, 64),
-            config=self.config,
             tokenizer=self.mock_tokenizer,
         )
 
@@ -235,7 +185,6 @@ class TestWordLlamaInference(unittest.TestCase):
         truncated_embedding = np.random.rand(128256, 32)
         truncated_model = WordLlamaInference(
             embedding=truncated_embedding,
-            config=self.config,
             tokenizer=self.mock_tokenizer,
         )
         self.assertEqual(truncated_model.embedding.shape[1], 32)

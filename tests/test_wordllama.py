@@ -12,57 +12,24 @@ from wordllama.config import (
     TrainingConfig,
     TokenizerInferenceConfig,
 )
+from wordllama.config.models import ModelURI, WordLlamaModels
 
 
 class TestWordLlama(unittest.TestCase):
     def setUp(self):
-        self.config_name = "l2_supercat"
+        self.config = "l2_supercat"
         self.dim = 256
         self.binary = False
         self.trunc_dim = None
 
-        # Mock TokenizerInferenceConfig
-        tokenizer_inference_config = MagicMock(spec=TokenizerInferenceConfig)
-        tokenizer_inference_config.use_local_config = True
-        tokenizer_inference_config.config_filename = "tokenizer_config.json"
-
-        # Mock WordLlamaModel
-        model_config = MagicMock(spec=WordLlamaModel)
-        model_config.n_vocab = 32000
-        model_config.dim = 4096
-        model_config.n_layers = 12
-        model_config.n_heads = 12
-        model_config.hf_model_id = "dummy-model-id"
-        model_config.pad_token = 0
-
-        # Mock TokenizerConfig
-        tokenizer_config = MagicMock(spec=TokenizerConfig)
-        tokenizer_config.inference = tokenizer_inference_config
-        tokenizer_config.return_tensors = True
-        tokenizer_config.return_attention_mask = True
-        tokenizer_config.max_length = 512
-        tokenizer_config.padding = "max_length"
-        tokenizer_config.truncation = True
-        tokenizer_config.add_special_tokens = True
-
-        # Mock TrainingConfig
-        training_config = MagicMock(spec=TrainingConfig)
-        training_config.learning_rate = 0.001
-        training_config.batch_size = 32
-        training_config.epochs = 10
-
-        # Mock MatryoshkaConfig
-        matryoshka_config = MagicMock(spec=MatryoshkaConfig)
-        matryoshka_config.dims = [64, 128, 256, 512, 1024]
-
         # Assemble WordLlamaConfig
-        self.config = WordLlamaConfig(
-            config_name="test",
-            model=model_config,
-            tokenizer=tokenizer_config,
-            training=training_config,
-            matryoshka=matryoshka_config,
-        )
+        self.config = "l2_supercat"
+        self.model_uri = getattr(WordLlamaModels, "l2_supercat")
+
+    def test_list_configs(self):
+        output = WordLlama.list_configs()
+        assert len(output) > 0
+        assert isinstance(output, dict)
 
     @patch("wordllama.wordllama.requests.get", autospec=True)
     @patch("wordllama.wordllama.Path.mkdir", autospec=True)
@@ -89,7 +56,8 @@ class TestWordLlama(unittest.TestCase):
 
         # Call resolve_file for weights
         weights_path = WordLlama.resolve_file(
-            config_name=self.config_name,
+            config_name=self.config,
+            model_uri=self.model_uri,
             dim=self.dim,
             binary=self.binary,
             file_type="weights",
@@ -157,20 +125,24 @@ class TestWordLlama(unittest.TestCase):
             # Assert resolve_file was called twice: once for weights, once for tokenizer
             expected_calls = [
                 call(
-                    config_name="test",
+                    config_name=self.config,
+                    model_uri=self.model_uri,
                     dim=self.dim,
                     binary=self.binary,
                     file_type="weights",
                     cache_dir=default_cache_dir,
-                    disable_download=True,
+                    disable_download=False,
+                    remote_filename=None,
                 ),
                 call(
-                    config_name="test",
+                    config_name=self.config,
+                    model_uri=self.model_uri,
                     dim=self.dim,
                     binary=False,
                     file_type="tokenizer",
                     cache_dir=default_cache_dir,
-                    disable_download=True,
+                    disable_download=False,
+                    remote_filename=None,
                 ),
             ]
             mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
@@ -179,7 +151,7 @@ class TestWordLlama(unittest.TestCase):
             # Assert load_tokenizer was called with correct path
             mock_load_tokenizer.assert_called_once_with(
                 tokenizer_path,
-                self.config,
+                hf_model_id=self.model_uri.tokenizer_fallback,
             )
 
             # Assert safe_open was called with the weights path
@@ -247,7 +219,7 @@ class TestWordLlama(unittest.TestCase):
 
                     # Call load with custom cache_dir
                     model = WordLlama.load(
-                        config=self.config,
+                        config=self.model_uri,
                         cache_dir=cache_dir_input,
                         binary=self.binary,
                         dim=self.dim,
@@ -258,21 +230,25 @@ class TestWordLlama(unittest.TestCase):
                     expected_calls = [
                         call(
                             # WordLlama,
-                            config_name="test",
+                            config_name="custom",
+                            model_uri=self.model_uri,
                             dim=self.dim,
                             binary=self.binary,
                             file_type="weights",
                             cache_dir=expected_resolved_dirs[key],
                             disable_download=True,
+                            remote_filename=None,
                         ),
                         call(
                             # WordLlama,
-                            config_name="test",
+                            config_name="custom",
+                            model_uri=self.model_uri,
                             dim=self.dim,
                             binary=False,
                             file_type="tokenizer",
                             cache_dir=expected_resolved_dirs[key],
                             disable_download=True,
+                            remote_filename=None,
                         ),
                     ]
                     mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
@@ -281,7 +257,7 @@ class TestWordLlama(unittest.TestCase):
                     # Assert load_tokenizer was called with correct path
                     mock_load_tokenizer.assert_called_once_with(
                         tokenizer_path,
-                        self.config,
+                        hf_model_id=self.model_uri.tokenizer_fallback,
                     )
 
                     # Assert safe_open was called with the weights path
@@ -316,12 +292,14 @@ class TestWordLlama(unittest.TestCase):
         # Assert resolve_file was called twice: once for weights, once for tokenizer
         expected_calls = [
             call(
-                config_name="test",
+                config_name=self.config,
+                model_uri=self.model_uri,
                 dim=self.dim,
                 binary=self.binary,
                 file_type="weights",
                 cache_dir=Path("/dummy/cache"),
                 disable_download=True,
+                remote_filename=None,
             )
         ]
         mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
@@ -355,7 +333,7 @@ class TestWordLlama(unittest.TestCase):
 
             # Call load with trunc_dim
             model = WordLlama.load(
-                config=self.config,
+                config=self.model_uri,
                 cache_dir=Path("/dummy/cache"),
                 binary=self.binary,
                 dim=self.dim,
@@ -365,19 +343,23 @@ class TestWordLlama(unittest.TestCase):
             # Assert resolve_file was called twice
             expected_calls = [
                 call(
-                    config_name="test",
+                    config_name="custom",
+                    model_uri=self.model_uri,
                     dim=self.dim,
                     binary=self.binary,
                     file_type="weights",
                     cache_dir=Path("/dummy/cache"),
+                    remote_filename=None,
                     disable_download=True,
                 ),
                 call(
-                    config_name="test",
+                    config_name="custom",
+                    model_uri=self.model_uri,
                     dim=self.dim,
                     binary=False,
                     file_type="tokenizer",
                     cache_dir=Path("/dummy/cache"),
+                    remote_filename=None,
                     disable_download=True,
                 ),
             ]
@@ -387,7 +369,7 @@ class TestWordLlama(unittest.TestCase):
             # Assert load_tokenizer was called with correct path
             mock_load_tokenizer.assert_called_once_with(
                 tokenizer_path,
-                self.config,
+                hf_model_id=self.model_uri.tokenizer_fallback,
             )
 
             # Assert safe_open was called with the weights path
@@ -403,12 +385,15 @@ class TestWordLlama(unittest.TestCase):
             # Assert that the embedding was truncated
             mock_tensor.__getitem__.assert_called_with((slice(None), slice(None, 128)))
 
+    @patch("wordllama.wordllama.WordLlamaInference", autospec=True)
     @patch(
         "wordllama.wordllama.Tokenizer.from_pretrained",
         return_value=MagicMock(spec=Tokenizer),
     )
     @patch.object(WordLlama, "resolve_file", autospec=True)
-    def test_load_tokenizer_fallback(self, mock_resolve_file, mock_from_pretrained):
+    def test_load_tokenizer_fallback(
+        self, mock_resolve_file, mock_from_pretrained, mock_word_llama_inference
+    ):
         """
         Test that load_tokenizer falls back to Hugging Face if local config is not found.
         """
@@ -428,7 +413,7 @@ class TestWordLlama(unittest.TestCase):
             mock_tensor = MagicMock()
             mock_tensor.__getitem__.return_value = np.random.rand(256, 4096)
             mock_safe_open.return_value.__enter__.return_value.get_tensor.return_value = (
-                mock_tensor
+                mock_tensor,
             )
 
             # Call load
@@ -443,27 +428,31 @@ class TestWordLlama(unittest.TestCase):
             # Assert resolve_file was called twice: weights and tokenizer
             expected_calls = [
                 call(
-                    config_name="test",
+                    config_name=self.config,
+                    model_uri=self.model_uri,
                     dim=self.dim,
                     binary=self.binary,
                     file_type="weights",
                     cache_dir=Path("/dummy/cache"),
-                    disable_download=True,
+                    disable_download=False,
+                    remote_filename=None,
                 ),
                 call(
-                    config_name="test",
+                    config_name=self.config,
+                    model_uri=self.model_uri,
                     dim=self.dim,
                     binary=False,
                     file_type="tokenizer",
                     cache_dir=Path("/dummy/cache"),
-                    disable_download=True,
+                    disable_download=False,
+                    remote_filename=None,
                 ),
             ]
             mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
             self.assertEqual(mock_resolve_file.call_count, 2)
 
             # Assert Tokenizer.from_pretrained was called since local config was not found
-            mock_from_pretrained.assert_called_once_with("dummy-model-id")
+            mock_from_pretrained.assert_called_once_with("meta-llama/Llama-2-70b-hf")
 
             # Assert safe_open was called with the weights path
             mock_safe_open.assert_called_once_with(

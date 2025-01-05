@@ -8,6 +8,7 @@
 
 ## News and Updates 🔥
 
+- **2025-01-04**  We're excited to announce support for model2vec static embeddings. See also: [Model2Vec](https://github.com/MinishLab/model2vec)
 - **2024-10-04**  Added semantic splitting inference algorithm. See our [technical overview](tutorials/blog/semantic_split/wl_semantic_blog.md).
 
 ## Table of Contents
@@ -26,6 +27,8 @@
   - [Filtering](#filtering)
   - [Top-K Retrieval](#top-k-retrieval)
   - [Semantic Text Splitting](#semantic-text-splitting)
+  - [Loading Model2Vec](#loading-model2vec)
+  - [Inference Class](#inference-class)
 - [Training Notes](#training-notes)
 - [Roadmap](#roadmap)
 - [Extracting Token Embeddings](#extracting-token-embeddings)
@@ -242,6 +245,35 @@ probably be batched after splitting, and will often be aggregated from multiple 
 For more information see: [technical overview](tutorials/blog/semantic_split/wl_semantic_blog.md)
 
 
+### Loading Model2Vec
+
+```python
+wl = WordLlama.list_configs()
+# dict of config names
+
+wl = WordLlama.load_m2v("potion_base_8m") # 256-dim model
+wl = WordLlama.load_m2v("m2v_multilingual") # multilingual model
+```
+
+Model2Vec is a different way of creating static embeddings using PCA.
+Notably, they have produced multilingual models, and glove-based models, which score well in word similarity tasks.
+
+Check them out on huggingface! [minishlab](https://huggingface.co/minishlab)
+
+
+### Inference Class
+
+```python
+from wordllama import WordLlamaInference
+from tokenizers import Tokenizer
+
+tokenizer = Tokenizer.from_pretrained(...)
+wl = WordLlamaInference(np_embeddings_ar, tokenizer)
+```
+
+The inference class can be used directly with a bring-your-own static embeddings array (n_vocab, dim), rather than using the loader.
+
+
 ## Training Notes
 
 Binary embedding models showed more pronounced improvement at higher dimensions, and either 512 or 1024 dimensions are recommended for binary embeddings.
@@ -250,8 +282,6 @@ The L2 Supercat model was trained using a batch size of 512 on a single A100 GPU
 
 ## Roadmap
 
-- **Adding Inference Features**:
-  - Semantic text splitting (completed)
 - **Additional Example Notebooks**:
   - DSPy evaluators
   - Retrieval-Augmented Generation (RAG) pipelines

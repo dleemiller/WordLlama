@@ -38,6 +38,9 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
+          - os: windows-latest
+            python: 313
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -50,7 +53,6 @@ jobs:
             python: 310
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-
           - os: ubuntu-latest
             python: 311
             platform_id: manylinux_x86_64
@@ -59,13 +61,10 @@ jobs:
             python: 312
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-              #- os: ubuntu-latest
-              #  python: 313t
-              #  platform_id: manylinux_x86_64
-              #  manylinux_image: manylinux2014
-              #  # TODO: remove next line when Python 3.13 is released
-              #  prerelease_pythons: True
-              #  free_threaded_support: True
+          - os: ubuntu-latest
+            python: 313
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
 
           # MacOS x86_64
           - os: macos-13
@@ -79,6 +78,9 @@ jobs:
             platform_id: macosx_x86_64
           - os: macos-13
             python: 312
+            platform_id: macosx_x86_64
+          - os: macos-13
+            python: 313
             platform_id: macosx_x86_64
 
           # MacOS arm64
@@ -94,7 +96,9 @@ jobs:
           - os: macos-14
             python: 312
             platform_id: macosx_arm64
-
+          - os: macos-14
+            python: 313
+            platform_id: macosx_arm64
     steps:
       - name: Checkout wordllama
         uses: actions/checkout@v4
@@ -112,8 +116,8 @@ jobs:
         run: |
           set -ex
           # macos arm64 runners do not have conda installed. Thus we much install conda manually
-          EXPECTED_SHA="dd832d8a65a861b5592b2cf1d55f26031f7c1491b30321754443931e7b1e6832"
-          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/23.11.0-0/Mambaforge-23.11.0-0-MacOSX-arm64.sh"
+          EXPECTED_SHA="30d47bb61b337d2a2e166cc56923267089a6be526faf9677666af178a0059f0d"
+          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/24.11.0-1/Mambaforge-24.11.0-1-MacOSX-arm64.sh"
           curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
 
           # Check SHA
@@ -128,6 +132,26 @@ jobs:
           bash ./miniforge.sh -b -p $MINIFORGE_PATH
           echo "$MINIFORGE_PATH/bin" >> $GITHUB_PATH
           echo "CONDA_HOME=$MINIFORGE_PATH" >> $GITHUB_ENV
+
+      - name: Install Conda for macOS x86_64
+        if: ${{ matrix.platform_id == 'macosx_x86_64' }}
+        run: |
+          set -ex
+          EXPECTED_SHA="2303dcacb52860660e3f290d06e9313acb9e8826bfa6c1ca10972fedc9e3b388"
+          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/24.11.0-1/Mambaforge-24.11.0-1-MacOSX-x86_64.sh"
+          curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
+
+          # Verify SHA
+          file_sha=$(shasum -a 256 miniforge.sh | awk '{print $1}')
+          if [ "$EXPECTED_SHA" != "$file_sha" ]; then
+              echo "SHA mismatch for Miniforge installer!"
+              exit 1
+          fi
+
+          # Install Miniforge
+          bash miniforge.sh -b -p $HOME/miniforge
+          echo "$HOME/miniforge/bin" >> $GITHUB_PATH
+          echo "CONDA_HOME=$HOME/miniforge" >> $GITHUB_ENV
 
       - name: Set conda environment for non-macos arm64 environments
         if: ${{ matrix.platform_id != 'macosx_arm64' }}

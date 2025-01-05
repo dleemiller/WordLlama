@@ -34,7 +34,6 @@ Homepage = "https://github.com/dleemiller"
 Repository = "https://github.com/dleemiller/WordLlama"
 
 [tool.setuptools]
-packages = { find = {} }
 include-package-data = true  # Ensures non-code files are included in the package
 
 [tool.setuptools.packages.find]

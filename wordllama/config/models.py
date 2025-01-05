@@ -15,6 +15,19 @@ class ModelURI:
 
 
 class WordLlamaModels:
+
+    @classmethod
+    def list_configs(cls) -> List[str]:
+        """
+        Return a list of configuration names defined as `ModelURI` instances in the class.
+
+        Returns:
+            List[str]: A list of configuration attribute names.
+        """
+        return [
+            name for name, value in cls.__dict__.items() if isinstance(value, ModelURI)
+        ]
+
     l2_supercat = ModelURI(
         repo_id="dleemiller/word-llama-l2-supercat",
         available_dims=[64, 128, 256, 512, 1024],
@@ -33,6 +46,19 @@ class WordLlamaModels:
 
 
 class Model2VecModels:
+
+    @classmethod
+    def list_configs(cls) -> List[str]:
+        """
+        Return a list of configuration names defined as `ModelURI` instances in the class.
+
+        Returns:
+            List[str]: A list of configuration attribute names.
+        """
+        return [
+            name for name, value in cls.__dict__.items() if isinstance(value, ModelURI)
+        ]
+
     potion_base_8m = ModelURI(
         repo_id="minishlab/potion-base-8M",
         available_dims=[256],
@@ -85,6 +111,7 @@ class Model2VecModels:
         remote_filename="model.safetensors",
         remote_tokenizer_filename="tokenizer.json",
         tensor_key="embeddings",
+        tokenizer_fallback="minishlab/M2V_base_glove",
     )
 
     m2v_glove_subword = ModelURI(
@@ -95,4 +122,5 @@ class Model2VecModels:
         remote_filename="model.safetensors",
         remote_tokenizer_filename="tokenizer.json",
         tensor_key="embeddings",
+        tokenizer_fallback="minishlab/M2V_base_glove_subword",
     )

@@ -3,6 +3,8 @@ from pathlib import Path
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 
+from .models import ModelURI, WordLlamaModels, Model2VecModels
+
 
 class TokenizerInferenceConfig(BaseModel):
     use_local_config: Optional[bool] = False

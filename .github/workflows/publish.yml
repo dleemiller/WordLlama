@@ -162,13 +162,13 @@ jobs:
           # Non-macos arm64 environments already have conda installed
           echo "CONDA_HOME=/usr/local/miniconda" >> $GITHUB_ENV
 
-      # 6. Initialize Conda
-      - name: Initialize Conda
-        run: |
-          if [[ "$CONDA_HOME" != "" ]]; then
-            source $CONDA_HOME/etc/profile.d/conda.sh
-            conda activate base
-          fi
+      # # 6. Initialize Conda
+      # - name: Initialize Conda
+      #   run: |
+      #     if [[ "$CONDA_HOME" != "" ]]; then
+      #       source $CONDA_HOME/etc/profile.d/conda.sh
+      #       conda activate base
+      #     fi
 
       # 7. Install OpenMP via Conda for macOS environments
       - name: Install OpenMP via Conda (macOS only)

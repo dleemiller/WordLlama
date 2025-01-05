@@ -13,9 +13,8 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
-
 jobs:
-  # Build the wheels for Linux, Windows and macOS for Python 3.9 and newer
+  # Build the wheels for Linux, Windows, and macOS for Python 3.9 and newer
   build_wheels:
     name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
@@ -25,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Window 64 bit
+          # Windows 64 bit
           - os: windows-latest
             python: 39
             platform_id: win_amd64
@@ -47,8 +46,6 @@ jobs:
             python: 39
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-
-          # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
           - os: ubuntu-latest
             python: 310
             platform_id: manylinux_x86_64
@@ -66,7 +63,7 @@ jobs:
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
-          # MacOS x86_64
+          # macOS x86_64
           - os: macos-13
             python: 39
             platform_id: macosx_x86_64
@@ -83,7 +80,7 @@ jobs:
             python: 313
             platform_id: macosx_x86_64
 
-          # MacOS arm64
+          # macOS arm64
           - os: macos-14
             python: 39
             platform_id: macosx_arm64
@@ -99,23 +96,27 @@ jobs:
           - os: macos-14
             python: 313
             platform_id: macosx_arm64
+
     steps:
+      # 1. Checkout the repository
       - name: Checkout wordllama
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           tags: true
 
+      # 2. Setup Python using the matrix.python version
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11" # update once build dependencies are available
+          python-version: "${{ matrix.python }}"  # Corrected to use matrix variable
 
-      - name: Install conda for macos arm64
+      # 3. Install Conda for macOS arm64
+      - name: Install Conda for macOS arm64
         if: ${{ matrix.platform_id == 'macosx_arm64' }}
         run: |
           set -ex
-          # macos arm64 runners do not have conda installed. Thus we much install conda manually
+          # macOS arm64 runners do not have conda installed. Thus, we must install conda manually
           EXPECTED_SHA="8bde418e8f5030b887535940cad3b531adf128a38b99e58ba6a26e68e9d5ad06"
           MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-24.11.2-1-MacOSX-arm64.sh"
           curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
@@ -127,12 +128,13 @@ jobs:
               exit 1
           fi
 
-          # Install miniforge
+          # Install Miniforge
           MINIFORGE_PATH=$HOME/miniforge
           bash ./miniforge.sh -b -p $MINIFORGE_PATH
           echo "$MINIFORGE_PATH/bin" >> $GITHUB_PATH
           echo "CONDA_HOME=$MINIFORGE_PATH" >> $GITHUB_ENV
 
+      # 4. Install Conda for macOS x86_64
       - name: Install Conda for macOS x86_64
         if: ${{ matrix.platform_id == 'macosx_x86_64' }}
         run: |
@@ -153,12 +155,36 @@ jobs:
           echo "$HOME/miniforge/bin" >> $GITHUB_PATH
           echo "CONDA_HOME=$HOME/miniforge" >> $GITHUB_ENV
 
+      # 5. Set conda environment for non-macos arm64 environments
       - name: Set conda environment for non-macos arm64 environments
         if: ${{ matrix.platform_id != 'macosx_arm64' }}
         run: |
-          # Non-macos arm64 envrionments already have conda installed
+          # Non-macos arm64 environments already have conda installed
           echo "CONDA_HOME=/usr/local/miniconda" >> $GITHUB_ENV
 
+      # 6. Initialize Conda
+      - name: Initialize Conda
+        run: |
+          if [[ "$CONDA_HOME" != "" ]]; then
+            source $CONDA_HOME/etc/profile.d/conda.sh
+            conda activate base
+          fi
+
+      # 7. Install OpenMP via Conda for macOS environments
+      - name: Install OpenMP via Conda (macOS only)
+        if: startsWith(matrix.platform_id, 'macosx_')
+        run: |
+          conda install -y -c conda-forge libomp llvm-openmp
+
+      # 8. Set Compiler Flags for OpenMP (macOS only)
+      - name: Set Compiler Flags for OpenMP (macOS only)
+        if: startsWith(matrix.platform_id, 'macosx_')
+        run: |
+          # Export OpenMP include and lib paths
+          echo "CXXFLAGS=-I${CONDA_HOME}/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L${CONDA_HOME}/lib -lomp" >> $GITHUB_ENV
+
+      # 9. Build and test wheels
       - name: Build and test wheels
         env:
           CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease_pythons }}
@@ -171,16 +197,13 @@ jobs:
           # otherwise Meson detects a MINGW64 platform and use MINGW64
           # toolchain
           CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
-            #CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
-            #CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
-            #CIBW_BEFORE_TEST: bash {project}/build_tools/wheels/cibw_before_test.sh
-            #CIBW_TEST_REQUIRES: pytest pandas
-            #CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
-            #CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
+          CXXFLAGS: ${{ env.CXXFLAGS }}
+          LDFLAGS: ${{ env.LDFLAGS }}
+        run: |
+          bash build_tools/build_wheels.sh
 
-        run: bash build_tools/build_wheels.sh
-
+      # 10. Store artifacts
       - name: Store artifacts
         uses: actions/upload-artifact@v4
         with:

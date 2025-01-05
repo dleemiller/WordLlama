@@ -12,6 +12,7 @@ from wordllama.config import (
     TrainingConfig,
     TokenizerInferenceConfig,
 )
+from wordllama.config.models import ModelURI, WordLlamaModels
 
 
 class TestWordLlama(unittest.TestCase):
@@ -95,6 +96,7 @@ class TestWordLlama(unittest.TestCase):
     def test_check_and_download_model(self, mock_exists, mock_download):
         weights_file_path = WordLlama.check_and_download_model(
             config_name=self.config_name,
+            model_uri=getattr(WordLlamaModels, "l2_supercat"),
             dim=self.dim,
             binary=self.binary,
             weights_dir=Path("/dummy/weights"),
@@ -111,7 +113,8 @@ class TestWordLlama(unittest.TestCase):
     @patch("wordllama.wordllama.Path.exists", side_effect=[False, True, True])
     def test_check_and_download_tokenizer(self, mock_exists, mock_download):
         tokenizer_file_path = WordLlama.check_and_download_tokenizer(
-            config_name=self.config_name
+            config_name=self.config_name,
+            model_uri=getattr(WordLlamaModels, "l2_supercat"),
         )
         self.assertEqual(
             tokenizer_file_path, Path("/dummy/cache/tokenizers/tokenizer_config.json")
@@ -174,6 +177,7 @@ class TestWordLlama(unittest.TestCase):
         self.assertIsInstance(model, WordLlamaInference)
         mock_check_model.assert_called_once_with(
             config_name="l2_supercat",
+            model_uri=getattr(WordLlamaModels, "l2_supercat"),
             dim=256,
             binary=False,
             weights_dir=Path("/dummy/weights"),
@@ -181,7 +185,9 @@ class TestWordLlama(unittest.TestCase):
             disable_download=False,
         )
         mock_check_tokenizer.assert_called_once_with(
-            config_name="l2_supercat", disable_download=False
+            config_name="l2_supercat",
+            model_uri=getattr(WordLlamaModels, "l2_supercat"),
+            disable_download=False,
         )
         mock_load_tokenizer.assert_called_once()
         mock_safe_open.assert_called_once_with(

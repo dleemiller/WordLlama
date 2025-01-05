@@ -1,41 +1,21 @@
 import logging
 import requests
 import warnings
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Union, Optional, List
+from typing import Optional
 from tokenizers import Tokenizer
 from safetensors import safe_open
 
 from .inference import WordLlamaInference
-from .config import Config, WordLlamaConfig
+from .config.models import ModelURI, WordLlamaModels, Model2VecModels
 from .tokenizers import tokenizer_from_file
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class ModelURI:
-    repo_id: str
-    available_dims: List[int]
-    binary_dims: List[int]
-    tokenizer_config: Optional[str]
-
-
 class WordLlama:
-    l2_supercat = ModelURI(
-        repo_id="dleemiller/word-llama-l2-supercat",
-        available_dims=[64, 128, 256, 512, 1024],
-        binary_dims=[64, 128, 256, 512, 1024],
-        tokenizer_config="l2_supercat_tokenizer_config.json",
-    )
-
-    l3_supercat = ModelURI(
-        repo_id="dleemiller/wordllama-l3-supercat",
-        available_dims=[64, 128, 256, 512, 1024],
-        binary_dims=[64, 128, 256, 512, 1024],
-        tokenizer_config="l3_supercat_tokenizer_config.json",
-    )
+    _wordllama = WordLlamaModels
+    _model2vec = Model2VecModels
 
     @staticmethod
     def get_filename(config_name: str, dim: int, binary: bool = False) -> str:
@@ -71,6 +51,7 @@ class WordLlama:
     def download_file_from_hf(
         repo_id: str,
         filename: str,
+        remote_filename: Optional[str] = None,
         cache_dir: Optional[Path] = None,
         force_download: bool = False,
         token: Optional[str] = None,
@@ -98,7 +79,10 @@ class WordLlama:
             logger.debug(f"File {filename} exists in cache. Using cached version.")
             return cached_file_path
 
-        url = f"https://huggingface.co/{repo_id}/resolve/main/{filename}"
+        if remote_filename:
+            url = f"https://huggingface.co/{repo_id}/resolve/main/{remote_filename}"
+        else:
+            url = f"https://huggingface.co/{repo_id}/resolve/main/{filename}"
         headers = {"Authorization": f"Bearer {token}"} if token else {}
 
         logger.info(f"Downloading {filename} from {url}")
@@ -118,6 +102,7 @@ class WordLlama:
     def check_and_download_model(
         cls,
         config_name: str,
+        model_uri: ModelURI,
         dim: int,
         binary: bool = False,
         weights_dir: Optional[Path] = None,
@@ -158,7 +143,6 @@ class WordLlama:
                         f"Weights file '{filename}' not found and downloads are disabled."
                     )
 
-                model_uri = getattr(cls, config_name)
                 if binary:
                     assert (
                         dim in model_uri.binary_dims
@@ -172,7 +156,9 @@ class WordLlama:
                     f"Weights file '{filename}' not found in cache directory '{cache_dir}'. Downloading..."
                 )
                 weights_file_path = cls.download_file_from_hf(
-                    repo_id=model_uri.repo_id, filename=filename
+                    repo_id=model_uri.repo_id,
+                    filename=filename,
+                    remote_filename=model_uri.remote_filename,
                 )
 
         if not weights_file_path.exists():
@@ -184,7 +170,7 @@ class WordLlama:
 
     @classmethod
     def check_and_download_tokenizer(
-        cls, config_name: str, disable_download: bool = False
+        cls, config_name: str, model_uri: ModelURI, disable_download: bool = False
     ) -> Path:
         """
         Check if tokenizer configuration exists locally, if not, download it.
@@ -197,7 +183,6 @@ class WordLlama:
         Returns:
             Path: Path to the tokenizer configuration file.
         """
-        model_uri = getattr(cls, config_name)
         cache_dir = cls.get_cache_dir(is_tokenizer_config=True)
         tokenizer_file_path = cache_dir / model_uri.tokenizer_config
 
@@ -214,6 +199,7 @@ class WordLlama:
             tokenizer_file_path = cls.download_file_from_hf(
                 repo_id=model_uri.repo_id,
                 filename=model_uri.tokenizer_config,
+                remote_filename=model_uri.remote_tokenizer_filename,
                 cache_dir=cache_dir,
             )
 
@@ -225,9 +211,32 @@ class WordLlama:
         return tokenizer_file_path
 
     @classmethod
+    def load_m2v(
+        cls,
+        config: str,
+        weights_dir: Optional[Path] = None,
+        cache_dir: Optional[Path] = None,
+        disable_download: bool = False,
+    ) -> WordLlamaInference:
+        """ """
+        model_uri = getattr(cls._model2vec, config)
+        dim = model_uri.available_dims[0]
+        return cls._load(
+            config=config,
+            model_uri=model_uri,
+            weights_dir=weights_dir,
+            cache_dir=cache_dir,
+            binary=False,
+            dim=model_uri.available_dims[0],
+            trunc_dim=None,
+            disable_download=disable_download,
+            tensor_key=model_uri.tensor_key,
+        )
+
+    @classmethod
     def load(
         cls,
-        config: Union[str, WordLlamaConfig] = "l2_supercat",
+        config: str = "l2_supercat",
         weights_dir: Optional[Path] = None,
         cache_dir: Optional[Path] = None,
         binary: bool = False,
@@ -239,7 +248,7 @@ class WordLlama:
         Load the WordLlama model.
 
         Args:
-            config (Union[str, WordLlamaConfig], optional): The configuration object or the name of the configuration to load. Defaults to "l2_supercat".
+            config (str, optional): The name of the configuration to load. Defaults to "l2_supercat".
             weights_dir (Optional[Path], optional): Directory where weight files are stored. If None, defaults to 'weights' directory in the current module directory. Defaults to None.
             cache_dir (Optional[Path], optional): Directory where cached files are stored. Defaults to ~/.cache/wordllama/weights. Defaults to None.
             binary (bool, optional): Whether to load the binary version of the weights. Defaults to False.
@@ -254,29 +263,46 @@ class WordLlama:
             ValueError: If the configuration is not found or dimensions are invalid.
             FileNotFoundError: If the weights file is not found in either the weights directory or cache directory.
         """
-        if isinstance(config, str):
-            config_obj = Config._configurations.get(config, None)
-            if config_obj is None:
-                raise ValueError(f"Configuration '{config}' not found.")
-        elif isinstance(config, WordLlamaConfig):
-            config_obj = config
-        else:
-            raise ValueError(
-                "Invalid configuration type provided. It must be either a string or an instance of WordLlamaConfig."
-            )
-
+        model_uri = getattr(cls._wordllama, config)
         assert (
-            dim in config_obj.matryoshka.dims
-        ), f"Model dimension must be one of matryoshka dims in config: {config_obj.matryoshka.dims}"
+            dim in model_uri.available_dims
+        ), f"Model dimension must be one of available dims in config: {model_uri.available_dims}"
         if trunc_dim is not None:
             assert (
                 trunc_dim <= dim
             ), f"Cannot truncate to dimension lower than model dimension ({trunc_dim} > {dim})"
-            assert trunc_dim in config_obj.matryoshka.dims
+            assert trunc_dim in model_uri.available_dims
 
+        return cls._load(
+            config=config,
+            model_uri=model_uri,
+            weights_dir=weights_dir,
+            cache_dir=cache_dir,
+            binary=binary,
+            dim=dim,
+            trunc_dim=trunc_dim,
+            disable_download=disable_download,
+            tensor_key="embedding.weight",
+        )
+
+    @classmethod
+    def _load(
+        cls,
+        config: str,
+        model_uri: ModelURI,
+        weights_dir: Optional[Path] = None,
+        cache_dir: Optional[Path] = None,
+        binary: bool = False,
+        dim: int = 256,
+        trunc_dim: Optional[int] = None,
+        disable_download: bool = False,
+        tensor_key: str = "embedding.weight",
+    ) -> WordLlamaInference:
+        """ """
         # Check and download model weights
         weights_file_path = cls.check_and_download_model(
             config_name=config,
+            model_uri=model_uri,
             dim=dim,
             binary=binary,
             weights_dir=weights_dir,
@@ -287,38 +313,40 @@ class WordLlama:
         # Check and download tokenizer config if necessary
         tokenizer_file_path = cls.check_and_download_tokenizer(
             config_name=config,
+            model_uri=model_uri,
             disable_download=disable_download,
         )
 
         # Load the tokenizer
-        tokenizer = cls.load_tokenizer(tokenizer_file_path, config_obj)
+        tokenizer = cls.load_tokenizer(tokenizer_file_path)
 
         # Load the model weights
         with safe_open(weights_file_path, framework="np", device="cpu") as f:
-            embedding = f.get_tensor("embedding.weight")
+            embedding = f.get_tensor(tensor_key)
             if trunc_dim:  # truncate dimension
                 embedding = embedding[:, 0:trunc_dim]
 
         logger.debug(f"Loading weights from: {weights_file_path}")
-        return WordLlamaInference(embedding, config_obj, tokenizer, binary=binary)
+        return WordLlamaInference(embedding, tokenizer, binary=binary)
 
     @staticmethod
-    def load_tokenizer(tokenizer_file_path: Path, config: WordLlamaConfig) -> Tokenizer:
+    def load_tokenizer(
+        tokenizer_file_path: Path,
+        hf_model_id: Optional[str] = None,
+        use_local_if_exists: bool = True,
+    ) -> Tokenizer:
         """
         Load the tokenizer from a local file or from the Hugging Face repository.
         First, it checks the default path, then the cache directory.
 
         Args:
             tokenizer_file_path (Path): The path to the tokenizer configuration file.
-            config (WordLlamaConfig): The configuration for the WordLlama model.
+            tokenizer_config
 
         Returns:
             Tokenizer: An instance of the Tokenizer class.
         """
-        if (
-            config.tokenizer.inference is not None
-            and config.tokenizer.inference.use_local_config
-        ):
+        if use_local_if_exists:
             # Check in the default path
             if tokenizer_file_path.exists():
                 logger.debug(
@@ -327,8 +355,9 @@ class WordLlama:
                 return tokenizer_from_file(tokenizer_file_path)
 
             warnings.warn(
-                f"Tokenizer config file not found in both default and cache paths. Falling back to Hugging Face model: {config.model.hf_model_id}"
+                f"Tokenizer config file not found in both default and cache paths. Falling back to Hugging Face model: {hf_model_id}"
             )
-
-        # Load from Hugging Face if local config is not used or not found
-        return Tokenizer.from_pretrained(config.model.hf_model_id)
+        elif hf_model_id:
+            return Tokenizer.from_pretrained(hf_model_id)
+        else:
+            raise FileNotFoundError(f"Tokenizer not found at: {tokenizer_file_path}")

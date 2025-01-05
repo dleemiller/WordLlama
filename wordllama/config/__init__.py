@@ -66,7 +66,7 @@ class Config:
     @staticmethod
     def load_configurations() -> Dict[str, WordLlamaConfig]:
         """Load configurations from TOML files within the same directory as this script."""
-        config_dir = Path(__file__).parent
+        config_dir = Path(__file__).parent / "train"
         configs = {}
         for config_file in config_dir.glob("*.toml"):
             config_data = toml.load(config_file)

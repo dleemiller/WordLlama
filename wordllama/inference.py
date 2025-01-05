@@ -22,7 +22,6 @@ class WordLlamaInference:
     def __init__(
         self,
         embedding: np.ndarray,
-        config: WordLlamaConfig,
         tokenizer: Tokenizer,
         binary: bool = False,
     ):
@@ -36,9 +35,7 @@ class WordLlamaInference:
         """
         self.binary = binary
         self.embedding = np.ascontiguousarray(embedding.astype(np.float32))
-        self.config = config
         self.tokenizer = tokenizer
-        self.tokenizer_kwargs = self.config.tokenizer.model_dump()
 
         # Default settings for all inference
         self.tokenizer.enable_padding()

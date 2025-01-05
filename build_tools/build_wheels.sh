@@ -1,80 +1,60 @@
 #!/bin/bash
 
-# Exit on error and echo each command (for debugging)
 set -e
 set -x
 
-# ------------------------------------------------------------------------------
-# 1. Reproducible Builds
-# ------------------------------------------------------------------------------
-
-# SOURCE_DATE_EPOCH is used to produce byte-for-byte reproducible builds
-# based on the last commit timestamp.
+# Set reproducible build variables
 export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
-
-# Ensure consistent hashing in Python
 export PYTHONHASHSEED=0
 
-# ------------------------------------------------------------------------------
-# 2. macOS-Specific OpenMP Setup
-# ------------------------------------------------------------------------------
-
 if [[ "$(uname)" == "Darwin" ]]; then
-    # Determine which macOS architecture we are building for
-    # and set deployment target accordingly.
     if [[ "$CIBW_BUILD" == *-macosx_arm64 ]]; then
-        # If the runner is x86_64 but we're building for arm64, enable cross-compilation
+        # For arm64 builds, use Homebrew
         if [[ "$(uname -m)" == "x86_64" ]]; then
+            # Cross-compilation on x86_64 for arm64
             export PYTHON_CROSSENV=1
         fi
-        # SciPy uses MACOSX_DEPLOYMENT_TARGET=12.0 on arm64; we match that to avoid issues
-        export MACOSX_DEPLOYMENT_TARGET=12.0
+        export MACOSX_DEPLOYMENT_TARGET=12.0  # Match SciPy recommendations for arm64
+        HOMEBREW_PREFIX="/opt/homebrew"
+
+        echo "Installing libomp + llvm via Homebrew for arm64..."
+        brew install libomp llvm
+
+        export CC="$HOMEBREW_PREFIX/opt/llvm/bin/clang"
+        export CXX="$HOMEBREW_PREFIX/opt/llvm/bin/clang++"
+        export PATH="$HOMEBREW_PREFIX/opt/llvm/bin:$PATH"
+        export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp -I$HOMEBREW_PREFIX/opt/libomp/include"
+        export CFLAGS="$CFLAGS -I$HOMEBREW_PREFIX/opt/libomp/include -ffp-contract=off"
+        export CXXFLAGS="$CXXFLAGS -I$HOMEBREW_PREFIX/opt/libomp/include -ffp-contract=off"
+        export LDFLAGS="$LDFLAGS -L$HOMEBREW_PREFIX/opt/libomp/lib -lomp"
+
     else
-        # Homebrew's libomp requires macOS 13.0+ on x86_64
-        export MACOSX_DEPLOYMENT_TARGET=13.0
+        # For x86_64 builds, adjust deployment target to match libomp requirements
+        export MACOSX_DEPLOYMENT_TARGET=13.0  # Matches Homebrew's libomp minimum
+        OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/19.1.6/download/osx-64/llvm-openmp-19.1.6-ha54dae1_0.tar.bz2"
+
+        echo "Installing llvm-openmp via Conda for x86_64..."
+        sudo conda create -n build $OPENMP_URL
+        PREFIX="$CONDA_HOME/envs/build"
+
+        export CC="/usr/bin/clang"
+        export CXX="/usr/bin/clang++"
+        export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+        export CFLAGS="$CFLAGS -I$PREFIX/include -ffp-contract=off"
+        export CXXFLAGS="$CXXFLAGS -I$PREFIX/include -ffp-contract=off"
+        export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
     fi
-
-    # Install libomp and llvm from Homebrew (NOT Conda).
-    # This ensures we use a Clang that fully supports OpenMP.
-    echo "Installing libomp + llvm via Homebrew..."
-    brew install libomp llvm
-
-    # Force the use of Homebrew's LLVM Clang/Clang++ instead of system Clang
-    export CC=/usr/local/opt/llvm/bin/clang
-    export CXX=/usr/local/opt/llvm/bin/clang++
-    
-    # Prepend Homebrew LLVM to PATH so it’s picked up first
-    export PATH="/usr/local/opt/llvm/bin:$PATH"
-
-    # ------------------------------------------------------------------------------
-    # 3. Compiler & Linker Flags for OpenMP
-    # ------------------------------------------------------------------------------
-
-    # CPPFLAGS: C/C++ preprocessor flags
-    export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp -I/usr/local/opt/libomp/include"
-    # CFLAGS/CXXFLAGS: Compiler flags for C/C++
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include -ffp-contract=off"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include -ffp-contract=off"
-    # LDFLAGS: Linker flags
-    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
 fi
 
-# ------------------------------------------------------------------------------
-# 4. Optional: CPython Free-Threaded Support
-# ------------------------------------------------------------------------------
-
-# If CIBW_FREE_THREADED_SUPPORT is set to "true", we install pre-release wheels
-# from the scientific-python-nightly-wheels channel, which include free-threaded
-# interpreter builds for CPython. This setting is rarely needed; remove if not used.
 if [[ "$CIBW_FREE_THREADED_SUPPORT" =~ [tT]rue ]]; then
+    # Enable free-threaded builds for CPython if specified
     export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
 fi
 
-# ------------------------------------------------------------------------------
-# 5. Build the Wheels with cibuildwheel
-# ------------------------------------------------------------------------------
-
+# Ensure pip is updated before installing dependencies
 python -m pip install --upgrade pip
-python -m pip install cibuildwheel
+
+# Install cibuildwheel and build wheels
+python -m pip install --upgrade cibuildwheel
 python -m cibuildwheel --output-dir wheelhouse
 

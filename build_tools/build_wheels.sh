@@ -33,7 +33,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
         export MACOSX_DEPLOYMENT_TARGET=13.0  # Matches Homebrew's libomp minimum
     
         # Install llvm-openmp via Conda
-        OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/19.1.6/download/osx-64/llvm-openmp-19.1.6-ha54dae1_0.tar.bz2"
+        OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/19.1.6/download/osx-64/llvm-openmp-19.1.6-ha54dae1_0.conda"
         echo "Installing llvm-openmp via Conda for x86_64..."
         sudo conda create -n build $OPENMP_URL
         PREFIX="$CONDA_HOME/envs/build"

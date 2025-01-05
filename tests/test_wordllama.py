@@ -26,6 +26,11 @@ class TestWordLlama(unittest.TestCase):
         self.config = "l2_supercat"
         self.model_uri = getattr(WordLlamaModels, "l2_supercat")
 
+    def test_list_configs(self):
+        output = WordLlama.list_configs()
+        assert len(output) > 0
+        assert isinstance(output, dict)
+
     @patch("wordllama.wordllama.requests.get", autospec=True)
     @patch("wordllama.wordllama.Path.mkdir", autospec=True)
     @patch("wordllama.wordllama.Path.exists", autospec=True)

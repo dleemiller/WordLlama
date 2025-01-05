@@ -271,7 +271,7 @@ tokenizer = Tokenizer.from_pretrained(...)
 wl = WordLlamaInference(np_embeddings_ar, tokenizer)
 ```
 
-The inference class can be used directly with a bring-your-own static embeddings array, rather than using the loader.
+The inference class can be used directly with a bring-your-own static embeddings array (n_vocab, dim), rather than using the loader.
 
 
 ## Training Notes

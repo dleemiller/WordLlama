@@ -116,8 +116,8 @@ jobs:
         run: |
           set -ex
           # macos arm64 runners do not have conda installed. Thus we much install conda manually
-          EXPECTED_SHA="30d47bb61b337d2a2e166cc56923267089a6be526faf9677666af178a0059f0d"
-          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/24.11.0-1/Mambaforge-24.11.0-1-MacOSX-arm64.sh"
+          EXPECTED_SHA="8bde418e8f5030b887535940cad3b531adf128a38b99e58ba6a26e68e9d5ad06"
+          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-24.11.2-1-MacOSX-arm64.sh"
           curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
 
           # Check SHA
@@ -137,8 +137,8 @@ jobs:
         if: ${{ matrix.platform_id == 'macosx_x86_64' }}
         run: |
           set -ex
-          EXPECTED_SHA="2303dcacb52860660e3f290d06e9313acb9e8826bfa6c1ca10972fedc9e3b388"
-          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/24.11.0-1/Mambaforge-24.11.0-1-MacOSX-x86_64.sh"
+          EXPECTED_SHA="50a00997a0f08737d076e93f964dffcb51bc4792fd9371344fd244ab97bcf61c"
+          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/24.11.2-1/Miniforge3-24.11.2-1-MacOSX-x86_64.sh"
           curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
 
           # Verify SHA

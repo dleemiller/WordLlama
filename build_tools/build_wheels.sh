@@ -30,8 +30,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
         # SciPy uses MACOSX_DEPLOYMENT_TARGET=12.0 on arm64; we match that to avoid issues
         export MACOSX_DEPLOYMENT_TARGET=12.0
     else
-        # For x86_64 wheels, set an older deployment target (10.9)
-        export MACOSX_DEPLOYMENT_TARGET=10.9
+        # Homebrew's libomp requires macOS 13.0+ on x86_64
+        export MACOSX_DEPLOYMENT_TARGET=13.0
     fi
 
     # Install libomp and llvm from Homebrew (NOT Conda).
@@ -53,8 +53,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
     # CPPFLAGS: C/C++ preprocessor flags
     export CPPFLAGS="$CPPFLAGS -Xclang -fopenmp -I/usr/local/opt/libomp/include"
     # CFLAGS/CXXFLAGS: Compiler flags for C/C++
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include -ffp-contract=off"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include -ffp-contract=off"
     # LDFLAGS: Linker flags
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
 fi

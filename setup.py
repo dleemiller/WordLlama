@@ -1,7 +1,6 @@
 from setuptools import setup, Extension
 from Cython.Build import cythonize
 import numpy as np
-import platform
 
 numpy_include = np.get_include()
 

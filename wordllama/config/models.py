@@ -11,6 +11,7 @@ class ModelURI:
     remote_filename: Optional[str] = None
     remote_tokenizer_filename: Optional[str] = None
     tensor_key: str = "embedding.weight"
+    tokenizer_fallback: Optional[str] = None
 
 
 class WordLlamaModels:
@@ -19,6 +20,7 @@ class WordLlamaModels:
         available_dims=[64, 128, 256, 512, 1024],
         binary_dims=[64, 128, 256, 512, 1024],
         tokenizer_config="l2_supercat_tokenizer_config.json",
+        tokenizer_fallback="meta-llama/Llama-2-70b-hf",
     )
 
     l3_supercat = ModelURI(
@@ -26,6 +28,7 @@ class WordLlamaModels:
         available_dims=[64, 128, 256, 512, 1024],
         binary_dims=[64, 128, 256, 512, 1024],
         tokenizer_config="l3_supercat_tokenizer_config.json",
+        tokenizer_fallback="meta-llama/Meta-Llama-3.1-405B",
     )
 
 
@@ -38,6 +41,7 @@ class Model2VecModels:
         remote_filename="model.safetensors",
         remote_tokenizer_filename="tokenizer.json",
         tensor_key="embeddings",
+        tokenizer_fallback="minishlab/potion-base-8M",
     )
 
     potion_base_4m = ModelURI(
@@ -48,6 +52,7 @@ class Model2VecModels:
         remote_filename="model.safetensors",
         remote_tokenizer_filename="tokenizer.json",
         tensor_key="embeddings",
+        tokenizer_fallback="minishlab/potion-base-4M",
     )
 
     potion_base_2m = ModelURI(
@@ -58,6 +63,7 @@ class Model2VecModels:
         remote_filename="model.safetensors",
         remote_tokenizer_filename="tokenizer.json",
         tensor_key="embeddings",
+        tokenizer_fallback="minishlab/potion-base-2M",
     )
 
     m2v_multilingual = ModelURI(
@@ -68,6 +74,7 @@ class Model2VecModels:
         remote_filename="model.safetensors",
         remote_tokenizer_filename="tokenizer.json",
         tensor_key="embeddings",
+        tokenizer_fallback="minishlab/M2V_multilingual_output",
     )
 
     m2v_glove = ModelURI(

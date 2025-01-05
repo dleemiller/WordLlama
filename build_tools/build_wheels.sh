@@ -14,7 +14,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
             # Cross-compilation on x86_64 for arm64
             export PYTHON_CROSSENV=1
         fi
-        export MACOSX_DEPLOYMENT_TARGET=12.0  # Match SciPy recommendations for arm64
+        export MACOSX_DEPLOYMENT_TARGET=14.0  # Match SciPy recommendations for arm64
         HOMEBREW_PREFIX="/opt/homebrew"
 
         echo "Installing libomp + llvm via Homebrew for arm64..."
@@ -29,21 +29,30 @@ if [[ "$(uname)" == "Darwin" ]]; then
         export LDFLAGS="$LDFLAGS -L$HOMEBREW_PREFIX/opt/libomp/lib -lomp"
 
     else
-        # For x86_64 builds, adjust deployment target to match libomp requirements
+        # For x86_64 builds, adjust deployment target and install llvm-openmp via Conda
         export MACOSX_DEPLOYMENT_TARGET=13.0  # Matches Homebrew's libomp minimum
-        OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/19.1.6/download/osx-64/llvm-openmp-19.1.6-ha54dae1_0.conda"
-
+    
+        # Install llvm-openmp via Conda
+        OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/19.1.6/download/osx-64/llvm-openmp-19.1.6-ha54dae1_0.tar.bz2"
         echo "Installing llvm-openmp via Conda for x86_64..."
         sudo conda create -n build $OPENMP_URL
         PREFIX="$CONDA_HOME/envs/build"
-
+    
+        # Use system Clang and point it to Conda's OpenMP paths
         export CC="/usr/bin/clang"
         export CXX="/usr/bin/clang++"
-        export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-        export CFLAGS="$CFLAGS -I$PREFIX/include -ffp-contract=off"
-        export CXXFLAGS="$CXXFLAGS -I$PREFIX/include -ffp-contract=off"
-        export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
+        export CPPFLAGS="-Xpreprocessor -fopenmp -I$PREFIX/include"
+        export CFLAGS="-I$PREFIX/include -ffp-contract=off"
+        export CXXFLAGS="-I$PREFIX/include -ffp-contract=off"
+        export LDFLAGS="-Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
+    
+        # Verify that omp.h exists where we expect
+        if [[ ! -f "$PREFIX/include/omp.h" ]]; then
+            echo "Error: omp.h not found in $PREFIX/include"
+            exit 1
+        fi
     fi
+
 fi
 
 if [[ "$CIBW_FREE_THREADED_SUPPORT" =~ [tT]rue ]]; then

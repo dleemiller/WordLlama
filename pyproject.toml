@@ -34,17 +34,24 @@ Homepage = "https://github.com/dleemiller"
 Repository = "https://github.com/dleemiller/WordLlama"
 
 [tool.setuptools]
-packages = ["wordllama"]
+packages = { find = {} }
+include-package-data = true  # Ensures non-code files are included in the package
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["wordllama*"]
 
 [tool.setuptools.package-data]
 wordllama = [
-    "algorithms/*.so",
-    "algorithms/*.pyd",
-    "**/*.pyx",
-    "**/*.pyd",
-    "**/*.toml",
-    "tokenizers/*.json",
-    "weights/*.safetensors"
+    "algorithms/*.so",          # Compiled shared libraries
+    "algorithms/*.pyd",         # Compiled Python extensions for Windows
+    "algorithms/*.pyx",         # Cython source files
+    "algorithms/*.pxd",         # Cython declaration files
+    "**/*.pyx",                 # Catch any other *.pyx files
+    "**/*.pxd",                 # Catch any other *.pxd files
+    "**/*.toml",                # TOML configuration files
+    "tokenizers/*.json",        # Tokenizer JSON configuration files
+    "weights/*.safetensors"     # Model weights
 ]
 
 [tool.setuptools.dynamic]
@@ -66,27 +73,27 @@ print(similarity_score);"
 """
 
 [tool.cibuildwheel.macos]
-before-all = """
-brew install openblas libomp llvm
-
-# Create a NumPy site.cfg so that it detects your Homebrew-installed OpenBLAS
-cat > ~/.numpy-site.cfg <<EOF
-[openblas]
-libraries = openblas
-library_dirs = /usr/local/opt/openblas/lib
-include_dirs = /usr/local/opt/openblas/include
-runtime_library_dirs = /usr/local/opt/openblas/lib
-EOF
-
-# Use Homebrew's Clang/Clang++
-export CC=/usr/local/opt/llvm/bin/clang
-export CXX=/usr/local/opt/llvm/bin/clang++
-export PATH="/usr/local/opt/llvm/bin:$PATH"
-
-# Add necessary flags for libomp
-export CXXFLAGS="$CXXFLAGS -Xclang -fopenmp -I/usr/local/opt/libomp/include -I/usr/local/opt/openblas/include"
-export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -L/usr/local/opt/openblas/lib -lomp"
-"""
+# before-all = """
+# brew install openblas libomp llvm
+# 
+# # Create a NumPy site.cfg so that it detects your Homebrew-installed OpenBLAS
+# cat > ~/.numpy-site.cfg <<EOF
+# [openblas]
+# libraries = openblas
+# library_dirs = /usr/local/opt/openblas/lib
+# include_dirs = /usr/local/opt/openblas/include
+# runtime_library_dirs = /usr/local/opt/openblas/lib
+# EOF
+# 
+# # Use Homebrew's Clang/Clang++
+# export CC=/usr/local/opt/llvm/bin/clang
+# export CXX=/usr/local/opt/llvm/bin/clang++
+# export PATH="/usr/local/opt/llvm/bin:$PATH"
+# 
+# # Add necessary flags for libomp
+# export CXXFLAGS="$CXXFLAGS -Xclang -fopenmp -I/usr/local/opt/libomp/include -I/usr/local/opt/openblas/include"
+# export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -L/usr/local/opt/openblas/lib -lomp"
+# """
 
 [tool.cibuildwheel.windows]
 before-all = """

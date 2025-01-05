@@ -71,7 +71,7 @@ runtime_library_dirs = $(brew --prefix openblas)/lib
 EOF
 
 # Point the compiler to the libomp headers and library
-export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
+export CXXFLAGS="$CXXFLAGS -Xclang -fopenmp -I$(brew --prefix libomp)/include"
 export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib -lomp"
 """
 

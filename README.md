@@ -78,13 +78,13 @@ for i, candidate in enumerate(sorted_candidates, 1):
 
 print(f"\nBest Match: {best_candidate} (Score: {sim_key(best_candidate):.4f})")
 
-Ranked Candidates:
-1. Introduction to neural networks (Score: 0.3414)
-2. Foundations of neural science (Score: 0.2115)
-3. Introduction to philosophy: logic (Score: 0.1067)
-4. Cooking delicious pasta at home (Score: 0.0045)
-
-Best Match: Introduction to neural networks (Score: 0.3414)
+# Ranked Candidates:
+# 1. Introduction to neural networks (Score: 0.3414)
+# 2. Foundations of neural science (Score: 0.2115)
+# 3. Introduction to philosophy: logic (Score: 0.1067)
+# 4. Cooking delicious pasta at home (Score: 0.0045)
+# 
+# Best Match: Introduction to neural networks (Score: 0.3414)
 ```
 
 ## Features

@@ -62,13 +62,13 @@ candidates = [
     "Introduction to philosophy: logic",
 ]
 
-# Returns a Callable function.
+# Returns a Callable[[str], float] function
 sim_key = wl.key(query)
 
-# Sort candidates, most similar first.
+# Sort candidates, most similar first
 sorted_candidates = sorted(candidates, key=sim_key, reverse=True)
 
-# Most similar candidate.
+# Most similar candidate
 best_candidate = max(candidates, key=sim_key)
 
 # Print the results
@@ -171,21 +171,21 @@ print(embeddings.shape)  # Output: (2, 64)
 Return a Callable function from `.key(query)`.
 
 ```python
-query = "Learn about neural networks."
+query = "Machine learning methods"
 candidates = [
-    "Principles of Neural Science.",
-    "Introduction to machine learning concepts.",
-    "Cooking delicious pasta at home.",
-    "Introduction to philosophy: Logic.",
+    "Foundations of neural science",
+    "Introduction to neural networks",
+    "Cooking delicious pasta at home",
+    "Introduction to philosophy: logic",
 ]
 
-# Returns a Callable function.
+# Returns a Callable[[str], float] function
 sim_key = wl.key(query)
 
-# Sort candidates, most similar first.
+# Sort candidates, most similar first
 sorted_candidates = sorted(candidates, key=sim_key, reverse=True)
 
-# Most similar candidate.
+# Most similar candidate
 best_candidate = max(candidates, key=sim_key)
 
 # Print the results
@@ -196,12 +196,12 @@ for i, candidate in enumerate(sorted_candidates, 1):
 print(f"\nBest Match: {best_candidate} (Score: {sim_key(best_candidate):.4f})")
 
 # Ranked Candidates:
-# 1. Introduction to machine learning concepts. (Score: 0.3650)
-# 2. Principles of Neural Science. (Score: 0.3021)
-# 3. Introduction to philosophy: Logic. (Score: 0.1232)
-# 4. Cooking delicious pasta at home. (Score: -0.0018)
-#
-# Best Match: Introduction to machine learning concepts. (Score: 0.3650)
+# 1. Introduction to neural networks (Score: 0.3414)
+# 2. Foundations of neural science (Score: 0.2115)
+# 3. Introduction to philosophy: logic (Score: 0.1067)
+# 4. Cooking delicious pasta at home (Score: 0.0045)
+# 
+# Best Match: Introduction to neural networks (Score: 0.3414)
 ```
 
 ### Calculating Similarity

@@ -177,7 +177,7 @@ class WordLlamaInference:
         embedding2 = self.embed(text2)
         return self.vector_similarity(embedding1[0], embedding2[0]).item()
 
-    def key(self, query: str, norm: bool = True) -> Callable:
+    def key(self, query: str, norm: bool = True) -> Callable[[str], float]:
         """
         Returns a key function for comparing candidate strings based on their
         similarity to the given query. This key function can be used with built-in

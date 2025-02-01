@@ -192,7 +192,7 @@ class WordLlamaInference:
             Callable[[str], float]: A function that computes the similarity between
                                       the precomputed query embedding and a candidate string.
         """
-        # Precompute the embedding for the query to avoid redundant work.
+        # Precompute the embedding for the query
         query_embedding = self.embed(query, norm=norm)
 
         def similarity_key(candidate: str) -> float:

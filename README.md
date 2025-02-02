@@ -8,6 +8,7 @@
 
 ## News and Updates 🔥
 
+- **2025-02-01**  Callable for stdlib functions (sorted/min/max)
 - **2025-01-04**  We're excited to announce support for model2vec static embeddings. See also: [Model2Vec](https://github.com/MinishLab/model2vec)
 - **2024-10-04**  Added semantic splitting inference algorithm. See our [technical overview](tutorials/blog/semantic_split/wl_semantic_blog.md).
 
@@ -20,6 +21,7 @@
 - [How Fast?](#how-fast-zap)
 - [Usage](#usage)
   - [Embedding Text](#embedding-text)
+  - [Stdlib Sorted/Min/Max](#stdlib-sorted-min-max)
   - [Calculating Similarity](#calculating-similarity)
   - [Ranking Documents](#ranking-documents)
   - [Fuzzy Deduplication](#fuzzy-deduplication)
@@ -52,22 +54,37 @@ from wordllama import WordLlama
 # Load the default WordLlama model
 wl = WordLlama.load()
 
-# Calculate similarity between two sentences
-similarity_score = wl.similarity("I went to the car", "I went to the pawn shop")
-print(similarity_score)  # Output: e.g., 0.0664
+query = "Machine learning methods"
+candidates = [
+    "Foundations of neural science",
+    "Introduction to neural networks",
+    "Cooking delicious pasta at home",
+    "Introduction to philosophy: logic",
+]
 
-# Rank documents based on their similarity to a query
-query = "I went to the car"
-candidates = ["I went to the park", "I went to the shop", "I went to the truck", "I went to the vehicle"]
-ranked_docs = wl.rank(query, candidates)
-print(ranked_docs)
-# Output:
-# [
-#   ('I went to the vehicle', 0.7441),
-#   ('I went to the truck', 0.2832),
-#   ('I went to the shop', 0.1973),
-#   ('I went to the park', 0.1510)
-# ]
+# Returns a Callable[[str], float] function
+sim_key = wl.key(query)
+
+# Sort candidates, most similar first
+sorted_candidates = sorted(candidates, key=sim_key, reverse=True)
+
+# Most similar candidate
+best_candidate = max(candidates, key=sim_key)
+
+# Print the results
+print("Ranked Candidates:")
+for i, candidate in enumerate(sorted_candidates, 1):
+    print(f"{i}. {candidate} (Score: {sim_key(candidate):.4f})")
+
+print(f"\nBest Match: {best_candidate} (Score: {sim_key(best_candidate):.4f})")
+
+# Ranked Candidates:
+# 1. Introduction to neural networks (Score: 0.3414)
+# 2. Foundations of neural science (Score: 0.2115)
+# 3. Introduction to philosophy: logic (Score: 0.1067)
+# 4. Cooking delicious pasta at home (Score: 0.0045)
+# 
+# Best Match: Introduction to neural networks (Score: 0.3414)
 ```
 
 ## Features
@@ -147,6 +164,44 @@ wl = WordLlama.load(trunc_dim=64)
 # Embed text
 embeddings = wl.embed(["The quick brown fox jumps over the lazy dog", "And all that jazz"])
 print(embeddings.shape)  # Output: (2, 64)
+```
+
+### Stdlib Examples
+
+Return a Callable function from `.key(query)`.
+
+```python
+query = "Machine learning methods"
+candidates = [
+    "Foundations of neural science",
+    "Introduction to neural networks",
+    "Cooking delicious pasta at home",
+    "Introduction to philosophy: logic",
+]
+
+# Returns a Callable[[str], float] function
+sim_key = wl.key(query)
+
+# Sort candidates, most similar first
+sorted_candidates = sorted(candidates, key=sim_key, reverse=True)
+
+# Most similar candidate
+best_candidate = max(candidates, key=sim_key)
+
+# Print the results
+print("Ranked Candidates:")
+for i, candidate in enumerate(sorted_candidates, 1):
+    print(f"{i}. {candidate} (Score: {sim_key(candidate):.4f})")
+
+print(f"\nBest Match: {best_candidate} (Score: {sim_key(best_candidate):.4f})")
+
+# Ranked Candidates:
+# 1. Introduction to neural networks (Score: 0.3414)
+# 2. Foundations of neural science (Score: 0.2115)
+# 3. Introduction to philosophy: logic (Score: 0.1067)
+# 4. Cooking delicious pasta at home (Score: 0.0045)
+# 
+# Best Match: Introduction to neural networks (Score: 0.3414)
 ```
 
 ### Calculating Similarity
@@ -324,7 +379,7 @@ If you use WordLlama in your research or project, please consider citing it as f
   title = {WordLlama: Recycled Token Embeddings from Large Language Models},
   year = {2024},
   url = {https://github.com/dleemiller/wordllama},
-  version = {0.3.7}
+  version = {0.3.9}
 }
 ```
 

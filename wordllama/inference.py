@@ -1,6 +1,6 @@
 import numpy as np
 from tokenizers import Tokenizer
-from typing import Union, List, Tuple, Optional
+from typing import Callable, List, Optional, Tuple, Union
 import logging
 
 from .algorithms import (
@@ -176,6 +176,32 @@ class WordLlamaInference:
         embedding1 = self.embed(text1)
         embedding2 = self.embed(text2)
         return self.vector_similarity(embedding1[0], embedding2[0]).item()
+
+    def key(self, query: str, norm: bool = True) -> Callable[[str], float]:
+        """
+        Returns a key function for comparing candidate strings based on their
+        similarity to the given query. This key function can be used with built-in
+        functions like sorted(), min(), and max().
+
+        Args:
+            query (str): The reference query text.
+            norm (bool, optional): Whether to normalize embeddings before computing
+                                   similarity. Defaults to True.
+
+        Returns:
+            Callable[[str], float]: A function that computes the similarity between
+                                      the precomputed query embedding and a candidate string.
+        """
+        # Precompute the embedding for the query
+        query_embedding = self.embed(query, norm=norm)
+
+        def similarity_key(candidate: str) -> float:
+            candidate_embedding = self.embed(candidate, norm=norm)
+            return self.vector_similarity(
+                query_embedding[0], candidate_embedding[0]
+            ).item()
+
+        return similarity_key
 
     def rank(
         self, query: str, docs: List[str], sort: bool = True, batch_size: int = 64

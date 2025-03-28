@@ -209,10 +209,10 @@ class WordLlamaInference:
 
     def deduplicate(
         self,
-	docs: List[str],
-	threshold: float = 0.9,
-	return_indices: bool = False,
-	batch_size: Optional[int] = None
+        docs: List[str],
+        threshold: float = 0.9,
+        return_indices: bool = False,
+        batch_size: Optional[int] = None,
     ) -> List[Union[str, int]]:
         """Deduplicate documents based on a similarity threshold.
 
@@ -366,6 +366,7 @@ class WordLlamaInference:
 
         # Reconstruct text with similarity signals
         return SemanticSplitter.reconstruct(
+            text,
             lines,
             embeddings,
             target_size=target_size,

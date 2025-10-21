@@ -155,6 +155,4 @@ class SemanticSplitter:
             chunks.extend(chunk)
             start = end
 
-        return list(
-            map("".join, constrained_batches(lines, max_size=target_size, strict=False))
-        )
+        return chunks

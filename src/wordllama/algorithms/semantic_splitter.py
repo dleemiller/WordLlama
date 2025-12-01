@@ -79,9 +79,9 @@ class SemanticSplitter:
             List[str]: List of text chunks.
         """
         assert target_size > intermediate_size, "Target size must be larger than intermediate size."
-        assert (
-            intermediate_size > cleanup_size
-        ), "Intermediate size must be larger than cleanup size."
+        assert intermediate_size > cleanup_size, (
+            "Intermediate size must be larger than cleanup size."
+        )
 
         lines = text.splitlines()
         lines = constrained_coalesce(lines, intermediate_size, separator="\n")

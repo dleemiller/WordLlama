@@ -268,9 +268,9 @@ class WordLlamaInference:
         Returns:
             List[str]: The top-k documents most similar to the query.
         """
-        assert (
-            len(candidates) > k
-        ), f"Number of candidates ({len(candidates)}) must be greater than k ({k})"
+        assert len(candidates) > k, (
+            f"Number of candidates ({len(candidates)}) must be greater than k ({k})"
+        )
         ranked_docs = self.rank(query, candidates)
         return [doc for doc, score in ranked_docs[:k]]
 

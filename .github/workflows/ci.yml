@@ -56,14 +56,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install build dependencies
-        run: uv pip install --system setuptools wheel setuptools_scm cython "numpy>=2"
+      - name: Install package with dev dependencies
+        run: uv sync --all-extras
 
       - name: Build Cython extensions
         run: uv run python setup.py build_ext --inplace
-
-      - name: Install package with dev dependencies
-        run: uv pip install --system -e ".[dev]"
 
       - name: Run pytest
         run: uv run pytest tests/ -v --cov=wordllama --cov-report=xml --cov-report=term-missing

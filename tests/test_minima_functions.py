@@ -1,5 +1,8 @@
 import unittest
+
 import numpy as np
+import pytest
+
 from wordllama.algorithms.find_local_minima import (
     find_local_minima,
     windowed_cross_similarity,
@@ -17,23 +20,21 @@ class TestSavitzkyGolay(unittest.TestCase):
         x_minima, y_minima = find_local_minima(self.y, window_size=3, poly_order=2)
 
         # Known minima for sin(x) in the given range [0, 2*pi]
-        expected_x_minima = np.array([3 * np.pi / 2], dtype=np.float32)
+        np.array([3 * np.pi / 2], dtype=np.float32)
         expected_y_minima = np.array([-1.0], dtype=np.float32)
 
         # Check if the found minima are correct (allow small numerical tolerance)
-        np.testing.assert_array_almost_equal(
-            self.y[x_minima], expected_y_minima, decimal=2
-        )
+        np.testing.assert_array_almost_equal(self.y[x_minima], expected_y_minima, decimal=2)
         np.testing.assert_array_almost_equal(y_minima, expected_y_minima, decimal=2)
 
     def test_find_local_minima_invalid_window_size(self):
         # Test that the function raises a ValueError for an invalid window size
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             find_local_minima(self.y, window_size=2, poly_order=2)
 
     def test_find_local_minima_invalid_polynomial_order(self):
         # Test that the function raises a ValueError for an invalid polynomial order
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             find_local_minima(self.y, window_size=11, poly_order=11)
 
 
@@ -63,17 +64,17 @@ class TestWindowedCrossSimilarity(unittest.TestCase):
 
     def test_windowed_cross_similarity_invalid_window(self):
         # Test invalid window size (even window size should raise ValueError)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             windowed_cross_similarity(self.embeddings, window_size=4)
 
         # Test invalid window size (window size < 3)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             windowed_cross_similarity(self.embeddings, window_size=2)
 
     def test_windowed_cross_similarity_small_window(self):
         # Test windowed cross similarity with a small window (size 3)
         result = windowed_cross_similarity(self.embeddings, window_size=3)
-        self.assertEqual(result.shape[0], self.embeddings.shape[0])
+        assert result.shape[0] == self.embeddings.shape[0]
 
 
 if __name__ == "__main__":

@@ -162,10 +162,15 @@ cython_debug/
 #.idea/
 
 # Ignore generated Cython files
-wordllama/algorithms/*.c
-wordllama/algorithms/*.cpp
-wordllama/algorithms/*.html
+src/wordllama/algorithms/*.c
+src/wordllama/algorithms/*.cpp
+src/wordllama/algorithms/*.html
 
 # Ignore the generated version file
-wordllama/_version.py
+src/wordllama/_version.py
 
+# uv
+uv.lock
+
+# ruff
+.ruff_cache/

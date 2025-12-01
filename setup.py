@@ -1,6 +1,6 @@
-from setuptools import setup, Extension
-from Cython.Build import cythonize
 import numpy as np
+from Cython.Build import cythonize
+from setuptools import Extension, setup
 
 numpy_include = np.get_include()
 
@@ -11,13 +11,13 @@ define_macros = [("NPY_NO_DEPRECATED_API", "NPY_2_0_API_VERSION")]
 extensions = [
     Extension(
         "wordllama.algorithms.splitter",
-        ["wordllama/algorithms/splitter.pyx"],
+        ["src/wordllama/algorithms/splitter.pyx"],
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     ),
     Extension(
         "wordllama.algorithms.deduplicate_helpers",
-        ["wordllama/algorithms/deduplicate_helpers.pyx"],
+        ["src/wordllama/algorithms/deduplicate_helpers.pyx"],
         include_dirs=[numpy_include],
         define_macros=define_macros,
         extra_compile_args=extra_compile_args,
@@ -25,7 +25,7 @@ extensions = [
     ),
     Extension(
         "wordllama.algorithms.kmeans",
-        ["wordllama/algorithms/kmeans.pyx"],
+        ["src/wordllama/algorithms/kmeans.pyx"],
         include_dirs=[numpy_include],
         define_macros=define_macros,
         extra_compile_args=extra_compile_args,
@@ -33,7 +33,7 @@ extensions = [
     ),
     Extension(
         "wordllama.algorithms.splitter",
-        ["wordllama/algorithms/splitter.pyx"],
+        ["src/wordllama/algorithms/splitter.pyx"],
         include_dirs=[],
         define_macros=[],
         extra_compile_args=extra_compile_args,
@@ -42,7 +42,7 @@ extensions = [
     ),
     Extension(
         "wordllama.algorithms.find_local_minima",
-        ["wordllama/algorithms/find_local_minima.pyx"],
+        ["src/wordllama/algorithms/find_local_minima.pyx"],
         include_dirs=[numpy_include],
         define_macros=define_macros,
         extra_compile_args=extra_compile_args,
@@ -51,7 +51,7 @@ extensions = [
     ),
     Extension(
         "wordllama.algorithms.vector_similarity",
-        ["wordllama/algorithms/vector_similarity.pyx"],
+        ["src/wordllama/algorithms/vector_similarity.pyx"],
         include_dirs=[numpy_include],
         define_macros=define_macros,
         extra_compile_args=extra_compile_args,

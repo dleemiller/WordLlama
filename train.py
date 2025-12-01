@@ -7,23 +7,24 @@ os.environ["TORCH_USE_CUDA_DSA"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_DATASETS_TRUST_REMOTE_CODE"] = "1"
 
-import torch
-import tqdm
-import safetensors.torch
 from datetime import datetime
 from pathlib import Path
+
+import safetensors.torch
+import torch
+import tqdm
+from dataset_loader import load_datasets
 from sentence_transformers import (
-    SentenceTransformerTrainingArguments,
     SentenceTransformer,
+    SentenceTransformerTrainingArguments,
 )
 from sentence_transformers.training_args import MultiDatasetBatchSamplers
 
-from wordllama import load_training, Config
+from wordllama import Config, load_training
+from wordllama.adapters import AvgPool, Binarizer, WeightedProjector
 from wordllama.config import WordLlamaModel
 from wordllama.embedding.word_llama_embedding import WordLlamaEmbedding
 from wordllama.trainers.reduce_dimension import ReduceDimension
-from wordllama.adapters import AvgPool, WeightedProjector, Binarizer
-from dataset_loader import load_datasets
 
 
 class ReduceDimensionConfig:
@@ -108,9 +109,7 @@ class ReduceDimensionConfig:
 
         # load the projector weights
         max_dim = max(self.matryoshka_dims)
-        proj_path = (
-            checkpoint / "1_WeightedProjector" / "weighted_projector.safetensors"
-        )
+        proj_path = checkpoint / "1_WeightedProjector" / "weighted_projector.safetensors"
         proj = WeightedProjector(
             self.config.model.dim,
             max_dim,
@@ -183,9 +182,7 @@ if __name__ == "__main__":
         required=True,
         help="Name of your configuration (eg. [your_config].toml)",
     )
-    parser_save.add_argument(
-        "--checkpoint", type=str, required=True, help="Path to the checkpoint"
-    )
+    parser_save.add_argument("--checkpoint", type=str, required=True, help="Path to the checkpoint")
     parser_save.add_argument(
         "--outdir", type=str, required=True, help="Directory to save the models"
     )
@@ -196,9 +193,7 @@ if __name__ == "__main__":
 
     # Execute based on the command
     if args.command == "train":
-        config = ReduceDimensionConfig(
-            config_name, binarize=args.binarize, norm=args.norm
-        )
+        config = ReduceDimensionConfig(config_name, binarize=args.binarize, norm=args.norm)
         trainer = ReduceDimension(config)
         trainer.train()
 

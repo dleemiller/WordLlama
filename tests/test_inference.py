@@ -1,15 +1,10 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import numpy as np
+import pytest
+
 from wordllama.inference import WordLlamaInference
-from wordllama.config import (
-    WordLlamaConfig,
-    WordLlamaModel,
-    TokenizerConfig,
-    TrainingConfig,
-    MatryoshkaConfig,
-    TokenizerInferenceConfig,
-)
 
 np.random.seed(42)
 
@@ -43,9 +38,9 @@ class TestWordLlamaInference(unittest.TestCase):
     def test_deduplicate_cosine(self, mock_embed):
         docs = ["doc1", "doc1_dup", "a second document that is different", "doc1_dup2"]
         deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
-        self.assertEqual(len(deduplicated_docs), 2)
-        self.assertIn("doc1", deduplicated_docs)
-        self.assertIn("a second document that is different", deduplicated_docs)
+        assert len(deduplicated_docs) == 2
+        assert "doc1" in deduplicated_docs
+        assert "a second document that is different" in deduplicated_docs
 
     @patch.object(
         WordLlamaInference,
@@ -62,10 +57,10 @@ class TestWordLlamaInference(unittest.TestCase):
     def test_deduplicate_no_duplicates(self, mock_embed):
         docs = ["doc1", "doc2", "doc3"]
         deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
-        self.assertEqual(len(deduplicated_docs), 3)
-        self.assertIn("doc1", deduplicated_docs)
-        self.assertIn("doc2", deduplicated_docs)
-        self.assertIn("doc3", deduplicated_docs)
+        assert len(deduplicated_docs) == 3
+        assert "doc1" in deduplicated_docs
+        assert "doc2" in deduplicated_docs
+        assert "doc3" in deduplicated_docs
 
     @patch.object(
         WordLlamaInference,
@@ -75,8 +70,8 @@ class TestWordLlamaInference(unittest.TestCase):
     def test_deduplicate_all_duplicates(self, mock_embed):
         docs = ["doc1", "doc1_dup", "doc1_dup2"]
         deduplicated_docs = self.model.deduplicate(docs, threshold=0.9)
-        self.assertEqual(len(deduplicated_docs), 1)
-        self.assertIn("doc1", deduplicated_docs)
+        assert len(deduplicated_docs) == 1
+        assert "doc1" in deduplicated_docs
 
     @patch.object(
         WordLlamaInference,
@@ -85,32 +80,30 @@ class TestWordLlamaInference(unittest.TestCase):
     )
     def test_deduplicate_return_indices(self, mock_embed):
         docs = ["doc1", "doc1_dup", "doc1_dup2"]
-        duplicated_idx = self.model.deduplicate(
-            docs, return_indices=True, threshold=0.9
-        )
-        self.assertEqual(len(duplicated_idx), 2)
-        self.assertIn(1, duplicated_idx)
-        self.assertIn(2, duplicated_idx)
+        duplicated_idx = self.model.deduplicate(docs, return_indices=True, threshold=0.9)
+        assert len(duplicated_idx) == 2
+        assert 1 in duplicated_idx
+        assert 2 in duplicated_idx
 
     def test_tokenize(self):
         tokens = self.model.tokenize("test string")
         self.mock_tokenizer.encode_batch.assert_called_with(
             ["test string"], is_pretokenized=False, add_special_tokens=False
         )
-        self.assertEqual(len(tokens), 1)
+        assert len(tokens) == 1
 
     def test_embed(self):
         embeddings = self.model.embed("test string", return_np=True)
-        self.assertEqual(embeddings.shape, (1, 64))
+        assert embeddings.shape == (1, 64)
 
     def test_cluster_fails_binary(self):
         self.model.binary = True
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             self.model.cluster(["a", "b", "c"])
 
     def test_split_fails_binary(self):
         self.model.binary = True
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             self.model.split("a" * 1000)
 
     def test_similarity_cosine(self):
@@ -119,7 +112,7 @@ class TestWordLlamaInference(unittest.TestCase):
 
         self.mock_tokenizer.encode_batch.side_effect = mock_encode_batch
         sim_score = self.model.similarity("test string 1", "test string 2")
-        self.assertTrue(isinstance(sim_score, float))
+        assert isinstance(sim_score, float)
 
     def test_similarity_hamming(self):
         def mock_encode_batch(texts, *args, **kwargs):
@@ -129,7 +122,7 @@ class TestWordLlamaInference(unittest.TestCase):
 
         self.model.binary = True
         sim_score = self.model.similarity("test string 1", "test string 2")
-        self.assertTrue(isinstance(sim_score, float))
+        assert isinstance(sim_score, float)
 
     def test_rank_cosine(self):
         def mock_encode_batch(texts, *args, **kwargs):
@@ -145,7 +138,7 @@ class TestWordLlamaInference(unittest.TestCase):
             if isinstance(texts, str):
                 texts = [texts]
             embeddings = []
-            for i, text in enumerate(texts):
+            for i, _text in enumerate(texts):
                 embedding = np.zeros(64, dtype=np.float32)
                 embedding[1 if len(texts) == 1 else i] = 1
                 embeddings.append(embedding)
@@ -155,15 +148,15 @@ class TestWordLlamaInference(unittest.TestCase):
 
         docs = ["doc1", "doc2", "doc3"]
         ranked_docs = self.model.rank("test query", docs)
-        self.assertEqual(len(ranked_docs), len(docs))
-        self.assertTrue(all(isinstance(score, float) for doc, score in ranked_docs))
-        self.assertEqual(ranked_docs[0], ("doc2", 1.0))
+        assert len(ranked_docs) == len(docs)
+        assert all(isinstance(score, float) for doc, score in ranked_docs)
+        assert ranked_docs[0] == ("doc2", 1.0)
 
         # test turning off sorting
         unsorted_docs = self.model.rank("test query", docs, sort=False)
-        self.assertEqual(len(unsorted_docs), len(docs))
-        self.assertTrue(all(isinstance(score, float) for doc, score in unsorted_docs))
-        self.assertEqual(unsorted_docs[1], ("doc2", 1.0))
+        assert len(unsorted_docs) == len(docs)
+        assert all(isinstance(score, float) for doc, score in unsorted_docs)
+        assert unsorted_docs[1] == ("doc2", 1.0)
 
     def test_rank_hamming(self):
         def mock_encode_batch(texts, *args, **kwargs):
@@ -178,8 +171,8 @@ class TestWordLlamaInference(unittest.TestCase):
             ranked_docs = self.model.rank("test query", docs)
 
             mock_hamming.assert_called_once()  # check setting binary calls hamming
-            self.assertEqual(len(ranked_docs), len(docs))
-            self.assertTrue(all(isinstance(score, float) for doc, score in ranked_docs))
+            assert len(ranked_docs) == len(docs)
+            assert all(isinstance(score, float) for doc, score in ranked_docs)
 
     def test_instantiate_with_truncation(self):
         truncated_embedding = np.random.rand(128256, 32)
@@ -187,22 +180,22 @@ class TestWordLlamaInference(unittest.TestCase):
             embedding=truncated_embedding,
             tokenizer=self.mock_tokenizer,
         )
-        self.assertEqual(truncated_model.embedding.shape[1], 32)
+        assert truncated_model.embedding.shape[1] == 32
 
     def test_error_on_wrong_embedding_type(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             self.model.embed(np.array([1, 2]))
 
     def test_binarization_and_packing(self):
         self.model.binary = True
         binary_output = self.model.embed("test string")
-        self.assertIsInstance(binary_output, np.ndarray)
-        self.assertEqual(binary_output.dtype, np.uint64)
+        assert isinstance(binary_output, np.ndarray)
+        assert binary_output.dtype == np.uint64
 
     def test_normalization_effect(self):
         normalized_output = self.model.embed("test string", norm=True)
         norm = np.linalg.norm(normalized_output)
-        self.assertAlmostEqual(norm, 1, places=5)
+        assert norm == pytest.approx(1, abs=1e-5)
 
 
 if __name__ == "__main__":

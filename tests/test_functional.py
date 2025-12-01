@@ -1,4 +1,5 @@
 import unittest
+
 from wordllama import WordLlama
 
 
@@ -24,8 +25,8 @@ class TestFunctional(unittest.TestCase):
         sim_key = wl.key(query)
         sorted_candidates = sorted(candidates, key=sim_key, reverse=True)
 
-        self.assertIsInstance(sorted_candidates, list)
-        self.assertEqual(len(sorted_candidates), len(candidates))
+        assert isinstance(sorted_candidates, list)
+        assert len(sorted_candidates) == len(candidates)
 
     def test_function_max(self):
         wl = WordLlama.load()
@@ -35,7 +36,5 @@ class TestFunctional(unittest.TestCase):
         sim_key = wl.key(query)
         best_candidate = max(candidates, key=sim_key)
 
-        self.assertIn(best_candidate, candidates)
-        self.assertEqual(
-            best_candidate, max(candidates, key=lambda x: wl.similarity(query, x))
-        )
+        assert best_candidate in candidates
+        assert best_candidate == max(candidates, key=lambda x: wl.similarity(query, x))

@@ -1,8 +1,8 @@
 include LICENSE
 include README.md
-recursive-include wordllama *.py *.toml *.json
-include wordllama/weights/*.safetensors
-include wordllama/algorithms/*.pyx
-include wordllama/algorithms/*.pxd
-include wordllama/algorithms/*.so
-include wordllama/algorithms/*.pyd
+recursive-include src/wordllama *.py *.toml *.json
+include src/wordllama/weights/*.safetensors
+include src/wordllama/algorithms/*.pyx
+include src/wordllama/algorithms/*.pxd
+include src/wordllama/algorithms/*.so
+include src/wordllama/algorithms/*.pyd

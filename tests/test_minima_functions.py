@@ -1,5 +1,3 @@
-import unittest
-
 import numpy as np
 import pytest
 
@@ -9,8 +7,9 @@ from wordllama.algorithms.find_local_minima import (
 )
 
 
-class TestSavitzkyGolay(unittest.TestCase):
-    def setUp(self):
+class TestSavitzkyGolay:
+    @pytest.fixture(autouse=True)
+    def setup(self):
         self.x1 = np.linspace(0, 2 * np.pi, 100, dtype=np.float32)
         self.x = np.arange(100)
         self.y = np.sin(self.x1)
@@ -38,8 +37,9 @@ class TestSavitzkyGolay(unittest.TestCase):
             find_local_minima(self.y, window_size=11, poly_order=11)
 
 
-class TestWindowedCrossSimilarity(unittest.TestCase):
-    def setUp(self):
+class TestWindowedCrossSimilarity:
+    @pytest.fixture(autouse=True)
+    def setup(self):
         # Example embedding matrix (5 vectors of 3 dimensions each)
         self.embeddings = np.array(
             [
@@ -75,7 +75,3 @@ class TestWindowedCrossSimilarity(unittest.TestCase):
         # Test windowed cross similarity with a small window (size 3)
         result = windowed_cross_similarity(self.embeddings, window_size=3)
         assert result.shape[0] == self.embeddings.shape[0]
-
-
-if __name__ == "__main__":
-    unittest.main()

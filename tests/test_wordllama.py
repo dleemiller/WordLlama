@@ -1,4 +1,3 @@
-import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, call, mock_open, patch
 
@@ -10,8 +9,9 @@ from wordllama.config.models import WordLlamaModels
 from wordllama.wordllama import WordLlama, WordLlamaInference
 
 
-class TestWordLlama(unittest.TestCase):
-    def setUp(self):
+class TestWordLlama:
+    @pytest.fixture(autouse=True)
+    def setup(self):
         self.config = "l2_supercat"
         self.dim = 256
         self.binary = False
@@ -176,86 +176,83 @@ class TestWordLlama(unittest.TestCase):
         }
 
         for key, cache_dir_input in cache_dirs.items():
-            with self.subTest(cache_dir=key):
-                # Reset mocks
-                mock_resolve_file.reset_mock()
+            # Reset mocks
+            mock_resolve_file.reset_mock()
 
-                # Setup mock for resolve_file
-                weights_path = (
-                    expected_resolved_dirs[key] / "weights" / "l2_supercat_256.safetensors"
+            # Setup mock for resolve_file
+            weights_path = expected_resolved_dirs[key] / "weights" / "l2_supercat_256.safetensors"
+            tokenizer_path = (
+                expected_resolved_dirs[key] / "tokenizers" / "l2_supercat_tokenizer_config.json"
+            )
+            mock_resolve_file.side_effect = [weights_path, tokenizer_path]
+
+            # Mock tokenizer and weights loading
+            with (
+                patch(
+                    "wordllama.wordllama.WordLlama.load_tokenizer",
+                    return_value=MagicMock(spec=Tokenizer),
+                ) as mock_load_tokenizer,
+                patch("wordllama.wordllama.safe_open", autospec=True) as mock_safe_open,
+            ):
+                # Mock the tensor returned by safe_open
+                mock_tensor = MagicMock()
+                mock_tensor.__getitem__.return_value = np.random.rand(256, 4096)
+                mock_safe_open.return_value.__enter__.return_value.get_tensor.return_value = (
+                    mock_tensor
                 )
-                tokenizer_path = (
-                    expected_resolved_dirs[key] / "tokenizers" / "l2_supercat_tokenizer_config.json"
+
+                # Call load with custom cache_dir
+                model = WordLlama.load(
+                    config=self.model_uri,
+                    cache_dir=cache_dir_input,
+                    binary=self.binary,
+                    dim=self.dim,
+                    trunc_dim=self.trunc_dim,
                 )
-                mock_resolve_file.side_effect = [weights_path, tokenizer_path]
 
-                # Mock tokenizer and weights loading
-                with (
-                    patch(
-                        "wordllama.wordllama.WordLlama.load_tokenizer",
-                        return_value=MagicMock(spec=Tokenizer),
-                    ) as mock_load_tokenizer,
-                    patch("wordllama.wordllama.safe_open", autospec=True) as mock_safe_open,
-                ):
-                    # Mock the tensor returned by safe_open
-                    mock_tensor = MagicMock()
-                    mock_tensor.__getitem__.return_value = np.random.rand(256, 4096)
-                    mock_safe_open.return_value.__enter__.return_value.get_tensor.return_value = (
-                        mock_tensor
-                    )
-
-                    # Call load with custom cache_dir
-                    model = WordLlama.load(
-                        config=self.model_uri,
-                        cache_dir=cache_dir_input,
-                        binary=self.binary,
+                # Assert resolve_file was called twice with the correct cache_dir
+                expected_calls = [
+                    call(
+                        # WordLlama,
+                        config_name="custom",
+                        model_uri=self.model_uri,
                         dim=self.dim,
-                        trunc_dim=self.trunc_dim,
-                    )
+                        binary=self.binary,
+                        file_type="weights",
+                        cache_dir=expected_resolved_dirs[key],
+                        disable_download=True,
+                        remote_filename=None,
+                    ),
+                    call(
+                        # WordLlama,
+                        config_name="custom",
+                        model_uri=self.model_uri,
+                        dim=self.dim,
+                        binary=False,
+                        file_type="tokenizer",
+                        cache_dir=expected_resolved_dirs[key],
+                        disable_download=True,
+                        remote_filename=None,
+                    ),
+                ]
+                mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
+                assert mock_resolve_file.call_count == 2
 
-                    # Assert resolve_file was called twice with the correct cache_dir
-                    expected_calls = [
-                        call(
-                            # WordLlama,
-                            config_name="custom",
-                            model_uri=self.model_uri,
-                            dim=self.dim,
-                            binary=self.binary,
-                            file_type="weights",
-                            cache_dir=expected_resolved_dirs[key],
-                            disable_download=True,
-                            remote_filename=None,
-                        ),
-                        call(
-                            # WordLlama,
-                            config_name="custom",
-                            model_uri=self.model_uri,
-                            dim=self.dim,
-                            binary=False,
-                            file_type="tokenizer",
-                            cache_dir=expected_resolved_dirs[key],
-                            disable_download=True,
-                            remote_filename=None,
-                        ),
-                    ]
-                    mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
-                    assert mock_resolve_file.call_count == 2
+                # Assert load_tokenizer was called with correct path
+                mock_load_tokenizer.assert_called_once_with(
+                    tokenizer_path,
+                    hf_model_id=self.model_uri.tokenizer_fallback,
+                )
 
-                    # Assert load_tokenizer was called with correct path
-                    mock_load_tokenizer.assert_called_once_with(
-                        tokenizer_path,
-                        hf_model_id=self.model_uri.tokenizer_fallback,
-                    )
+                # Assert safe_open was called with the weights path
+                mock_safe_open.assert_called_once_with(
+                    weights_path,
+                    framework="np",
+                    device="cpu",
+                )
 
-                    # Assert safe_open was called with the weights path
-                    mock_safe_open.assert_called_once_with(
-                        weights_path,
-                        framework="np",
-                        device="cpu",
-                    )
-
-                    # Assert the returned model is an instance of WordLlamaInference
-                    assert isinstance(model, WordLlamaInference)
+                # Assert the returned model is an instance of WordLlamaInference
+                assert isinstance(model, WordLlamaInference)
 
     @patch.object(WordLlama, "resolve_file", autospec=True)
     def test_load_with_disable_download(self, mock_resolve_file):
@@ -446,7 +443,3 @@ class TestWordLlama(unittest.TestCase):
 
             # Assert the returned model is an instance of WordLlamaInference
             assert isinstance(model, WordLlamaInference)
-
-
-if __name__ == "__main__":
-    unittest.main()

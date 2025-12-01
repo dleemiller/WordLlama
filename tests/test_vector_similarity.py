@@ -1,11 +1,9 @@
-import unittest
-
 import numpy as np
 
 from wordllama.algorithms import binarize_and_packbits, vector_similarity
 
 
-class TestVectorSimilarity(unittest.TestCase):
+class TestVectorSimilarity:
     def test_binarization_and_packing(self):
         vec = np.zeros((1, 64))
         vec[0][7] = 1
@@ -25,7 +23,3 @@ class TestVectorSimilarity(unittest.TestCase):
         vec2 = np.expand_dims(np.random.randint(2, size=64, dtype=np.uint64), axis=0)
         result = vector_similarity(vec1, vec2, binary=True)
         assert isinstance(result.item(), float)
-
-
-if __name__ == "__main__":
-    unittest.main()

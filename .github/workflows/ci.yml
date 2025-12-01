@@ -22,11 +22,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install ruff, pre-commit, and pytest
-        run: uv pip install --system ruff pre-commit pytest
-
-      - name: Install package for pytest
-        run: uv pip install --system -e .
+      - name: Install ruff and pre-commit
+        run: uv pip install --system ruff pre-commit
 
       - name: Run ruff
         run: |
@@ -35,6 +32,8 @@ jobs:
 
       - name: Run pre-commit
         run: pre-commit run --all-files
+        env:
+          SKIP: pytest-fast
 
   test:
     runs-on: ${{ matrix.os }}

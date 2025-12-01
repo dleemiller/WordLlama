@@ -1,4 +1,4 @@
-.PHONY: help install install-dev build clean test test-cov lint format pre-commit-install pre-commit-run tag all
+.PHONY: help install install-dev build clean test test-cov lint format pre-commit-install pre-commit-run tag release all
 
 help:
 	@echo "WordLlama Development Makefile"
@@ -15,6 +15,7 @@ help:
 	@echo "  pre-commit-install - Install pre-commit hooks"
 	@echo "  pre-commit-run     - Run pre-commit on all files"
 	@echo "  tag VERSION=X.Y.Z  - Create and push a new release tag"
+	@echo "  release VERSION=X.Y.Z - Create tag and GitHub release"
 	@echo "  all                - Clean, build, lint, format, and test"
 
 install:
@@ -61,6 +62,24 @@ tag:
 	git push origin v$(VERSION)
 	@echo "- Tag v$(VERSION) created and pushed"
 	@echo "- GitHub Actions will build and publish the release"
+
+release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION is required. Usage: make release VERSION=0.4.1"; \
+		exit 1; \
+	fi
+	@if ! command -v gh &> /dev/null; then \
+		echo "Error: GitHub CLI (gh) is not installed."; \
+		echo "Install: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	@echo "Creating release v$(VERSION)..."
+	git tag -a v$(VERSION) -m "Release version $(VERSION)"
+	git push origin v$(VERSION)
+	gh release create v$(VERSION) --title "Release v$(VERSION)" --generate-notes
+	@echo "- Tag v$(VERSION) created and pushed"
+	@echo "- GitHub release created with auto-generated notes"
+	@echo "- GitHub Actions will build and publish to PyPI"
 
 all: clean build lint format test
 	@echo "- All tasks completed successfully"

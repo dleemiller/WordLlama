@@ -64,19 +64,19 @@ jobs:
             manylinux_image: manylinux2014
 
           # macOS x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 39
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 310
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 311
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 312
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 313
             platform_id: macosx_x86_64
 
@@ -103,7 +103,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          tags: true
+          fetch-tags: true
 
       # 2. Setup Python
       - name: Setup Python
@@ -215,7 +215,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          tags: true
+          fetch-tags: true
 
       - uses: actions/setup-python@v5
         with:

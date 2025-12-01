@@ -52,7 +52,7 @@ In [1]: from safetensors import safe_open
 
 In [2]: with safe_open("/home/lee/Downloads/model-00001-of-00002.safetensors", framework="pt") as f:
    ...:     weights = f.get_tensor("model.embed_tokens.weight")
-   ...: 
+   ...:
 
 In [3]: weights.shape
 Out[3]: torch.Size([256000, 2304])

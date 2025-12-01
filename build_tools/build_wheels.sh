@@ -31,17 +31,17 @@ if [[ "$(uname)" == "Darwin" ]]; then
     else
         # For x86_64 builds, adjust deployment target and install llvm-openmp via Conda
         export MACOSX_DEPLOYMENT_TARGET=13.0  # Matches Homebrew's libomp minimum
-    
+
         # Install llvm-openmp via Conda
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/19.1.6/download/osx-64/llvm-openmp-19.1.6-ha54dae1_0.conda"
         echo "Installing llvm-openmp via Conda for x86_64..."
         sudo conda create -n build $OPENMP_URL
         PREFIX="$CONDA_HOME/envs/build"
-    
+
         # Use system Clang and point it to Conda's OpenMP paths
         export CC="/usr/bin/clang"
         export CXX="/usr/bin/clang++"
-    
+
         # Locate omp.h dynamically
         OMP_INCLUDE_DIR=$(find $PREFIX -type d -name "include" | head -n 1)
         if [[ -n "$OMP_INCLUDE_DIR" && -f "$OMP_INCLUDE_DIR/omp.h" ]]; then
@@ -52,7 +52,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
             ls -R $PREFIX  # Debug: Show the structure of the Conda environment
             exit 1
         fi
-    
+
         # Set flags
         export CPPFLAGS="-Xpreprocessor -fopenmp -I$OMP_INCLUDE_DIR"
         export CFLAGS="-I$OMP_INCLUDE_DIR -ffp-contract=off"
@@ -74,4 +74,3 @@ python -m pip install --upgrade pip
 # Install cibuildwheel and build wheels
 python -m pip install --upgrade cibuildwheel
 python -m cibuildwheel --output-dir wheelhouse
-

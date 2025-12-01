@@ -16,7 +16,7 @@ When splitting/chunking text for Retrieval-Augmented Generation (RAG) applicatio
 
 These methods don't require language modeling, but they lack semantic awareness. More advanced techniques using language models can provide better semantic coherence but typically at a significant computational cost and latency. And, although semantic splitting is conceptually simple, it still involves multiple steps to refine a quality algorithm.
 
-WordLlama is a good platform for accomplishing this, since it can incorporate basic semantic information into the chunking process, without adding significant computational requirements. Here, we develop a recipe for semantic splitting with WordLlama using an intuitive process. 
+WordLlama is a good platform for accomplishing this, since it can incorporate basic semantic information into the chunking process, without adding significant computational requirements. Here, we develop a recipe for semantic splitting with WordLlama using an intuitive process.
 
 ## Target texts
 
@@ -83,21 +83,21 @@ print(text[0:300])
 
     J. R. R. Tolkien — The Lord Of The Rings. (1/4)
     -----------------------------------------------
-    
-    
+
+
          THE LORD OF THE RINGS
-    
+
                   by
-    
+
          J. R. R. TOLKIEN
-    
-    
-    
+
+
+
      Part 1: The Fellowship of the Ring
      Part 2: The Two Towers
      Part 3: The Return of the King
-    
-    
+
+
     _Complete with Index and Full Appendi
 
 
@@ -115,21 +115,21 @@ import seaborn as sns
 def plot_chars(chars_per_line):
     sns.set(style="whitegrid")
     fig, axes = plt.subplots(2, 1, figsize=(10, 8))
-    
+
     # First plot: full range
     sns.histplot(chars_per_line, bins=200, ax=axes[0], kde=False)
     axes[0].set_title("Characters per Line - Full Range")
     axes[0].set_xlabel("# Characters")
     axes[0].set_ylabel("$log($Counts$)$")
     axes[0].semilogy(True)
-    
+
     # Second plot: zoomed-in range
     sns.histplot(chars_per_line, bins=1000, ax=axes[1], kde=False)
     axes[1].set_title("Characters per Line - Zoomed In (0 to 100)")
     axes[1].set_xlabel("# Characters")
     axes[1].set_ylabel("Counts")
     axes[1].set_xlim((0, 200))
-    
+
     plt.tight_layout()
     plt.show()
 ```
@@ -146,9 +146,9 @@ plot_chars(chars_per_line)
 ```
 
 
-    
+
 ![png](output_6_0.png)
-    
+
 
 
 Here we can see a bunch of small fragments with close to zero size. Additionally, there are some smaller segments below 50 characters. While most of the chunks are fewer than 1k characters, there are a few larger ones as well. The chunks that are a few characters or less are not likely to carry much semantic information and are disproportionate compared to most of the other segments.
@@ -208,9 +208,9 @@ plot_chars(chars_per_line)
 ```
 
 
-    
+
 ![png](output_12_0.png)
-    
+
 
 
 This is better. Let's take care of the larger segments.
@@ -268,9 +268,9 @@ plot_chars(chars_per_line)
 ```
 
 
-    
+
 ![png](output_15_0.png)
-    
+
 
 
 Now we have a more reasonable starting point for doing semantic splitting. Let's use wordllama to embed the segments into vectors, and compute similarity for all the segments.
@@ -301,9 +301,9 @@ plt.title("Cross-similarity of lines")
 
 
 
-    
+
 ![png](output_17_1.png)
-    
+
 
 
 Here's where we can see how wordllama can help. As we traverse the diagonal, we can identify blocks of similar texts. The very small block in the upper left corner is the table of contents.
@@ -334,12 +334,12 @@ plt.show()
 ```
 
 
-    
+
 ![png](output_19_0.png)
-    
 
 
-With the size of our segments, even 10-20 segments is a decent chunk size. Here we can zoom in on the minimum around the **dashed red line index (308)**. 
+
+With the size of our segments, even 10-20 segments is a decent chunk size. Here we can zoom in on the minimum around the **dashed red line index (308)**.
 
 
 ```python
@@ -350,7 +350,7 @@ print("\n".join([lines[i] if i != 308 else f">>>>>>>>>>>>>{lines[i]}<<<<<<<<<<<<
          'So do I,' said Gandalf. 'And I wonder many other things. Good-bye now! Take care of yourself! Look out for me, especially at unlikely times! Good-bye!'
          Frodo saw him to the door. He gave a final wave of his hand, and walked off at a surprising pace; but Frodo thought the old wizard looked unusually bent, almost as if he was carrying a great weight. The evening was closing in, and his cloaked figure quickly vanished into the twilight. Frodo did not see him again for a long time.
     >>>>>>>>>>>>>
-    
+
                                _Chapter 2_
                 The Shadow of the Past
     <<<<<<<<<<<<<
@@ -404,9 +404,9 @@ plt.show()
 ```
 
 
-    
+
 ![png](output_23_0.png)
-    
+
 
 
 Well that was fun. Now all that's left is to bring the sections back up to our target size.
@@ -450,9 +450,9 @@ ax.semilogy(True)
 
 
 
-    
+
 ![png](output_26_1.png)
-    
+
 
 
 ### Visualize
@@ -464,21 +464,21 @@ from IPython.display import Markdown, display
 def display_strings(string_list, offset=0):
     """
     Convert a list of strings into a markdown table and display it in a Jupyter notebook.
-    
+
     Parameters:
     - string_list (list): The list of strings to display
-    
+
     Returns:
     - None (displays the table in the notebook)
     """
     # Create the table header
     table = "| Index | Text |\n|-------|------|\n"
-    
+
     # Add each string to the table
     for i, text in enumerate(string_list):
         row = f"| {i + offset} | {text[:600]}{'...' if len(text) > 600 else ''} |\n"
         table += row
-    
+
     # Display the table
     display(Markdown(table))
 
@@ -520,7 +520,7 @@ print(f"Length of text: {len(text):.2e} chars\n# of chunks: {len(results)}\n\nPr
 
     Length of text: 1.02e+06 chars
     # of chunks: 784
-    
+
     Processing time:
     CPU times: user 1.31 s, sys: 111 ms, total: 1.43 s
     Wall time: 677 ms

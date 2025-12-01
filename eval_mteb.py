@@ -1,5 +1,6 @@
 # ruff: noqa: E402
 from __future__ import annotations
+
 import os
 
 # Set environment variables
@@ -8,16 +9,16 @@ os.environ["TORCH_USE_CUDA_DSA"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_DATASETS_TRUST_REMOTE_CODE"] = "1"
 
-import mteb
 import logging
-
 from functools import partial
-from typing import Any, List
-from wordllama import load_training, Config
+from typing import Any
+
+import mteb
 import numpy as np
 from more_itertools import chunked
-
 from mteb.model_meta import ModelMeta
+
+from wordllama import Config, load_training
 
 logger = logging.getLogger(__name__)
 
@@ -109,23 +110,18 @@ TASK_LIST_STS = [
 
 
 class WordLlamaWrapper:
-    def __init__(
-        self, model_name: str, config, embed_dim: int | None = None, **kwargs
-    ) -> None:
+    def __init__(self, model_name: str, config, embed_dim: int | None = None, **kwargs) -> None:
         self._model_name = model_name
         self._embed_dim = embed_dim
         print(model_name)
         self.model = load_training(model_name, config, dims=embed_dim).to("cuda")
 
-    def encode(self, sentences: List[str], batch_size=512, **kwargs: Any) -> np.ndarray:
+    def encode(self, sentences: list[str], batch_size=512, **kwargs: Any) -> np.ndarray:
         all_embeddings = []
 
         for chunk in chunked(sentences, batch_size):
             embed_chunk = (
-                self.model.embed(chunk, return_pt=True, norm=True)
-                .to("cpu")
-                .detach()
-                .numpy()
+                self.model.embed(chunk, return_pt=True, norm=True).to("cpu").detach().numpy()
             )
             all_embeddings.append(embed_chunk)
 
@@ -135,7 +131,6 @@ class WordLlamaWrapper:
 
 
 if __name__ == "__main__":
-
     TASK_LIST = (
         TASK_LIST_CLASSIFICATION
         + TASK_LIST_CLUSTERING

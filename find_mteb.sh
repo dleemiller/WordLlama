@@ -43,12 +43,12 @@ while IFS= read -r line; do
     filename=$(echo "$line" | cut -d' ' -f1)
     score=$(echo "$line" | cut -d' ' -f2)
     subset=$(echo "$line" | cut -d' ' -f3)
-    
+
     echo "$filename $score $subset"
-    
+
     # Remove .json extension for matching
     task_name=${filename%.json}
-    
+
     for category in "${!TASK_LISTS[@]}"; do
         if [[ "${TASK_LISTS[$category]}" == *"$task_name"* ]]; then
             eval "${category}_scores+=(${score})"
@@ -63,8 +63,8 @@ while IFS= read -r line; do
         fi
     done
 done < <(find "$search_dir" -type f -name "*.json" -print0 | xargs -0 -I {} sh -c '
-jq -r ".. | objects | select((.hf_subset? == \"en\" or .hf_subset? == \"default\") and .main_score?) | \"\(.main_score) \(.hf_subset)\"" {} | 
-while read score subset; do 
+jq -r ".. | objects | select((.hf_subset? == \"en\" or .hf_subset? == \"default\") and .main_score?) | \"\(.main_score) \(.hf_subset)\"" {} |
+while read score subset; do
     formatted_score=$(printf "%.2f" $(echo "$score * 100" | bc))
     echo "$(basename {}) $formatted_score $subset"
 done
@@ -86,7 +86,7 @@ print_results() {
     local scores=("${!1}")
     local files=("${!2}")
     local name=$3
-    
+
     if [ ${#scores[@]} -ne 0 ]; then
         average=$(calculate_average "$1")
         echo ""

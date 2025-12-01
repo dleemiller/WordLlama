@@ -63,11 +63,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
 
 fi
 
-if [[ "$CIBW_FREE_THREADED_SUPPORT" =~ [tT]rue ]]; then
-    # Enable free-threaded builds for CPython if specified
-    export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
-fi
-
 # Ensure pip is updated before installing dependencies
 python -m pip install --upgrade pip
 

@@ -83,7 +83,7 @@ print(f"\nBest Match: {best_candidate} (Score: {sim_key(best_candidate):.4f})")
 # 2. Foundations of neural science (Score: 0.2115)
 # 3. Introduction to philosophy: logic (Score: 0.1067)
 # 4. Cooking delicious pasta at home (Score: 0.0045)
-# 
+#
 # Best Match: Introduction to neural networks (Score: 0.3414)
 ```
 
@@ -143,7 +143,7 @@ The following table presents the performance of WordLlama models compared to oth
 
 8k documents from the `ag_news` dataset
 - Single core performance (CPU), i9 12th gen, DDR4 3200
-- NVIDIA A4500 (GPU) 
+- NVIDIA A4500 (GPU)
 
 <p align="center">
   <img src="benchmark/inference_benchmark.png" alt="Word Llama" width="80%">
@@ -200,7 +200,7 @@ print(f"\nBest Match: {best_candidate} (Score: {sim_key(best_candidate):.4f})")
 # 2. Foundations of neural science (Score: 0.2115)
 # 3. Introduction to philosophy: logic (Score: 0.1067)
 # 4. Cooking delicious pasta at home (Score: 0.0045)
-# 
+#
 # Best Match: Introduction to neural networks (Score: 0.3414)
 ```
 
@@ -340,6 +340,21 @@ The L2 Supercat model was trained using a batch size of 512 on a single A100 GPU
 - **Additional Example Notebooks**:
   - DSPy evaluators
   - Retrieval-Augmented Generation (RAG) pipelines
+
+## Development
+
+For local development:
+
+```bash
+git clone https://github.com/dleemiller/WordLlama.git
+cd WordLlama
+pip install uv
+uv sync --all-extras
+uv run python setup.py build_ext --inplace
+uv run pytest
+```
+
+See the [Makefile](Makefile) for common development commands.
 
 ## Extracting Token Embeddings
 

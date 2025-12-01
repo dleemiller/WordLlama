@@ -1,4 +1,4 @@
-.PHONY: help install install-dev build clean test test-cov lint format pre-commit-install pre-commit-run all
+.PHONY: help install install-dev build clean test test-cov lint format pre-commit-install pre-commit-run tag all
 
 help:
 	@echo "WordLlama Development Makefile"
@@ -14,6 +14,7 @@ help:
 	@echo "  format             - Format code with ruff"
 	@echo "  pre-commit-install - Install pre-commit hooks"
 	@echo "  pre-commit-run     - Run pre-commit on all files"
+	@echo "  tag VERSION=X.Y.Z  - Create and push a new release tag"
 	@echo "  all                - Clean, build, lint, format, and test"
 
 install:
@@ -50,5 +51,16 @@ pre-commit-install:
 pre-commit-run:
 	uv run pre-commit run --all-files
 
+tag:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION is required. Usage: make tag VERSION=0.4.0"; \
+		exit 1; \
+	fi
+	@echo "Creating and pushing tag v$(VERSION)..."
+	git tag -a v$(VERSION) -m "Release version $(VERSION)"
+	git push origin v$(VERSION)
+	@echo "- Tag v$(VERSION) created and pushed"
+	@echo "- GitHub Actions will build and publish the release"
+
 all: clean build lint format test
-	@echo "✓ All tasks completed successfully"
+	@echo "- All tasks completed successfully"

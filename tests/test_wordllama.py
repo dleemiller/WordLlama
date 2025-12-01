@@ -172,7 +172,7 @@ class TestWordLlama(unittest.TestCase):
             "tilde": Path("~/tmp_cache").expanduser(),
             "relative": Path("tmp").resolve(),
             "relative_dot": Path("./tmp").resolve(),
-            "absolute": Path("/tmp/cache_dir"),
+            "absolute": Path("/tmp/cache_dir").resolve(),
         }
 
         for key, cache_dir_input in cache_dirs.items():

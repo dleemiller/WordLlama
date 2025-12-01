@@ -1,18 +1,13 @@
 import unittest
-from unittest.mock import patch, MagicMock, mock_open, call
 from pathlib import Path
+from unittest.mock import MagicMock, call, mock_open, patch
+
 import numpy as np
+import pytest
 from tokenizers import Tokenizer
+
+from wordllama.config.models import WordLlamaModels
 from wordllama.wordllama import WordLlama, WordLlamaInference
-from wordllama.config import (
-    WordLlamaConfig,
-    TokenizerConfig,
-    MatryoshkaConfig,
-    WordLlamaModel,
-    TrainingConfig,
-    TokenizerInferenceConfig,
-)
-from wordllama.config.models import ModelURI, WordLlamaModels
 
 
 class TestWordLlama(unittest.TestCase):
@@ -24,7 +19,7 @@ class TestWordLlama(unittest.TestCase):
 
         # Assemble WordLlamaConfig
         self.config = "l2_supercat"
-        self.model_uri = getattr(WordLlamaModels, "l2_supercat")
+        self.model_uri = WordLlamaModels.l2_supercat
 
     def test_list_configs(self):
         output = WordLlama.list_configs()
@@ -82,9 +77,7 @@ class TestWordLlama(unittest.TestCase):
         handle.write.assert_has_calls([call(b"chunk1"), call(b"chunk2")])
 
         # Assert the returned path is correct
-        self.assertEqual(
-            weights_path, Path("/dummy/cache/weights/l2_supercat_256.safetensors")
-        )
+        assert weights_path == Path("/dummy/cache/weights/l2_supercat_256.safetensors")
 
     @patch.object(WordLlama, "resolve_file", autospec=True)
     def test_load_with_default_cache_dir(self, mock_resolve_file):
@@ -94,24 +87,21 @@ class TestWordLlama(unittest.TestCase):
         # Setup mock for resolve_file
         default_cache_dir = WordLlama.DEFAULT_CACHE_DIR
         weights_path = default_cache_dir / "weights" / "l2_supercat_256.safetensors"
-        tokenizer_path = (
-            default_cache_dir / "tokenizers" / "l2_supercat_tokenizer_config.json"
-        )
+        tokenizer_path = default_cache_dir / "tokenizers" / "l2_supercat_tokenizer_config.json"
         mock_resolve_file.side_effect = [weights_path, tokenizer_path]
 
         # Mock tokenizer and weights loading
-        with patch(
-            "wordllama.wordllama.WordLlama.load_tokenizer",
-            return_value=MagicMock(spec=Tokenizer),
-        ) as mock_load_tokenizer, patch(
-            "wordllama.wordllama.safe_open", autospec=True
-        ) as mock_safe_open:
+        with (
+            patch(
+                "wordllama.wordllama.WordLlama.load_tokenizer",
+                return_value=MagicMock(spec=Tokenizer),
+            ) as mock_load_tokenizer,
+            patch("wordllama.wordllama.safe_open", autospec=True) as mock_safe_open,
+        ):
             # Mock the tensor returned by safe_open
             mock_tensor = MagicMock()
             mock_tensor.__getitem__.return_value = np.random.rand(256, 4096)
-            mock_safe_open.return_value.__enter__.return_value.get_tensor.return_value = (
-                mock_tensor
-            )
+            mock_safe_open.return_value.__enter__.return_value.get_tensor.return_value = mock_tensor
 
             # Call load without specifying cache_dir
             model = WordLlama.load(
@@ -146,7 +136,7 @@ class TestWordLlama(unittest.TestCase):
                 ),
             ]
             mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
-            self.assertEqual(mock_resolve_file.call_count, 2)
+            assert mock_resolve_file.call_count == 2
 
             # Assert load_tokenizer was called with correct path
             mock_load_tokenizer.assert_called_once_with(
@@ -162,7 +152,7 @@ class TestWordLlama(unittest.TestCase):
             )
 
             # Assert the returned model is an instance of WordLlamaInference
-            self.assertIsInstance(model, WordLlamaInference)
+            assert isinstance(model, WordLlamaInference)
 
     @patch.object(WordLlama, "resolve_file", autospec=True)
     def test_load_with_custom_cache_dir(self, mock_resolve_file):
@@ -192,24 +182,21 @@ class TestWordLlama(unittest.TestCase):
 
                 # Setup mock for resolve_file
                 weights_path = (
-                    expected_resolved_dirs[key]
-                    / "weights"
-                    / "l2_supercat_256.safetensors"
+                    expected_resolved_dirs[key] / "weights" / "l2_supercat_256.safetensors"
                 )
                 tokenizer_path = (
-                    expected_resolved_dirs[key]
-                    / "tokenizers"
-                    / "l2_supercat_tokenizer_config.json"
+                    expected_resolved_dirs[key] / "tokenizers" / "l2_supercat_tokenizer_config.json"
                 )
                 mock_resolve_file.side_effect = [weights_path, tokenizer_path]
 
                 # Mock tokenizer and weights loading
-                with patch(
-                    "wordllama.wordllama.WordLlama.load_tokenizer",
-                    return_value=MagicMock(spec=Tokenizer),
-                ) as mock_load_tokenizer, patch(
-                    "wordllama.wordllama.safe_open", autospec=True
-                ) as mock_safe_open:
+                with (
+                    patch(
+                        "wordllama.wordllama.WordLlama.load_tokenizer",
+                        return_value=MagicMock(spec=Tokenizer),
+                    ) as mock_load_tokenizer,
+                    patch("wordllama.wordllama.safe_open", autospec=True) as mock_safe_open,
+                ):
                     # Mock the tensor returned by safe_open
                     mock_tensor = MagicMock()
                     mock_tensor.__getitem__.return_value = np.random.rand(256, 4096)
@@ -252,7 +239,7 @@ class TestWordLlama(unittest.TestCase):
                         ),
                     ]
                     mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
-                    self.assertEqual(mock_resolve_file.call_count, 2)
+                    assert mock_resolve_file.call_count == 2
 
                     # Assert load_tokenizer was called with correct path
                     mock_load_tokenizer.assert_called_once_with(
@@ -268,7 +255,7 @@ class TestWordLlama(unittest.TestCase):
                     )
 
                     # Assert the returned model is an instance of WordLlamaInference
-                    self.assertIsInstance(model, WordLlamaInference)
+                    assert isinstance(model, WordLlamaInference)
 
     @patch.object(WordLlama, "resolve_file", autospec=True)
     def test_load_with_disable_download(self, mock_resolve_file):
@@ -279,7 +266,7 @@ class TestWordLlama(unittest.TestCase):
         mock_resolve_file.side_effect = FileNotFoundError("File not found")
 
         # Call load with disable_download=True and expect FileNotFoundError
-        with self.assertRaises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError):
             WordLlama.load(
                 config=self.config,
                 cache_dir=Path("/dummy/cache"),
@@ -303,7 +290,7 @@ class TestWordLlama(unittest.TestCase):
             )
         ]
         mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
-        self.assertEqual(mock_resolve_file.call_count, 1)
+        assert mock_resolve_file.call_count == 1
 
     @patch.object(WordLlama, "resolve_file", autospec=True)
     def test_load_with_truncated_dimension(self, mock_resolve_file):
@@ -312,24 +299,21 @@ class TestWordLlama(unittest.TestCase):
         """
         # Setup mock for resolve_file
         weights_path = Path("/dummy/cache/weights/l2_supercat_256.safetensors")
-        tokenizer_path = Path(
-            "/dummy/cache/tokenizers/l2_supercat_tokenizer_config.json"
-        )
+        tokenizer_path = Path("/dummy/cache/tokenizers/l2_supercat_tokenizer_config.json")
         mock_resolve_file.side_effect = [weights_path, tokenizer_path]
 
         # Mock tokenizer and weights loading
-        with patch(
-            "wordllama.wordllama.WordLlama.load_tokenizer",
-            return_value=MagicMock(spec=Tokenizer),
-        ) as mock_load_tokenizer, patch(
-            "wordllama.wordllama.safe_open", autospec=True
-        ) as mock_safe_open:
+        with (
+            patch(
+                "wordllama.wordllama.WordLlama.load_tokenizer",
+                return_value=MagicMock(spec=Tokenizer),
+            ) as mock_load_tokenizer,
+            patch("wordllama.wordllama.safe_open", autospec=True) as mock_safe_open,
+        ):
             # Mock the tensor returned by safe_open
             mock_tensor = MagicMock()
             mock_tensor.__getitem__.return_value = np.random.rand(256, 4096)
-            mock_safe_open.return_value.__enter__.return_value.get_tensor.return_value = (
-                mock_tensor
-            )
+            mock_safe_open.return_value.__enter__.return_value.get_tensor.return_value = mock_tensor
 
             # Call load with trunc_dim
             model = WordLlama.load(
@@ -364,7 +348,7 @@ class TestWordLlama(unittest.TestCase):
                 ),
             ]
             mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
-            self.assertEqual(mock_resolve_file.call_count, 2)
+            assert mock_resolve_file.call_count == 2
 
             # Assert load_tokenizer was called with correct path
             mock_load_tokenizer.assert_called_once_with(
@@ -380,7 +364,7 @@ class TestWordLlama(unittest.TestCase):
             )
 
             # Assert the returned model is an instance of WordLlamaInference
-            self.assertIsInstance(model, WordLlamaInference)
+            assert isinstance(model, WordLlamaInference)
 
             # Assert that the embedding was truncated
             mock_tensor.__getitem__.assert_called_with((slice(None), slice(None, 128)))
@@ -400,15 +384,14 @@ class TestWordLlama(unittest.TestCase):
         # Setup mocks
         # First call for weights, second call for tokenizer
         weights_path = Path("/dummy/cache/weights/l2_supercat_256.safetensors")
-        tokenizer_path = Path(
-            "/dummy/cache/tokenizers/l2_supercat_tokenizer_config.json"
-        )
+        tokenizer_path = Path("/dummy/cache/tokenizers/l2_supercat_tokenizer_config.json")
         mock_resolve_file.side_effect = [weights_path, tokenizer_path]
 
         # Simulate tokenizer config does not exist by patching Path.exists
-        with patch(
-            "wordllama.wordllama.Path.exists", side_effect=[False, False]
-        ), patch("wordllama.wordllama.safe_open", autospec=True) as mock_safe_open:
+        with (
+            patch("wordllama.wordllama.Path.exists", side_effect=[False, False]),
+            patch("wordllama.wordllama.safe_open", autospec=True) as mock_safe_open,
+        ):
             # Mock the tensor returned by safe_open
             mock_tensor = MagicMock()
             mock_tensor.__getitem__.return_value = np.random.rand(256, 4096)
@@ -449,7 +432,7 @@ class TestWordLlama(unittest.TestCase):
                 ),
             ]
             mock_resolve_file.assert_has_calls(expected_calls, any_order=False)
-            self.assertEqual(mock_resolve_file.call_count, 2)
+            assert mock_resolve_file.call_count == 2
 
             # Assert Tokenizer.from_pretrained was called since local config was not found
             mock_from_pretrained.assert_called_once_with("meta-llama/Llama-2-70b-hf")
@@ -462,7 +445,7 @@ class TestWordLlama(unittest.TestCase):
             )
 
             # Assert the returned model is an instance of WordLlamaInference
-            self.assertIsInstance(model, WordLlamaInference)
+            assert isinstance(model, WordLlamaInference)
 
 
 if __name__ == "__main__":

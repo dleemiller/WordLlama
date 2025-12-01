@@ -1,0 +1,30 @@
+[model]
+dim = 12288
+n_vocab = 256000
+hf_model_id = "CohereForAI/c4ai-command-r-plus"
+pad_token = "<|END_OF_TURN_TOKEN|>"
+
+[tokenizer]
+return_tensors = "pt"
+return_attention_mask = true
+max_length = 128
+padding = "longest"
+truncation = true
+add_special_tokens = false
+
+[training]
+output_dir = "output/matryoshka_command_rplus"
+num_train_epochs = 2
+per_device_train_batch_size = 256
+warmup_steps = 256
+evaluation_strategy = "steps"
+eval_steps = 250
+save_steps = 2000
+fp16 = true
+include_num_input_tokens_seen = false
+learning_rate = 2e-4
+multi_dataset_batch_sampler = "PROPORTIONAL"
+binarizer_ste = "tanh"
+
+[matryoshka]
+dims = [1024, 512, 256, 128, 64]

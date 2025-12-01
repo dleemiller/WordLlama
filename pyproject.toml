@@ -131,6 +131,7 @@ exclude = [
     ".ruff_cache",
     "tutorials",
     "benchmark",
+    "_version.py",
 ]
 
 [tool.ruff.lint]

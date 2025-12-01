@@ -1,5 +1,4 @@
 import string
-import unittest
 
 import pytest
 
@@ -11,7 +10,7 @@ from wordllama.algorithms.splitter import (
 )
 
 
-class TestSplitter(unittest.TestCase):
+class TestSplitter:
     def test_constrained_batches(self):
         # Basic batching
         data = ["a", "bb", "ccc", "dddd", "eeeee"]
@@ -123,7 +122,3 @@ class TestSplitter(unittest.TestCase):
         result = reverse_merge(data, n=5, separator=" ")
         expected = ["a bb ccc"]
         assert result == expected
-
-
-if __name__ == "__main__":
-    unittest.main()

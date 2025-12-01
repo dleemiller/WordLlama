@@ -1,4 +1,3 @@
-import unittest
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -9,9 +8,10 @@ from wordllama.inference import WordLlamaInference
 np.random.seed(42)
 
 
-class TestWordLlamaInference(unittest.TestCase):
+class TestWordLlamaInference:
+    @pytest.fixture(autouse=True)
     @patch("wordllama.inference.Tokenizer.from_pretrained")
-    def setUp(self, mock_tokenizer):
+    def setup(self, mock_tokenizer):
         np.random.seed(42)
 
         # Mock the tokenizer
@@ -196,7 +196,3 @@ class TestWordLlamaInference(unittest.TestCase):
         normalized_output = self.model.embed("test string", norm=True)
         norm = np.linalg.norm(normalized_output)
         assert norm == pytest.approx(1, abs=1e-5)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -1,15 +1,12 @@
-import unittest
-
 import numpy as np
+import pytest
 
-from wordllama.algorithms.kmeans import (
-    #    kmeans_plusplus_initialization,
-    kmeans_clustering,
-)
+from wordllama.algorithms.kmeans import kmeans_clustering
 
 
-class TestKMeansClustering(unittest.TestCase):
-    def setUp(self):
+class TestKMeansClustering:
+    @pytest.fixture(autouse=True)
+    def setup(self):
         self.random_state = np.random.RandomState(42)
         self.embeddings = np.array(
             [
@@ -22,21 +19,6 @@ class TestKMeansClustering(unittest.TestCase):
             ],
             dtype=np.float32,
         )
-
-    # def test_kmeans_plusplus_initialization(self):
-    #     k = 2
-    #     centroids = kmeans_plusplus_initialization(
-    #         self.embeddings, k, self.random_state
-    #     )
-
-    #     self.assertEqual(centroids.shape[0], k)
-    #     self.assertEqual(centroids.shape[1], self.embeddings.shape[1])
-
-    #     # Check that centroids are among the original points
-    #     for centroid in centroids:
-    #         self.assertTrue(
-    #             any(np.allclose(centroid, point) for point in self.embeddings)
-    #         )
 
     def test_kmeans_clustering_convergence(self):
         k = 2
@@ -77,7 +59,3 @@ class TestKMeansClustering(unittest.TestCase):
         labels2, inertia2 = kmeans_clustering(self.embeddings, k, random_state=42, n_init=10)
 
         assert inertia1 > inertia2
-
-
-if __name__ == "__main__":
-    unittest.main()

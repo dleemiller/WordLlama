@@ -1,12 +1,12 @@
-import unittest
-
 import numpy as np
+import pytest
 
 from wordllama.algorithms.semantic_splitter import SemanticSplitter
 
 
-class TestSemanticSplitter(unittest.TestCase):
-    def setUp(self):
+class TestSemanticSplitter:
+    @pytest.fixture(autouse=True)
+    def setup(self):
         self.splitter = SemanticSplitter()
 
     def test_flatten(self):
@@ -62,7 +62,3 @@ class TestSemanticSplitter(unittest.TestCase):
         assert isinstance(roots, np.ndarray)
         assert isinstance(y, np.ndarray)
         assert isinstance(sim_avg, np.ndarray)
-
-
-if __name__ == "__main__":
-    unittest.main()

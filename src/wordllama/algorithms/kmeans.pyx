@@ -26,16 +26,51 @@ cdef inline float squared_euclidean_distance(const float[:] vec1, const float[:]
         dist += (vec1[i] - vec2[i]) ** 2
     return dist
 
+cdef inline float squared_euclidean_distance_rows(const float[:, :] vec1, Py_ssize_t row1,
+                                                 const float[:, :] vec2, Py_ssize_t row2,
+                                                 Py_ssize_t dim) nogil:
+    cdef Py_ssize_t i
+    cdef float dist = 0.0
+    for i in range(dim):
+        dist += (vec1[row1, i] - vec2[row2, i]) ** 2
+    return dist
+
+cdef inline float squared_euclidean_distance_ptr(const float* vec1, Py_ssize_t row1,
+                                                 const float* vec2, Py_ssize_t row2,
+                                                 Py_ssize_t dim) nogil:
+    cdef Py_ssize_t i
+    cdef float dist = 0.0
+    for i in range(dim):
+        dist += (vec1[row1 * dim + i] - vec2[row2 * dim + i]) ** 2
+    return dist
+
 cdef void compute_distances(const float[:, :] embeddings, const float[:, :] centroids, float[:, :] distances):
     cdef Py_ssize_t num_points = embeddings.shape[0]
     cdef Py_ssize_t num_centroids = centroids.shape[0]
     cdef Py_ssize_t dim = embeddings.shape[1]
-    cdef Py_ssize_t i, j
+    cdef Py_ssize_t i, j, h
     cdef float dist
+    cdef const float* emb_ptr
+    cdef const float* cen_ptr
+
+    if (num_points > 0 and num_centroids > 0 and dim > 0
+            and embeddings.strides[1] == sizeof(float)
+            and embeddings.strides[0] == dim * sizeof(float)
+            and centroids.strides[1] == sizeof(float)
+            and centroids.strides[0] == dim * sizeof(float)):
+        emb_ptr = &embeddings[0, 0]
+        cen_ptr = &centroids[0, 0]
+        for i in range(num_points):
+            for j in range(num_centroids):
+                dist = 0.0
+                for h in range(dim):
+                    dist += (emb_ptr[i * dim + h] - cen_ptr[j * dim + h]) ** 2
+                distances[i, j] = sqrtf(dist)
+        return
 
     for i in range(num_points):
         for j in range(num_centroids):
-            dist = squared_euclidean_distance(embeddings[i], centroids[j], dim)
+            dist = squared_euclidean_distance_rows(embeddings, i, centroids, j, dim)
             distances[i, j] = sqrtf(dist)
 
 cdef update_centroids(const float[:, :] embeddings, const INT_t[:] labels, Py_ssize_t num_clusters):
@@ -70,13 +105,27 @@ cdef kmeans_plusplus_initialization(float[:, :] embeddings, int k, object random
     cdef float[:] distances_view = distances
     cdef Py_ssize_t i, j, index
     cdef float r, dist_sum
+    cdef const float* emb_ptr
+    cdef const float* cen_ptr
+    cdef bint contiguous = (n_samples > 0 and k > 0 and n_features > 0
+                            and embeddings.strides[1] == sizeof(float)
+                            and embeddings.strides[0] == n_features * sizeof(float)
+                            and centroids_view.strides[1] == sizeof(float)
+                            and centroids_view.strides[0] == n_features * sizeof(float))
 
+    if contiguous:
+        emb_ptr = &embeddings[0, 0]
+        cen_ptr = &centroids_view[0, 0]
     index = random_state.randint(n_samples)
     for j in range(n_features):
         centroids_view[0, j] = embeddings[index, j]
 
-    for i in range(n_samples):
-        distances_view[i] = squared_euclidean_distance(embeddings[i], centroids_view[0], n_features)
+    if contiguous:
+        for i in range(n_samples):
+            distances_view[i] = squared_euclidean_distance_ptr(emb_ptr, i, cen_ptr, 0, n_features)
+    else:
+        for i in range(n_samples):
+            distances_view[i] = squared_euclidean_distance_rows(embeddings, i, centroids_view, 0, n_features)
 
     for i in range(1, k):
         probabilities = distances / np.sum(distances)
@@ -87,10 +136,16 @@ cdef kmeans_plusplus_initialization(float[:, :] embeddings, int k, object random
         for j in range(n_features):
             centroids_view[i, j] = embeddings[index, j]
 
-        for j in range(n_samples):
-            new_dist = squared_euclidean_distance(embeddings[j], centroids_view[i], n_features)
-            if new_dist < distances_view[j]:
-                distances_view[j] = new_dist
+        if contiguous:
+            for j in range(n_samples):
+                new_dist = squared_euclidean_distance_ptr(emb_ptr, j, cen_ptr, i, n_features)
+                if new_dist < distances_view[j]:
+                    distances_view[j] = new_dist
+        else:
+            for j in range(n_samples):
+                new_dist = squared_euclidean_distance_rows(embeddings, j, centroids_view, i, n_features)
+                if new_dist < distances_view[j]:
+                    distances_view[j] = new_dist
 
     return centroids
 
